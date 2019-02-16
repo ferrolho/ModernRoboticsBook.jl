@@ -1,0 +1,4 @@
+name = "ModernRobotics.jl"
+uuid = "a31e6bd2-31fc-11e9-1a95-490d7e305206"
+authors = ["Henrique Ferrolho <henriqueferrolho@gmail.com>"]
+version = "0.1.0"
