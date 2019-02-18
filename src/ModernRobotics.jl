@@ -25,7 +25,9 @@ export NearZero,
        DistanceToSO3,
        DistanceToSE3,
        TestIfSO3,
-       TestIfSE3
+       TestIfSE3,
+       FKinBody,
+       FKinSpace
 
 """
 *** BASIC HELPER FUNCTIONS ***
@@ -465,5 +467,51 @@ julia> TestIfSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 
 false
 """
 TestIfSE3(mat::Array) = abs(DistanceToSE3(mat)) < 1e-3
+
+"""
+*** CHAPTER 4: FORWARD KINEMATICS ***
+"""
+
+"""
+    FKinBody(M, Blist, thetalist)
+
+Computes forward kinematics in the body frame for an open chain robot.
+
+# Examples
+```jldoctest
+julia> FKinBody(M, Blist, thetalist)
+4×4 Array{Float64,2}:
+ -1.14424e-17  1.0           0.0  -5.0    
+  1.0          1.14424e-17   0.0   4.0    
+  0.0          0.0          -1.0   1.68584
+  0.0          0.0           0.0   1.0    
+"""
+function FKinBody(M::AbstractMatrix, Blist::AbstractMatrix, thetalist::Array)
+    for i = 1:length(thetalist)
+        M *= MatrixExp6(VecTose3(Blist[:, i] * thetalist[i]))
+    end
+    M
+end
+
+"""
+    FKinSpace(M, Slist, thetalist)
+
+Computes forward kinematics in the space frame for an open chain robot.
+
+# Examples
+```jldoctest
+julia> FKinSpace(M, Slist, thetalist)
+4×4 Array{Float64,2}:
+ -1.14424e-17  1.0           0.0  -5.0    
+  1.0          1.14424e-17   0.0   4.0    
+  0.0          0.0          -1.0   1.68584
+  0.0          0.0           0.0   1.0    
+"""
+function FKinSpace(M::AbstractMatrix, Slist::AbstractMatrix, thetalist::Array)
+    for i = length(thetalist):-1:1
+        M = MatrixExp6(VecTose3(Slist[:, i] * thetalist[i])) * M
+    end
+    M
+end
 
 end # module
