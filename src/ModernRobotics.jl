@@ -29,7 +29,9 @@ export NearZero,
        FKinBody,
        FKinSpace,
        JacobianBody,
-       JacobianSpace
+       JacobianSpace,
+       IKinBody,
+       IKinSpace
 
 """
 *** BASIC HELPER FUNCTIONS ***
@@ -562,7 +564,7 @@ julia> JacobianSpace(Slist, thetalist)
  0.2  0.436541  -2.43713     2.77536  
  0.2  2.96027    3.23573     2.22512  
 """
-function JacobianSpace(Slist, thetalist)
+function JacobianSpace(Slist::AbstractMatrix, thetalist::Array)
     T = I
     Js = copy(Slist)
     for i = 2:length(thetalist)
@@ -571,5 +573,73 @@ function JacobianSpace(Slist, thetalist)
     end
     Js
 end
+
+"""
+*** CHAPTER 6: INVERSE KINEMATICS ***
+"""
+
+"""
+    IKinBody(Blist, M, T, thetalist0, eomg, ev)
+
+Computes inverse kinematics in the body frame for an open chain robot.
+
+# Examples
+```jldoctest
+julia> IKinBody(Blist, M, T, thetalist0, eomg, ev)
+([1.57074; 2.99967; 3.14154], true)
+"""
+function IKinBody(Blist::AbstractMatrix,
+                      M::AbstractMatrix,
+                      T::AbstractMatrix,
+             thetalist0::Array,
+                   eomg::Number,
+                     ev::Number)
+    thetalist = copy(thetalist0)
+    i = 0
+    maxiterations = 20
+    Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
+    err = norm(Vb[1:3]) > eomg || norm(Vb[4:6]) > ev
+    while err && i < maxiterations
+        thetalist += pinv(JacobianBody(Blist, thetalist)) * Vb'
+        i += 1
+        Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
+        err = norm(Vb[1:3]) > eomg || norm(Vb[4:6]) > ev
+    end
+    return thetalist, !err
+end
+
+"""
+    IKinSpace(Slist, M, T, thetalist0, eomg, ev)
+
+Computes inverse kinematics in the space frame for an open chain robot.
+
+# Examples
+```jldoctest
+julia> IKinSpace(Slist, M, T, thetalist0, eomg, ev)
+([1.57074; 2.99966; 3.14153], true)
+"""
+function IKinSpace(Slist::AbstractMatrix,
+                       M::AbstractMatrix,
+                       T::AbstractMatrix,
+              thetalist0::Array,
+                    eomg::Number,
+                      ev::Number)
+    thetalist = copy(thetalist0)
+    i = 0
+    maxiterations = 20
+    Tsb = FKinSpace(M, Slist, thetalist)
+    Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))'
+    err = norm(Vs[1:3]) > eomg || norm(Vs[4:6]) > ev
+    while err && i < maxiterations
+        thetalist += pinv(JacobianSpace(Slist, thetalist)) * Vs
+        i += 1
+        Tsb = FKinSpace(M, Slist, thetalist)
+        Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))'
+        err = norm(Vs[1:3]) > eomg || norm(Vs[4:6]) > ev
+    end
+    thetalist, !err
+end
+
+PrintMatrix(M) = show(stdout, "text/plain", M), println("\n")
 
 end # module
