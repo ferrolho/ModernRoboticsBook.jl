@@ -27,7 +27,9 @@ export NearZero,
        TestIfSO3,
        TestIfSE3,
        FKinBody,
-       FKinSpace
+       FKinSpace,
+       JacobianBody,
+       JacobianSpace
 
 """
 *** BASIC HELPER FUNCTIONS ***
@@ -512,6 +514,62 @@ function FKinSpace(M::AbstractMatrix, Slist::AbstractMatrix, thetalist::Array)
         M = MatrixExp6(VecTose3(Slist[:, i] * thetalist[i])) * M
     end
     M
+end
+
+"""
+*** CHAPTER 5: VELOCITY KINEMATICS AND STATICS ***
+"""
+
+"""
+    JacobianBody(Blist, thetalist)
+
+Computes the body Jacobian for an open chain robot.
+
+# Examples
+```jldoctest
+julia> JacobianBody(Blist, thetalist)
+6×4 Array{Float64,2}:
+ -0.0452841  0.995004    0.0       1.0
+  0.743593   0.0930486   0.362358  0.0
+ -0.667097   0.0361754  -0.932039  0.0
+  2.32586    1.66809     0.564108  0.2
+ -1.44321    2.94561     1.43307   0.3
+ -2.0664     1.82882    -1.58869   0.4
+"""
+function JacobianBody(Blist::AbstractMatrix, thetalist::Array)
+    T = I
+    Jb = copy(Blist)
+    for i = length(thetalist)-1:-1:1
+        T *= MatrixExp6(VecTose3(Blist[:, i+1] * -thetalist[i+1]))
+        Jb[:, i] = Adjoint(T) * Blist[:, i]
+    end
+    Jb
+end
+
+"""
+    JacobianSpace(Slist, thetalist)
+
+Computes the space Jacobian for an open chain robot.
+
+# Examples
+```jldoctest
+julia> JacobianSpace(Slist, thetalist)
+6×4 Array{Float64,2}:
+ 0.0  0.980067  -0.0901156   0.957494 
+ 0.0  0.198669   0.444554    0.284876 
+ 1.0  0.0        0.891207   -0.0452841
+ 0.0  1.95219   -2.21635    -0.511615 
+ 0.2  0.436541  -2.43713     2.77536  
+ 0.2  2.96027    3.23573     2.22512  
+"""
+function JacobianSpace(Slist, thetalist)
+    T = I
+    Js = copy(Slist)
+    for i = 2:length(thetalist)
+        T *= MatrixExp6(VecTose3(Slist[:, i - 1] * thetalist[i - 1]))
+        Js[:, i] = Adjoint(T) * Slist[:, i]
+    end
+    Js
 end
 
 end # module
