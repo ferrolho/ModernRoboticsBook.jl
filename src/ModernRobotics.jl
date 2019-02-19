@@ -1,6 +1,7 @@
 module ModernRobotics
 
-using LinearAlgebra
+import LinearAlgebra
+const linalg = LinearAlgebra
 
 export NearZero,
        Normalize,
@@ -61,7 +62,7 @@ julia> Normalize([1 2 3])
 1×3 Array{Float64,2}:
  0.267261  0.534522  0.801784
 """
-Normalize(V::Array) = V / norm(V)
+Normalize(V::Array) = V / linalg.norm(V)
 
 """
 *** CHAPTER 3: RIGID-BODY MOTIONS ***
@@ -128,7 +129,7 @@ Converts a 3-vector of exponential coordinates for rotation into axis-angle form
 julia> AxisAng3([1 2 3])
 ([0.267261 0.534522 0.801784], 3.7416573867739413)
 """
-AxisAng3(expc3::Array) = Normalize(expc3), norm(expc3)
+AxisAng3(expc3::Array) = Normalize(expc3), linalg.norm(expc3)
 
 """
     MatrixExp3(so3mat)
@@ -145,12 +146,12 @@ julia> MatrixExp3([0 -3 2; 3 0 -1; -2 1 0])
 """
 function MatrixExp3(so3mat::Array)
     omgtheta = so3ToVec(so3mat)
-    if NearZero(norm(omgtheta))
-        return I
+    if NearZero(linalg.norm(omgtheta))
+        return linalg.I
     else
         θ = AxisAng3(omgtheta)[2]
         omgmat = so3mat / θ
-        return I + sin(θ) * omgmat + (1 - cos(θ)) * omgmat * omgmat
+        return linalg.I + sin(θ) * omgmat + (1 - cos(θ)) * omgmat * omgmat
     end
 end
 
@@ -168,7 +169,7 @@ julia> MatrixLog3([0 0 1; 1 0 0; 0 1 0])
  -1.2092   1.2092   0.0   
 """
 function MatrixLog3(R::Array)
-    acosinput = (tr(R) - 1) / 2.0
+    acosinput = (linalg.tr(R) - 1) / 2.0
     if acosinput >= 1
         return zeros(3, 3)
     elseif acosinput <= -1
@@ -299,7 +300,7 @@ julia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)
  -3
   2
 """
-ScrewToAxis(q::Array, s::Array, h::Number) = vcat(s, q × s + h * s)
+ScrewToAxis(q::Array, s::Array, h::Number) = vcat(s, linalg.cross(q, s) + h * s)
 
 """
     AxisAng6(expc6)
@@ -312,9 +313,9 @@ julia> AxisAng6([1, 0, 0, 1, 2, 3])
 ([1.0, 0.0, 0.0, 1.0, 2.0, 3.0], 1.0)
 """
 function AxisAng6(expc6::Array)
-    θ = norm(expc6[1:3])
+    θ = linalg.norm(expc6[1:3])
     if NearZero(θ)
-        θ = norm(expc6[3:6])
+        θ = linalg.norm(expc6[3:6])
     end
     expc6 / θ, θ
 end
@@ -335,13 +336,13 @@ julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.3561944
 """
 function MatrixExp6(se3mat::Array)
     omgtheta = so3ToVec(se3mat[1:3, 1:3])
-    if NearZero(norm(omgtheta))
-        return vcat(hcat(I, se3mat[1:3, 4]), [0 0 0 1])
+    if NearZero(linalg.norm(omgtheta))
+        return vcat(hcat(linalg.I, se3mat[1:3, 4]), [0 0 0 1])
     else
         θ = AxisAng3(omgtheta)[2]
         omgmat = se3mat[1:3, 1:3] / θ
         return vcat(hcat(MatrixExp3(se3mat[1:3, 1:3]),
-                         (I * θ +
+                         (linalg.I * θ +
                           (1 - cos(θ)) * omgmat +
                           (θ - sin(θ)) * omgmat * omgmat) *
                          se3mat[1:3, 4] / θ),
@@ -369,9 +370,9 @@ function MatrixLog6(T::Array)
     if omgmat == zeros(3, 3)
         return vcat(hcat(zeros(3, 3), T[1:3, 4]), [0 0 0 0])
     else
-        θ = acos((tr(R) - 1) / 2.0)
+        θ = acos((linalg.tr(R) - 1) / 2.0)
         return vcat(hcat(omgmat,
-                         (I - omgmat / 2.0 +
+                         (linalg.I - omgmat / 2.0 +
                           (1.0 / θ - 1.0 / tan(θ / 2.0) / 2) *
                           omgmat * omgmat / θ) * T[1:3, 4]),
                     [0 0 0 0])
@@ -392,9 +393,9 @@ julia> ProjectToSO3([0.675 0.150  0.720; 0.370 0.771 -0.511; -0.630 0.619  0.472
  -0.632187  0.616428   0.469421
 """
 function ProjectToSO3(mat::Array)
-    F  = svd(mat)
+    F  = linalg.svd(mat)
     R = F.U * F.Vt
-    if det(R) < 0
+    if linalg.det(R) < 0
         # In this case the result may be far from mat.
         R[:, F.s[3, 3]] = -R[:, F.s[3, 3]]
     end
@@ -427,7 +428,7 @@ Returns the Frobenius norm to describe the distance of mat from the SO(3) manifo
 julia> DistanceToSO3([1.0 0.0 0.0 ; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 0.08835298523536149
 """
-DistanceToSO3(mat::Array) = det(mat) > 0 ? norm(mat'mat - I) : 1e+9
+DistanceToSO3(mat::Array) = linalg.det(mat) > 0 ? linalg.norm(mat'mat - linalg.I) : 1e+9
 
 """
     DistanceToSE3(mat)
@@ -441,8 +442,8 @@ julia> DistanceToSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 
 """
 function DistanceToSE3(mat::Array)
     matR = mat[1:3, 1:3]
-    if det(matR) > 0
-        norm(hcat(vcat(matR'matR, zeros(1, 3)), mat[4, :]) - I)
+    if linalg.det(matR) > 0
+        linalg.norm(hcat(vcat(matR'matR, zeros(1, 3)), mat[4, :]) - linalg.I)
     else
         1e+9
     end
@@ -539,7 +540,7 @@ julia> JacobianBody(Blist, thetalist)
  -2.0664     1.82882    -1.58869   0.4
 """
 function JacobianBody(Blist::AbstractMatrix, thetalist::Array)
-    T = I
+    T = linalg.I
     Jb = copy(Blist)
     for i = length(thetalist)-1:-1:1
         T *= MatrixExp6(VecTose3(Blist[:, i+1] * -thetalist[i+1]))
@@ -565,7 +566,7 @@ julia> JacobianSpace(Slist, thetalist)
  0.2  2.96027    3.23573     2.22512  
 """
 function JacobianSpace(Slist::AbstractMatrix, thetalist::Array)
-    T = I
+    T = linalg.I
     Js = copy(Slist)
     for i = 2:length(thetalist)
         T *= MatrixExp6(VecTose3(Slist[:, i - 1] * thetalist[i - 1]))
@@ -598,12 +599,12 @@ function IKinBody(Blist::AbstractMatrix,
     i = 0
     maxiterations = 20
     Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
-    err = norm(Vb[1:3]) > eomg || norm(Vb[4:6]) > ev
+    err = linalg.norm(Vb[1:3]) > eomg || linalg.norm(Vb[4:6]) > ev
     while err && i < maxiterations
-        thetalist += pinv(JacobianBody(Blist, thetalist)) * Vb'
+        thetalist += linalg.pinv(JacobianBody(Blist, thetalist)) * Vb'
         i += 1
         Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
-        err = norm(Vb[1:3]) > eomg || norm(Vb[4:6]) > ev
+        err = linalg.norm(Vb[1:3]) > eomg || linalg.norm(Vb[4:6]) > ev
     end
     return thetalist, !err
 end
@@ -629,13 +630,13 @@ function IKinSpace(Slist::AbstractMatrix,
     maxiterations = 20
     Tsb = FKinSpace(M, Slist, thetalist)
     Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))'
-    err = norm(Vs[1:3]) > eomg || norm(Vs[4:6]) > ev
+    err = linalg.norm(Vs[1:3]) > eomg || linalg.norm(Vs[4:6]) > ev
     while err && i < maxiterations
-        thetalist += pinv(JacobianSpace(Slist, thetalist)) * Vs
+        thetalist += linalg.pinv(JacobianSpace(Slist, thetalist)) * Vs
         i += 1
         Tsb = FKinSpace(M, Slist, thetalist)
         Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))'
-        err = norm(Vs[1:3]) > eomg || norm(Vs[4:6]) > ev
+        err = linalg.norm(Vs[1:3]) > eomg || linalg.norm(Vs[4:6]) > ev
     end
     thetalist, !err
 end
