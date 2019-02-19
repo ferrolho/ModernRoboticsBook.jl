@@ -32,7 +32,9 @@ export NearZero,
        JacobianBody,
        JacobianSpace,
        IKinBody,
-       IKinSpace
+       IKinSpace,
+       ad,
+       InverseDynamics
 
 """
 *** BASIC HELPER FUNCTIONS ***
@@ -639,6 +641,83 @@ function IKinSpace(Slist::AbstractMatrix,
         err = linalg.norm(Vs[1:3]) > eomg || linalg.norm(Vs[4:6]) > ev
     end
     thetalist, !err
+end
+
+"""
+*** CHAPTER 8: DYNAMICS OF OPEN CHAINS ***
+"""
+
+"""
+    ad(V)
+
+Calculate the 6x6 matrix [adV] of the given 6-vector.
+
+# Examples
+```jldoctest
+julia> ad([1, 2, 3, 4, 5, 6])
+6×6 Array{Float64,2}:
+  0.0  -3.0   2.0   0.0   0.0   0.0
+  3.0   0.0  -1.0   0.0   0.0   0.0
+ -2.0   1.0   0.0   0.0   0.0   0.0
+  0.0  -6.0   5.0   0.0  -3.0   2.0
+  6.0   0.0  -4.0   3.0   0.0  -1.0
+ -5.0   4.0   0.0  -2.0   1.0   0.0
+"""
+function ad(V::Array)
+    omgmat = VecToso3(V[1:3])
+    vcat(hcat(omgmat, zeros(3, 3)),
+         hcat(VecToso3(V[4:6]), omgmat))
+end
+
+"""
+    InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
+
+Computes inverse dynamics in the space frame for an open chain robot.
+
+# Examples
+```jldoctest
+julia> InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
+3-element Array{Float64,1}:
+  74.69616155287451 
+ -33.06766015851458 
+  -3.230573137901424
+"""
+function InverseDynamics(thetalist::Array,
+                        dthetalist::Array,
+                       ddthetalist::Array,
+                                 g::Array,
+                              Ftip::Array,
+                             Mlist::Array,
+                             Glist::Array,
+                             Slist::AbstractMatrix)
+    n = length(thetalist)
+    Mi = linalg.I
+    Ai = zeros(6, n)
+    AdTi = Array{Matrix}(undef, n + 1)
+    Vi = zeros(6, n + 1)
+    Vdi = zeros(6, n + 1)
+    Vdi[:, 1] = vcat([0, 0, 0], -g)
+    AdTi[n+1] = Adjoint(TransInv(Mlist[n+1]))
+    Fi = copy(Ftip)
+    taulist = zeros(n)
+
+    for i = 1:n
+        Mi *= Mlist[i]
+        Ai[:, i] = Adjoint(TransInv(Mi)) * Slist[:, i]
+        AdTi[i] = Adjoint(MatrixExp6(VecTose3(Ai[:, i] * -thetalist[i])) *
+                          TransInv(Mlist[i]))
+        Vi[:, i + 1] = AdTi[i] * Vi[:,i] + Ai[:, i] * dthetalist[i]
+        Vdi[:, i + 1] = AdTi[i] * Vdi[:, i] + Ai[:, i] * ddthetalist[i] +
+                        ad(Vi[:, i + 1]) * Ai[:, i] * dthetalist[i]
+    end
+
+    for i = n:-1:1
+        Fi = AdTi[i + 1]' * Fi + Glist[i] * Vdi[:, i + 1] -
+             ad(Vi[:, i + 1])' * Glist[i] * Vi[:, i + 1]
+        taulist[i] = Fi' * Ai[:, i]
+    end
+
+    return taulist
 end
 
 PrintMatrix(M) = show(stdout, "text/plain", M), println("\n")
