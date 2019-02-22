@@ -34,7 +34,15 @@ export NearZero,
        IKinBody,
        IKinSpace,
        ad,
-       InverseDynamics
+       InverseDynamics,
+       MassMatrix,
+       VelQuadraticForces,
+       GravityForces,
+       EndEffectorForces,
+       ForwardDynamics,
+       EulerStep,
+       InverseDynamicsTrajectory,
+       ForwardDynamicsTrajectory
 
 """
 *** BASIC HELPER FUNCTIONS ***
@@ -718,6 +726,208 @@ function InverseDynamics(thetalist::Array,
     end
 
     return taulist
+end
+
+"""
+    MassMatrix(thetalist, Mlist, Glist, Slist)
+
+Computes the mass matrix of an open chain robot based on the given configuration.
+
+# Examples
+```jldoctest
+julia> MassMatrix(thetalist, Mlist, Glist, Slist)
+3×3 Array{Float64,2}:
+ 22.5433      -0.307147  -0.00718426
+ -0.307147     1.96851    0.432157  
+ -0.00718426   0.432157   0.191631  
+"""
+function MassMatrix(thetalist::Array,
+                        Mlist::Array,
+                        Glist::Array,
+                        Slist::AbstractMatrix)
+    n = length(thetalist)
+    M = zeros(n, n)
+
+    for i = 1:n
+        ddthetalist = zeros(n)
+        ddthetalist[i] = 1
+        M[:, i] = InverseDynamics(thetalist, zeros(n), ddthetalist, [0, 0, 0],
+                                  [0, 0, 0, 0, 0, 0], Mlist, Glist, Slist)
+    end
+
+    return M
+end
+
+"""
+    VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
+
+Computes the Coriolis and centripetal terms in the inverse dynamics of an open chain robot.
+
+# Examples
+```jldoctest
+julia> VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
+3-element Array{Float64,1}:
+  0.26453118054501235 
+ -0.0550515682891655  
+ -0.006891320068248911
+"""
+function VelQuadraticForces(thetalist::Array,
+                           dthetalist::Array,
+                                Mlist::Array,
+                                Glist::Array,
+                                Slist::AbstractMatrix)
+    InverseDynamics(thetalist, dthetalist, zeros(length(thetalist)),
+                    [0, 0, 0], [0, 0, 0, 0, 0, 0], Mlist, Glist, Slist)
+end
+
+"""
+    GravityForces(thetalist, g, Mlist, Glist, Slist)
+
+Computes the joint forces/torques an open chain robot requires to overcome gravity at its configuration.
+
+# Examples
+```jldoctest
+julia> GravityForces(thetalist, g, Mlist, Glist, Slist)
+3-element Array{Float64,1}:
+  28.40331261821983  
+ -37.64094817177068  
+  -5.4415891999683605
+"""
+function GravityForces(thetalist::Array,
+                               g::Array,
+                           Mlist::Array,
+                           Glist::Array,
+                           Slist::AbstractMatrix)
+    n = length(thetalist)
+    InverseDynamics(thetalist, zeros(n), zeros(n), g, [0, 0, 0, 0, 0, 0], Mlist, Glist, Slist)
+end
+
+"""
+    EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist)
+
+Computes the joint forces/torques an open chain robot requires only to create the end-effector force Ftip.
+
+# Examples
+```jldoctest
+julia> EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist)
+3-element Array{Float64,1}:
+ 1.4095460782639782
+ 1.8577149723180628
+ 1.392409          
+"""
+function EndEffectorForces(thetalist::Array,
+                                Ftip::Array,
+                               Mlist::Array,
+                               Glist::Array,
+                               Slist::AbstractMatrix)
+    n = length(thetalist)
+    InverseDynamics(thetalist, zeros(n), zeros(n), [0, 0, 0], Ftip, Mlist, Glist, Slist)
+end
+
+"""
+    ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist)
+
+Computes forward dynamics in the space frame for an open chain robot.
+
+# Examples
+```jldoctest
+julia> ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist)
+3-element Array{Float64,1}:
+  -0.9739290670855626
+  25.584667840340558 
+ -32.91499212478149  
+"""
+function ForwardDynamics(thetalist::Array,
+                        dthetalist::Array,
+                           taulist::Array,
+                                 g::Array,
+                              Ftip::Array,
+                             Mlist::Array,
+                             Glist::Array,
+                             Slist::AbstractMatrix)
+    linalg.inv(MassMatrix(thetalist, Mlist, Glist, Slist)) *
+    (taulist - VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
+             - GravityForces(thetalist, g, Mlist, Glist, Slist)
+             - EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist))
+end
+
+"""
+    EulerStep(thetalist, dthetalist, ddthetalist, dt)
+
+Compute the joint angles and velocities at the next timestep using first order Euler integration.
+
+# Examples
+```jldoctest
+julia> EulerStep(thetalist, dthetalist, ddthetalist, dt)
+([0.11, 0.12, 0.13], [0.3, 0.35, 0.4])
+"""
+function EulerStep(thetalist::Array, dthetalist::Array, ddthetalist::Array, dt::Number)
+    thetalist + dt * dthetalist, dthetalist + dt * ddthetalist
+end
+
+"""
+    InverseDynamicsTrajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)
+
+Calculates the joint forces/torques required to move the serial chain along the given trajectory using inverse dynamics.
+"""
+function InverseDynamicsTrajectory(thetamat::Array,
+                                  dthetamat::Array,
+                                 ddthetamat::Array,
+                                          g::Array,
+                                    Ftipmat::Array,
+                                      Mlist::Array,
+                                      Glist::Array,
+                                      Slist::AbstractMatrix)
+    thetamat = thetamat'
+    dthetamat = dthetamat'
+    ddthetamat = ddthetamat'
+    Ftipmat = Ftipmat'
+    taumat = copy(thetamat)
+
+    for i = 1:size(thetamat, 2)
+        taumat[:, i] = InverseDynamics(thetamat[:, i], dthetamat[:, i],
+                                       ddthetamat[:, i], g, Ftipmat[:, i],
+                                       Mlist, Glist, Slist)
+    end
+
+    taumat'
+end
+
+"""
+    ForwardDynamicsTrajectory(thetalist, dthetalist, taumat, g, Ftipmat, Mlist, Glist, Slist, dt, intRes)
+
+Simulates the motion of a serial chain given an open-loop history of joint forces/torques.
+"""
+function ForwardDynamicsTrajectory(thetalist::Array,
+                                  dthetalist::Array,
+                                      taumat::AbstractMatrix,
+                                           g::Array,
+                                     Ftipmat::Array,
+                                       Mlist::Array,
+                                       Glist::Array,
+                                       Slist::AbstractMatrix,
+                                          dt::Number,
+                                      intRes::Number)
+    taumat = taumat'
+    Ftipmat = Ftipmat'
+    thetamat = copy(taumat)
+    thetamat[:, 1] = thetalist
+    dthetamat = copy(taumat)
+    dthetamat[:, 1] = dthetalist
+
+    for i = 1:size(taumat, 2)-1
+        for j = 1:intRes
+            ddthetalist = ForwardDynamics(thetalist, dthetalist, taumat[:, i], g, Ftipmat[:, i], Mlist, Glist, Slist)
+            thetalist, dthetalist = EulerStep(thetalist, dthetalist, ddthetalist, 1.0 * dt / intRes)
+        end
+
+        thetamat[:, i + 1] = thetalist
+        dthetamat[:, i + 1] = dthetalist
+    end
+
+    thetamat = thetamat'
+    dthetamat = dthetamat'
+    return thetamat, dthetamat
 end
 
 PrintMatrix(M) = show(stdout, "text/plain", M), println("\n")
