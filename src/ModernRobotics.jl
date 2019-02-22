@@ -42,7 +42,14 @@ export NearZero,
        ForwardDynamics,
        EulerStep,
        InverseDynamicsTrajectory,
-       ForwardDynamicsTrajectory
+       ForwardDynamicsTrajectory,
+       CubicTimeScaling,
+       QuinticTimeScaling,
+       JointTrajectory,
+       # ScrewTrajectory,
+       # CartesianTrajectory,
+       ComputedTorque,
+       SimulateControl
 
 """
 *** BASIC HELPER FUNCTIONS ***
@@ -930,6 +937,141 @@ function ForwardDynamicsTrajectory(thetalist::Array,
     return thetamat, dthetamat
 end
 
-PrintMatrix(M) = show(stdout, "text/plain", M), println("\n")
+"""
+*** CHAPTER 9: TRAJECTORY GENERATION ***
+"""
+
+"""
+    CubicTimeScaling(Tf, t)
+
+Computes s(t) for a cubic time scaling.
+
+# Examples
+```jldoctest
+julia> CubicTimeScaling(2, 0.6)
+0.21600000000000003
+"""
+CubicTimeScaling(Tf::Number, t::Number) = 3(t / Tf)^2 - 2(t / Tf)^3
+
+"""
+    QuinticTimeScaling(Tf, t)
+
+Computes s(t) for a quintic time scaling.
+
+# Examples
+```jldoctest
+julia> QuinticTimeScaling(2, 0.6)
+0.16308
+"""
+QuinticTimeScaling(Tf::Number, t::Number) = 10(t / Tf)^3 - 15(t / Tf)^4 + 6(t / Tf)^5
+
+"""
+    JointTrajectory(thetastart, thetaend, Tf, N, method)
+
+Computes a straight-line trajectory in joint space.
+"""
+function JointTrajectory(thetastart::Array, thetaend::Array, Tf::Number, N::Integer, method::Integer)
+    timegap = Tf / (N - 1.0)
+    traj = zeros(length(thetastart), N)
+
+    for i = 1:N
+        if method == 3
+            s = CubicTimeScaling(Tf, timegap * (i - 1))
+        else
+            s = QuinticTimeScaling(Tf, timegap * (i - 1))
+        end
+
+        traj[:, i] = s * thetaend + (1 - s) * thetastart
+    end
+
+    traj'
+end
+
+#= TODO: ScrewTrajectory, CartesianTrajectory =#
+
+"""
+*** CHAPTER 11: ROBOT CONTROL ***
+"""
+
+"""
+    ComputedTorque(thetalist, dthetalist, eint, g, Mlist, Glist, Slist, thetalistd, dthetalistd, ddthetalistd, Kp, Ki, Kd)
+
+Computes the joint control torques at a particular time instant.
+"""
+function ComputedTorque(thetalist::Array,
+                       dthetalist::Array,
+                             eint::Array,
+                                g::Array,
+                            Mlist::Array,
+                            Glist::Array,
+                            Slist::AbstractMatrix,
+                       thetalistd::Array,
+                      dthetalistd::Array,
+                     ddthetalistd::Array,
+                               Kp::Number,
+                               Ki::Number,
+                               Kd::Number)
+    e = thetalistd - thetalist
+    MassMatrix(thetalist, Mlist, Glist, Slist) *
+    (Kp * e + Ki * (eint + e) + Kd * (dthetalistd - dthetalist)) +
+    InverseDynamics(thetalist, dthetalist, ddthetalistd, g,
+                    [0, 0, 0, 0, 0, 0], Mlist, Glist, Slist)
+end
+
+"""
+    SimulateControl(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
+                    Slist, thetamatd, dthetamatd, ddthetamatd, gtilde,
+                    Mtildelist, Gtildelist, Kp, Ki, Kd, dt, intRes)
+
+Simulates the computed torque controller over a given desired trajectory.
+"""
+function SimulateControl(thetalist::Array,
+                        dthetalist::Array,
+                                 g::Array,
+                           Ftipmat::Array,
+                             Mlist::Array,
+                             Glist::Array,
+                             Slist::AbstractMatrix,
+                         thetamatd::Array,
+                        dthetamatd::Array,
+                       ddthetamatd::Array,
+                            gtilde::Array,
+                        Mtildelist::Array,
+                        Gtildelist::Array,
+                                Kp::Number,
+                                Ki::Number,
+                                Kd::Number,
+                                dt::Number,
+                            intRes::Number)
+    Ftipmat = Ftipmat'
+    thetamatd = thetamatd'
+    dthetamatd = dthetamatd'
+    ddthetamatd = ddthetamatd'
+
+    m, n = size(thetamatd)
+
+    thetacurrent = copy(thetalist)
+    dthetacurrent = copy(dthetalist)
+
+    eint = reshape(zeros(m, 1), (m,))
+    taumat = zeros(size(thetamatd))
+    thetamat = zeros(size(thetamatd))
+
+    for i = 1:n
+        taulist = ComputedTorque(thetacurrent, dthetacurrent, eint, gtilde, Mtildelist, Gtildelist, Slist, thetamatd[:, i], dthetamatd[:, i], ddthetamatd[:, i], Kp, Ki, Kd)
+
+        for j = 1:intRes
+            ddthetalist = ForwardDynamics(thetacurrent, dthetacurrent, taulist, g, Ftipmat[:, i], Mlist, Glist, Slist)
+            thetacurrent, dthetacurrent = EulerStep(thetacurrent, dthetacurrent, ddthetalist, dt / intRes)
+        end
+
+        taumat[:, i] = taulist
+        thetamat[:, i] = thetacurrent
+
+        eint += dt * (thetamatd[:, i] - thetacurrent)
+    end
+
+    taumat', thetamat'
+end
 
 end # module
