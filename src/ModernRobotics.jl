@@ -51,9 +51,9 @@ export NearZero,
        ComputedTorque,
        SimulateControl
 
-"""
-*** BASIC HELPER FUNCTIONS ***
-"""
+# """
+# *** BASIC HELPER FUNCTIONS ***
+# """
 
 """
     NearZero(z)
@@ -84,9 +84,9 @@ julia> Normalize([1, 2, 3])
 """
 Normalize(V::Array) = V / linalg.norm(V)
 
-"""
-*** CHAPTER 3: RIGID-BODY MOTIONS ***
-"""
+# """
+# *** CHAPTER 3: RIGID-BODY MOTIONS ***
+# """
 
 """
     RotInv(R)
@@ -522,9 +522,9 @@ false
 """
 TestIfSE3(mat::Array) = abs(DistanceToSE3(mat)) < 1e-3
 
-"""
-*** CHAPTER 4: FORWARD KINEMATICS ***
-"""
+# """
+# *** CHAPTER 4: FORWARD KINEMATICS ***
+# """
 
 """
     FKinBody(M, Blist, thetalist)
@@ -592,9 +592,9 @@ function FKinSpace(M::AbstractMatrix, Slist::AbstractMatrix, thetalist::Array)
     M
 end
 
-"""
-*** CHAPTER 5: VELOCITY KINEMATICS AND STATICS ***
-"""
+# """
+# *** CHAPTER 5: VELOCITY KINEMATICS AND STATICS ***
+# """
 
 """
     JacobianBody(Blist, thetalist)
@@ -664,9 +664,9 @@ function JacobianSpace(Slist::AbstractMatrix, thetalist::Array)
     Js
 end
 
-"""
-*** CHAPTER 6: INVERSE KINEMATICS ***
-"""
+# """
+# *** CHAPTER 6: INVERSE KINEMATICS ***
+# """
 
 """
     IKinBody(Blist, M, T, thetalist0, eomg, ev)
@@ -768,9 +768,9 @@ function IKinSpace(Slist::AbstractMatrix,
     thetalist, !err
 end
 
-"""
-*** CHAPTER 8: DYNAMICS OF OPEN CHAINS ***
-"""
+# """
+# *** CHAPTER 8: DYNAMICS OF OPEN CHAINS ***
+# """
 
 """
     ad(V)
@@ -929,20 +929,12 @@ end
 
 Computes the joint forces/torques an open chain robot requires only to create the end-effector force `Ftip`.
 
-`thetalist`
-A list of joint variables
-
-`Ftip`
-Spatial force applied by the end-effector expressed in frame `{n+1}`
-
-`Mlist`
-List of link frames `i` relative to `i-1` at the home position
-
-`Glist`
-Spatial inertia matrices `Gi` of the links
-
-`Slist`
-Screw axes `Si` of the joints in a space frame, in the format of a matrix with axes as the columns
+# Arguments
+- `thetalist`: the ``n``-vector of joint variables.
+- `Ftip`: the spatial force applied by the end-effector expressed in frame `{n+1}`.
+- `Mlist`: the list of link frames `i` relative to `i-1` at the home position.
+- `Glist`: the spatial inertia matrices `Gi` of the links.
+- `Slist`: the screw axes `Si` of the joints in a space frame, in the format of a matrix with axes as the columns.
 
 Returns the joint forces and torques required only to create the end-effector force `Ftip`.
 This function calls InverseDynamics with `g = 0`, `dthetalist = 0`, and `ddthetalist = 0`.
@@ -1108,27 +1100,15 @@ end
 
 Compute the joint angles and velocities at the next timestep using first order Euler integration.
 
-## Parameters
+# Arguments
+- `thetalist`: the ``n``-vector of joint variables.
+- `dthetalist`: the ``n``-vector of joint rates.
+- `ddthetalist`: the ``n``-vector of joint accelerations.
+- `dt`: the timestep delta t.
 
-`thetalist`
-``n``-vector of joint variables
-
-`dthetalist`
-``n``-vector of joint rates
-
-`ddthetalist`
-``n``-vector of joint accelerations
-
-`dt`
-The timestep delta t
-
-## Returns
-
-`thetalistNext`
-Vector of joint variables after `dt` from first order Euler integration
-
-`dthetalistNext`
-Vector of joint rates after `dt` from first order Euler integration
+# Return
+- `thetalistNext`: the vector of joint variables after `dt` from first order Euler integration.
+- `dthetalistNext`: the vector of joint rates after `dt` from first order Euler integration.
 
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
@@ -1205,9 +1185,9 @@ function ForwardDynamicsTrajectory(thetalist::Array,
     return thetamat, dthetamat
 end
 
-"""
-*** CHAPTER 9: TRAJECTORY GENERATION ***
-"""
+# """
+# *** CHAPTER 9: TRAJECTORY GENERATION ***
+# """
 
 """
     CubicTimeScaling(Tf, t)
@@ -1259,9 +1239,9 @@ end
 
 #= TODO: ScrewTrajectory, CartesianTrajectory =#
 
-"""
-*** CHAPTER 11: ROBOT CONTROL ***
-"""
+# """
+# *** CHAPTER 11: ROBOT CONTROL ***
+# """
 
 """
     ComputedTorque(thetalist, dthetalist, eint, g, Mlist, Glist, Slist, thetalistd, dthetalistd, ddthetalistd, Kp, Ki, Kd)
