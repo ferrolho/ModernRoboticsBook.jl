@@ -288,11 +288,18 @@ Converts an se3 matrix into a spatial velocity vector.
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
 julia> se3ToVec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
-1×6 Array{Int64,2}:
- 1  2  3  4  5  6
+6-element Array{Int64,1}:
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
 ```
 """
-se3ToVec(se3mat::Array) = hcat([se3mat[3, 2] se3mat[1, 3] se3mat[2, 1]], se3mat[1:3, 4]')
+se3ToVec(se3mat::Array) = vcat([se3mat[3, 2],
+                                se3mat[1, 3],
+                                se3mat[2, 1]], se3mat[1:3, 4])
 
 """
     Adjoint(T)
@@ -463,7 +470,7 @@ Returns the Frobenius norm to describe the distance of mat from the SO(3) manifo
 
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
-julia> DistanceToSO3([1.0 0.0 0.0 ; 0.0 0.1 -0.95; 0.0 1.0 0.1])
+julia> DistanceToSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 0.08835298523536149
 ```
 """
