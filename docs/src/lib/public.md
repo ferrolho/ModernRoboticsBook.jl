@@ -1,6 +1,6 @@
 # Public Documentation
 
-Documentation for `ModernRobotics.jl`'s public interface.
+Documentation for `ModernRoboticsBook.jl`'s public interface.
 
 ## Contents
 
@@ -17,5 +17,5 @@ Pages = ["public.md"]
 ## Public Interface
 
 ```@autodocs
-Modules = [ModernRobotics]
+Modules = [ModernRoboticsBook]
 ```

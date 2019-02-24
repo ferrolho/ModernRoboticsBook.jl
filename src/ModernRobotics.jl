@@ -1,4 +1,4 @@
-module ModernRobotics
+module ModernRoboticsBook
 
 import LinearAlgebra
 const linalg = LinearAlgebra
@@ -61,7 +61,7 @@ export NearZero,
 Determines whether a scalar is small enough to be treated as zero.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> NearZero(-1e-7)
 true
 ```
@@ -74,7 +74,7 @@ NearZero(z::Number) = abs(z) < 1e-6
 Normalizes a vector.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> Normalize([1, 2, 3])
 3-element Array{Float64,1}:
  0.2672612419124244
@@ -94,7 +94,7 @@ Normalize(V::Array) = V / linalg.norm(V)
 Inverts a rotation matrix.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> RotInv([0 0 1; 1 0 0; 0 1 0])
 3×3 LinearAlgebra.Adjoint{Int64,Array{Int64,2}}:
  0  1  0
@@ -110,7 +110,7 @@ RotInv(R::Array) = R'
 Converts a 3-vector to an so(3) representation.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> VecToso3([1 2 3])
 3×3 Array{Int64,2}:
   0  -3   2
@@ -130,7 +130,7 @@ end
 Converts an so(3) representation to a 3-vector.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> so3ToVec([0 -3 2; 3 0 -1; -2 1 0])
 3-element Array{Int64,1}:
  1
@@ -148,7 +148,7 @@ end
 Converts a 3-vector of exponential coordinates for rotation into axis-angle form.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> AxisAng3([1, 2, 3])
 ([0.267261, 0.534522, 0.801784], 3.7416573867739413)
 ```
@@ -161,7 +161,7 @@ AxisAng3(expc3::Array) = Normalize(expc3), linalg.norm(expc3)
 Computes the matrix exponential of a matrix in so(3).
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixExp3([0 -3 2; 3 0 -1; -2 1 0])
 3×3 Array{Float64,2}:
  -0.694921   0.713521  0.0892929
@@ -186,7 +186,7 @@ end
 Computes the matrix logarithm of a rotation matrix.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixLog3([0 0 1; 1 0 0; 0 1 0])
 3×3 Array{Float64,2}:
   0.0     -1.2092   1.2092
@@ -219,7 +219,7 @@ end
 Converts a rotation matrix and a position vector into homogeneous transformation matrix.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> RpToTrans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
 4×4 Array{Int64,2}:
  1  0   0  1
@@ -236,7 +236,7 @@ RpToTrans(R::Array, p::Array) = vcat(hcat(R, p), [0 0 0 1])
 Converts a homogeneous transformation matrix into a rotation matrix and position vector.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> TransToRp([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ([1 0 0; 0 0 -1; 0 1 0], [0, 0, 3])
 ```
@@ -249,7 +249,7 @@ TransToRp(T::Array) = T[1:3, 1:3], T[1:3, 4]
 Inverts a homogeneous transformation matrix.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> TransInv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 4×4 Array{Int64,2}:
  1   0  0   0
@@ -269,7 +269,7 @@ end
 Converts a spatial velocity vector into a 4x4 matrix in se3.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> VecTose3([1 2 3 4 5 6])
 4×4 Array{Float64,2}:
   0.0  -3.0   2.0  4.0
@@ -286,7 +286,7 @@ VecTose3(V::Array) = vcat(hcat(VecToso3(V[1:3]), V[4:6]), zeros(1, 4))
 Converts an se3 matrix into a spatial velocity vector.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> se3ToVec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
 6-element Array{Int64,1}:
  1
@@ -307,7 +307,7 @@ se3ToVec(se3mat::Array) = vcat([se3mat[3, 2],
 Computes the adjoint representation of a homogeneous transformation matrix.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> Adjoint([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 6×6 Array{Float64,2}:
  1.0  0.0   0.0  0.0  0.0   0.0
@@ -329,7 +329,7 @@ end
 Takes a parametric description of a screw axis and converts it to a normalized screw axis.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)
 6-element Array{Int64,1}:
   0
@@ -348,7 +348,7 @@ ScrewToAxis(q::Array, s::Array, h::Number) = vcat(s, linalg.cross(q, s) + h * s)
 Converts a 6-vector of exponential coordinates into screw axis-angle form.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> AxisAng6([1, 0, 0, 1, 2, 3])
 ([1.0, 0.0, 0.0, 1.0, 2.0, 3.0], 1.0)
 ```
@@ -367,7 +367,7 @@ end
 Computes the matrix exponential of an se3 representation of exponential coordinates.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.35619449; 0 0 0 0])
 4×4 Array{Float64,2}:
  1.0  0.0         0.0        0.0       
@@ -398,7 +398,7 @@ end
 Computes the matrix logarithm of a homogeneous transformation matrix.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixLog6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 4×4 Array{Float64,2}:
  0.0  0.0      0.0     0.0    
@@ -428,7 +428,7 @@ end
 Returns a projection of mat into SO(3).
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ProjectToSO3([0.675 0.150  0.720; 0.370 0.771 -0.511; -0.630 0.619  0.472])
 3×3 Array{Float64,2}:
   0.679011  0.148945   0.718859
@@ -452,7 +452,7 @@ end
 Returns a projection of mat into SE(3).
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ProjectToSE3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.619 0.472 3.6; 0.003 0.002 0.010 0.9])
 4×4 Array{Float64,2}:
   0.679011  0.148945   0.718859  1.2
@@ -469,7 +469,7 @@ ProjectToSE3(mat::Array) = RpToTrans(ProjectToSO3(mat[1:3, 1:3]), mat[1:3, 4])
 Returns the Frobenius norm to describe the distance of mat from the SO(3) manifold.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> DistanceToSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 0.08835298523536149
 ```
@@ -482,7 +482,7 @@ DistanceToSO3(mat::Array) = linalg.det(mat) > 0 ? linalg.norm(mat'mat - linalg.I
 Returns the Frobenius norm to describe the distance of mat from the SE(3) manifold.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> DistanceToSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 0.1 0.98])
 0.13493053768513638
 ```
@@ -502,7 +502,7 @@ end
 Returns true if mat is close to or on the manifold SO(3).
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> TestIfSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 false
 ```
@@ -515,7 +515,7 @@ TestIfSO3(mat::Array) = abs(DistanceToSO3(mat)) < 1e-3
 Returns true if mat is close to or on the manifold SE(3).
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> TestIfSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 0.1 0.98])
 false
 ```
@@ -532,7 +532,7 @@ TestIfSE3(mat::Array) = abs(DistanceToSE3(mat)) < 1e-3
 Computes forward kinematics in the body frame for an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> M = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
@@ -565,7 +565,7 @@ end
 Computes forward kinematics in the space frame for an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> M = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
@@ -602,7 +602,7 @@ end
 Computes the body Jacobian for an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> Blist = [0 0 1   0 0.2 0.2;
                 1 0 0   2   0   3;
                 0 1 0   0   2   1;
@@ -636,7 +636,7 @@ end
 Computes the space Jacobian for an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> Slist = [0 0 1   0 0.2 0.2;
                 1 0 0   2   0   3;
                 0 1 0   0   2   1;
@@ -674,7 +674,7 @@ end
 Computes inverse kinematics in the body frame for an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> Blist = [  0  0 -1  2  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0  1  0  0  0.1 ]';
@@ -723,7 +723,7 @@ end
 Computes inverse kinematics in the space frame for an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> Slist = [  0  0  1  4  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0 -1 -6  0 -0.1 ]';
@@ -778,7 +778,7 @@ end
 Calculate the 6x6 matrix [adV] of the given 6-vector.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ad([1, 2, 3, 4, 5, 6])
 6×6 Array{Float64,2}:
   0.0  -3.0   2.0   0.0   0.0   0.0
@@ -801,7 +801,7 @@ end
 Computes inverse dynamics in the space frame for an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
 3-element Array{Float64,1}:
   74.69616155287451 
@@ -853,7 +853,7 @@ end
 Computes the mass matrix of an open chain robot based on the given configuration.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MassMatrix(thetalist, Mlist, Glist, Slist)
 3×3 Array{Float64,2}:
  22.5433      -0.307147  -0.00718426
@@ -884,7 +884,7 @@ end
 Computes the Coriolis and centripetal terms in the inverse dynamics of an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
 3-element Array{Float64,1}:
   0.26453118054501235 
@@ -907,7 +907,7 @@ end
 Computes the joint forces/torques an open chain robot requires to overcome gravity at its configuration.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> GravityForces(thetalist, g, Mlist, Glist, Slist)
 3-element Array{Float64,1}:
   28.40331261821983  
@@ -940,7 +940,7 @@ Returns the joint forces and torques required only to create the end-effector fo
 This function calls InverseDynamics with `g = 0`, `dthetalist = 0`, and `ddthetalist = 0`.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> import LinearAlgebra
 
 julia> const linalg = LinearAlgebra;
@@ -1073,7 +1073,7 @@ end
 Computes forward dynamics in the space frame for an open chain robot.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist)
 3-element Array{Float64,1}:
   -0.9739290670855626
@@ -1111,7 +1111,7 @@ Compute the joint angles and velocities at the next timestep using first order E
 - `dthetalistNext`: the vector of joint rates after `dt` from first order Euler integration.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)
 ([0.11, 0.12, 0.13], [0.3, 0.35, 0.4])
 ```
@@ -1195,7 +1195,7 @@ end
 Computes s(t) for a cubic time scaling.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> CubicTimeScaling(2, 0.6)
 0.21600000000000003
 ```
@@ -1208,7 +1208,7 @@ CubicTimeScaling(Tf::Number, t::Number) = 3(t / Tf)^2 - 2(t / Tf)^3
 Computes s(t) for a quintic time scaling.
 
 # Examples
-```jldoctest; setup = :(using ModernRobotics)
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> QuinticTimeScaling(2, 0.6)
 0.16308
 ```

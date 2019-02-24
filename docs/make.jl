@@ -1,7 +1,7 @@
-using Documenter, ModernRobotics
+using Documenter, ModernRoboticsBook
 
 makedocs(;
-    modules=[ModernRobotics],
+    modules=[ModernRoboticsBook],
     format=Documenter.HTML(),
     pages=[
         "Home" => "index.md",
@@ -12,13 +12,13 @@ makedocs(;
             "Public" => "lib/public.md",
         ],
     ],
-    repo="https://github.com/ferrolho/ModernRobotics.jl/blob/{commit}{path}#L{line}",
-    sitename="ModernRobotics.jl",
+    repo="https://github.com/ferrolho/ModernRoboticsBook.jl/blob/{commit}{path}#L{line}",
+    sitename="ModernRoboticsBook.jl",
     authors="Henrique Ferrolho",
     analytics = "UA-72743607-4",
     assets=[],
 )
 
 deploydocs(;
-    repo="github.com/ferrolho/ModernRobotics.jl",
+    repo="github.com/ferrolho/ModernRoboticsBook.jl",
 )

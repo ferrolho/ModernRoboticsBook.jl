@@ -11,7 +11,7 @@ Pages = ["examples.md"]
 ## Inverse Dynamics Trajectory
 
 ```julia
-using ModernRobotics
+using ModernRoboticsBook
 
 import LinearAlgebra
 const linalg = LinearAlgebra;

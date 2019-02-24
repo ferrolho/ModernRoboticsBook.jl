@@ -1,7 +1,7 @@
-using ModernRobotics
+using ModernRoboticsBook
 using Test
 
-@testset "ModernRobotics.jl" begin
+@testset "ModernRoboticsBook.jl" begin
     @testset "basic helper functions" begin
         @test NearZero(-1e-7)
         @test Normalize([1, 2, 3]) == [0.2672612419124244,
