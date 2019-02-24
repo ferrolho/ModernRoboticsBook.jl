@@ -61,7 +61,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "ModernRobotics.DistanceToSO3",
     "category": "method",
-    "text": "DistanceToSO3(mat)\n\nReturns the Frobenius norm to describe the distance of mat from the SO(3) manifold.\n\nExamples\n\njulia> DistanceToSO3([1.0 0.0 0.0 ; 0.0 0.1 -0.95; 0.0 1.0 0.1])\n0.08835298523536149\n\n\n\n\n\n"
+    "text": "DistanceToSO3(mat)\n\nReturns the Frobenius norm to describe the distance of mat from the SO(3) manifold.\n\nExamples\n\njulia> DistanceToSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])\n0.08835298523536149\n\n\n\n\n\n"
 },
 
 {
@@ -357,7 +357,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "ModernRobotics.se3ToVec",
     "category": "method",
-    "text": "se3ToVec(se3mat)\n\nConverts an se3 matrix into a spatial velocity vector.\n\nExamples\n\njulia> se3ToVec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])\n1×6 Array{Int64,2}:\n 1  2  3  4  5  6\n\n\n\n\n\n"
+    "text": "se3ToVec(se3mat)\n\nConverts an se3 matrix into a spatial velocity vector.\n\nExamples\n\njulia> se3ToVec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])\n6-element Array{Int64,1}:\n 1\n 2\n 3\n 4\n 5\n 6\n\n\n\n\n\n"
 },
 
 {
