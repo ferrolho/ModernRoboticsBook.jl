@@ -1,6 +1,6 @@
 # Examples
 
-Here are some examples for Forward and Inverse Dynamics Trajectories.
+Here are some examples for Forward and Inverse Dynamics Trajectories, and Control Simulation.
 
 ## Contents
 
