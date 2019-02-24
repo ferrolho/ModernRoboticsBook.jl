@@ -150,7 +150,7 @@ Converts a 3-vector of exponential coordinates for rotation into axis-angle form
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
 julia> AxisAng3([1, 2, 3])
-([0.267261 0.534522 0.801784], 3.7416573867739413)
+([0.267261, 0.534522, 0.801784], 3.7416573867739413)
 ```
 """
 AxisAng3(expc3::Array) = Normalize(expc3), linalg.norm(expc3)
@@ -533,6 +533,17 @@ Computes forward kinematics in the body frame for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
+julia> M = [ -1  0  0  0 ;
+              0  1  0  6 ;
+              0  0 -1  2 ;
+              0  0  0  1 ];
+
+julia> Blist = [  0  0 -1  2  0  0   ;
+                  0  0  0  0  1  0   ;
+                  0  0  1  0  0  0.1 ]';
+
+julia> thetalist = [ π/2, 3, π ];
+
 julia> FKinBody(M, Blist, thetalist)
 4×4 Array{Float64,2}:
  -1.14424e-17  1.0           0.0  -5.0    
@@ -555,6 +566,17 @@ Computes forward kinematics in the space frame for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
+julia> M = [ -1  0  0  0 ;
+              0  1  0  6 ;
+              0  0 -1  2 ;
+              0  0  0  1 ];
+
+julia> Slist = [  0  0  1  4  0  0   ;
+                  0  0  0  0  1  0   ;
+                  0  0 -1 -6  0 -0.1 ]';
+
+julia> thetalist = [ π/2, 3, π ];
+
 julia> FKinSpace(M, Slist, thetalist)
 4×4 Array{Float64,2}:
  -1.14424e-17  1.0           0.0  -5.0    
@@ -581,6 +603,13 @@ Computes the body Jacobian for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
+julia> Blist = [0 0 1   0 0.2 0.2;
+                1 0 0   2   0   3;
+                0 1 0   0   2   1;
+                1 0 0 0.2 0.3 0.4]';
+
+julia> thetalist = [0.2, 1.1, 0.1, 1.2];
+
 julia> JacobianBody(Blist, thetalist)
 6×4 Array{Float64,2}:
  -0.0452841  0.995004    0.0       1.0
@@ -608,6 +637,13 @@ Computes the space Jacobian for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
+julia> Slist = [0 0 1   0 0.2 0.2;
+                1 0 0   2   0   3;
+                0 1 0   0   2   1;
+                1 0 0 0.2 0.3 0.4]';
+
+julia> thetalist = [0.2, 1.1, 0.1, 1.2];
+
 julia> JacobianSpace(Slist, thetalist)
 6×4 Array{Float64,2}:
  0.0  0.980067  -0.0901156   0.957494 
@@ -639,8 +675,26 @@ Computes inverse kinematics in the body frame for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
+julia> Blist = [  0  0 -1  2  0  0   ;
+                  0  0  0  0  1  0   ;
+                  0  0  1  0  0  0.1 ]';
+
+julia> M = [ -1  0  0  0 ;
+              0  1  0  6 ;
+              0  0 -1  2 ;
+              0  0  0  1 ];
+
+julia> T = [ 0  1  0     -5 ;
+             1  0  0      4 ;
+             0  0 -1 1.6858 ;
+             0  0  0      1 ];
+
+julia> thetalist0 = [1.5, 2.5, 3];
+
+julia> eomg, ev = 0.01, 0.001;
+
 julia> IKinBody(Blist, M, T, thetalist0, eomg, ev)
-([1.57074; 2.99967; 3.14154], true)
+([1.57074, 2.99967, 3.14154], true)
 ```
 """
 function IKinBody(Blist::AbstractMatrix,
@@ -655,7 +709,7 @@ function IKinBody(Blist::AbstractMatrix,
     Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
     err = linalg.norm(Vb[1:3]) > eomg || linalg.norm(Vb[4:6]) > ev
     while err && i < maxiterations
-        thetalist += linalg.pinv(JacobianBody(Blist, thetalist)) * Vb'
+        thetalist += linalg.pinv(JacobianBody(Blist, thetalist)) * Vb
         i += 1
         Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
         err = linalg.norm(Vb[1:3]) > eomg || linalg.norm(Vb[4:6]) > ev
@@ -670,8 +724,26 @@ Computes inverse kinematics in the space frame for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
+julia> Slist = [  0  0  1  4  0  0   ;
+                  0  0  0  0  1  0   ;
+                  0  0 -1 -6  0 -0.1 ]';
+
+julia> M = [ -1  0  0  0 ;
+              0  1  0  6 ;
+              0  0 -1  2 ;
+              0  0  0  1 ];
+
+julia> T = [ 0  1  0     -5 ;
+             1  0  0      4 ;
+             0  0 -1 1.6858 ;
+             0  0  0      1 ];
+
+julia> thetalist0 = [1.5, 2.5, 3];
+
+julia> eomg, ev = 0.01, 0.001;
+
 julia> IKinSpace(Slist, M, T, thetalist0, eomg, ev)
-([1.57074; 2.99966; 3.14153], true)
+([1.57074, 2.99966, 3.14153], true)
 ```
 """
 function IKinSpace(Slist::AbstractMatrix,
@@ -684,13 +756,13 @@ function IKinSpace(Slist::AbstractMatrix,
     i = 0
     maxiterations = 20
     Tsb = FKinSpace(M, Slist, thetalist)
-    Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))'
+    Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))
     err = linalg.norm(Vs[1:3]) > eomg || linalg.norm(Vs[4:6]) > ev
     while err && i < maxiterations
         thetalist += linalg.pinv(JacobianSpace(Slist, thetalist)) * Vs
         i += 1
         Tsb = FKinSpace(M, Slist, thetalist)
-        Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))'
+        Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))
         err = linalg.norm(Vs[1:3]) > eomg || linalg.norm(Vs[4:6]) > ev
     end
     thetalist, !err
@@ -1036,9 +1108,31 @@ end
 
 Compute the joint angles and velocities at the next timestep using first order Euler integration.
 
+## Parameters
+
+`thetalist`
+``n``-vector of joint variables
+
+`dthetalist`
+``n``-vector of joint rates
+
+`ddthetalist`
+``n``-vector of joint accelerations
+
+`dt`
+The timestep delta t
+
+## Returns
+
+`thetalistNext`
+Vector of joint variables after `dt` from first order Euler integration
+
+`dthetalistNext`
+Vector of joint rates after `dt` from first order Euler integration
+
 # Examples
 ```jldoctest; setup = :(using ModernRobotics)
-julia> EulerStep(thetalist, dthetalist, ddthetalist, dt)
+julia> EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)
 ([0.11, 0.12, 0.13], [0.3, 0.35, 0.4])
 ```
 """
