@@ -820,7 +820,7 @@ function InverseDynamics(thetalist::Array,
     n = length(thetalist)
     Mi = linalg.I
     Ai = zeros(6, n)
-    AdTi = Array{Matrix}(undef, n + 1)
+    AdTi = Array{Array{Float64, 2}}(undef, n + 1)
     Vi = zeros(6, n + 1)
     Vdi = zeros(6, n + 1)
     Vdi[:, 1] = vcat([0, 0, 0], -g)
@@ -1244,7 +1244,7 @@ Computes a trajectory as a list of N SE(3) matrices corresponding to the screw m
 """
 function ScrewTrajectory(Xstart::Array, Xend::Array, Tf::Number, N::Integer, method::Integer)
     timegap = Tf / (N - 1)
-    traj = Array{Matrix}(undef, N)
+    traj = Array{Array{Float64, 2}}(undef, N)
 
     for i = 1:N
         if method == 3
@@ -1266,7 +1266,7 @@ Computes a trajectory as a list of N SE(3) matrices corresponding to the origin 
 """
 function CartesianTrajectory(Xstart::Array, Xend::Array, Tf::Number, N::Integer, method::Integer)
     timegap = Tf / (N - 1)
-    traj = Array{Matrix}(undef, N)
+    traj = Array{Array{Float64, 2}}(undef, N)
 
     Rstart, pstart = TransToRp(Xstart)
     Rend, pend = TransToRp(Xend)
