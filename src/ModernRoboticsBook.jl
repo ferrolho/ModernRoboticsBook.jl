@@ -46,8 +46,8 @@ export NearZero,
        CubicTimeScaling,
        QuinticTimeScaling,
        JointTrajectory,
-       # ScrewTrajectory,
-       # CartesianTrajectory,
+       ScrewTrajectory,
+       CartesianTrajectory,
        ComputedTorque,
        SimulateControl
 
@@ -1221,7 +1221,7 @@ QuinticTimeScaling(Tf::Number, t::Number) = 10(t / Tf)^3 - 15(t / Tf)^4 + 6(t / 
 Computes a straight-line trajectory in joint space.
 """
 function JointTrajectory(thetastart::Array, thetaend::Array, Tf::Number, N::Integer, method::Integer)
-    timegap = Tf / (N - 1.0)
+    timegap = Tf / (N - 1)
     traj = zeros(length(thetastart), N)
 
     for i = 1:N
@@ -1237,7 +1237,52 @@ function JointTrajectory(thetastart::Array, thetaend::Array, Tf::Number, N::Inte
     traj'
 end
 
-#= TODO: ScrewTrajectory, CartesianTrajectory =#
+"""
+    ScrewTrajectory(Xstart, Xend, Tf, N, method)
+
+Computes a trajectory as a list of N SE(3) matrices corresponding to the screw motion about a space screw axis.
+"""
+function ScrewTrajectory(Xstart::Array, Xend::Array, Tf::Number, N::Integer, method::Integer)
+    timegap = Tf / (N - 1)
+    traj = Array{Matrix}(undef, N)
+
+    for i = 1:N
+        if method == 3
+            s = CubicTimeScaling(Tf, timegap * (i - 1))
+        else
+            s = QuinticTimeScaling(Tf, timegap * (i - 1))
+        end
+
+        traj[i] = Xstart * MatrixExp6(MatrixLog6(TransInv(Xstart) * Xend) * s)
+    end
+
+    return traj
+end
+
+"""
+    CartesianTrajectory(Xstart, Xend, Tf, N, method)
+
+Computes a trajectory as a list of N SE(3) matrices corresponding to the origin of the end-effector frame following a straight line.
+"""
+function CartesianTrajectory(Xstart::Array, Xend::Array, Tf::Number, N::Integer, method::Integer)
+    timegap = Tf / (N - 1)
+    traj = Array{Matrix}(undef, N)
+
+    Rstart, pstart = TransToRp(Xstart)
+    Rend, pend = TransToRp(Xend)
+
+    for i = 1:N
+        if method == 3
+            s = CubicTimeScaling(Tf, timegap * (i - 1))
+        else
+            s = QuinticTimeScaling(Tf, timegap * (i - 1))
+        end
+
+        traj[i] = vcat(hcat(Rstart * MatrixExp3(MatrixLog3(Rstart' * Rend) * s), s * pend + (1 - s) * pstart), [0 0 0 1])
+    end
+
+    return traj
+end
 
 # """
 # *** CHAPTER 11: ROBOT CONTROL ***
