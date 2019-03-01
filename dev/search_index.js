@@ -21,7 +21,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Home",
     "title": "Installation",
     "category": "section",
-    "text": "The latest release of ModernRoboticsBook can be installed from the Julia REPL prompt withjulia> Pkg.add(\"ModernRoboticsBook\")warning: Warning\nModernRoboticsBook.jl is currently in the process of being added to the official registry of Julia packages: JuliaLang/METADATA.jl/pull/21669.Should the above command fail please try enter Julia\'s Pkg REPL mode by pressing ] and use this one instead:(v1.1) pkg> add https://github.com/ferrolho/ModernRoboticsBook.jl"
+    "text": "The latest release of ModernRoboticsBook can be installed from the Julia REPL prompt withjulia> Pkg.add(\"ModernRoboticsBook\")"
 },
 
 {
