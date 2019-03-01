@@ -12,17 +12,6 @@ The latest release of **ModernRoboticsBook** can be installed from the Julia REP
 julia> Pkg.add("ModernRoboticsBook")
 ```
 
-!!! warning
-
-    `ModernRoboticsBook.jl` is currently in the process of being added to the official registry of Julia packages:
-    [JuliaLang/METADATA.jl/pull/21669](https://github.com/JuliaLang/METADATA.jl/pull/21669).
-
-    Should the above command fail please try enter Julia's Pkg REPL mode by pressing `]` and use this one instead:
-
-    ```julia
-    (v1.1) pkg> add https://github.com/ferrolho/ModernRoboticsBook.jl
-    ```
-
 ## Manual Outline
 
 ```@contents
