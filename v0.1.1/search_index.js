@@ -153,6 +153,14 @@ var documenterSearchIndex = {"docs": [
 },
 
 {
+    "location": "lib/public/#ModernRoboticsBook.CartesianTrajectory-Tuple{Array,Array,Number,Integer,Integer}",
+    "page": "Public",
+    "title": "ModernRoboticsBook.CartesianTrajectory",
+    "category": "method",
+    "text": "CartesianTrajectory(Xstart, Xend, Tf, N, method)\n\nComputes a trajectory as a list of N SE(3) matrices corresponding to the origin of the end-effector frame following a straight line.\n\n\n\n\n\n"
+},
+
+{
     "location": "lib/public/#ModernRoboticsBook.ComputedTorque-Tuple{Array,Array,Array,Array,Array,Array,AbstractArray{T,2} where T,Array,Array,Array,Number,Number,Number}",
     "page": "Public",
     "title": "ModernRoboticsBook.ComputedTorque",
@@ -398,6 +406,14 @@ var documenterSearchIndex = {"docs": [
     "title": "ModernRoboticsBook.ScrewToAxis",
     "category": "method",
     "text": "ScrewToAxis(q, s, h)\n\nTakes a parametric description of a screw axis and converts it to a normalized screw axis.\n\nExamples\n\njulia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)\n6-element Array{Int64,1}:\n  0\n  0\n  1\n  0\n -3\n  2\n\n\n\n\n\n"
+},
+
+{
+    "location": "lib/public/#ModernRoboticsBook.ScrewTrajectory-Tuple{Array,Array,Number,Integer,Integer}",
+    "page": "Public",
+    "title": "ModernRoboticsBook.ScrewTrajectory",
+    "category": "method",
+    "text": "ScrewTrajectory(Xstart, Xend, Tf, N, method)\n\nComputes a trajectory as a list of N SE(3) matrices corresponding to the screw motion about a space screw axis.\n\n\n\n\n\n"
 },
 
 {
