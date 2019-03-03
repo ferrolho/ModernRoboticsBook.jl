@@ -105,7 +105,7 @@ julia> RotInv([0 0 1; 1 0 0; 0 1 0])
 RotInv(R::Array) = R'
 
 """
-    VecToso3(omg)
+    VecToso3(ω)
 
 Converts a 3-vector to an so(3) representation.
 
@@ -118,10 +118,10 @@ julia> VecToso3([1 2 3])
  -2   1   0
 ```
 """
-function VecToso3(omg::Array)
-    [0      -omg[3]  omg[2];
-     omg[3]       0 -omg[1];
-     -omg[2] omg[1]       0;]
+function VecToso3(ω::Array)
+    [ 0    -ω[3]  ω[2];
+      ω[3]  0    -ω[1];
+     -ω[2]  ω[1]  0   ]
 end
 
 """
@@ -195,21 +195,21 @@ julia> MatrixLog3([0 0 1; 1 0 0; 0 1 0])
 ```
 """
 function MatrixLog3(R::Array)
-    acosinput = (linalg.tr(R) - 1) / 2.0
+    acosinput = (linalg.tr(R) - 1) / 2
     if acosinput >= 1
         return zeros(3, 3)
     elseif acosinput <= -1
         if !NearZero(1 + R[3, 3])
-            omg = (1.0 / √(2 * (1 + R[3, 3]))) * [R[1, 3], R[2, 3], 1 + R[3, 3]]
+            omg = (1 / √(2 * (1 + R[3, 3]))) * [R[1, 3], R[2, 3], 1 + R[3, 3]]
         elseif !NearZero(1 + R[2, 2])
-            omg = (1.0 / √(2 * (1 + R[2, 2]))) * [R[1, 2], 1 + R[2, 2], R[3, 2]]
+            omg = (1 / √(2 * (1 + R[2, 2]))) * [R[1, 2], 1 + R[2, 2], R[3, 2]]
         else
-            omg = (1.0 / √(2 * (1 + R[1, 1]))) * [1 + R[1, 1], R[2, 1], R[3, 1]]
+            omg = (1 / √(2 * (1 + R[1, 1]))) * [1 + R[1, 1], R[2, 1], R[3, 1]]
         end
         return VecToso3(π * omg)
     else
         θ = acos(acosinput)
-        return θ / 2.0 / sin(θ) * (R - R')
+        return θ / 2 / sin(θ) * (R - R')
     end
 end
 
@@ -413,10 +413,10 @@ function MatrixLog6(T::Array)
     if omgmat == zeros(3, 3)
         return vcat(hcat(zeros(3, 3), T[1:3, 4]), [0 0 0 0])
     else
-        θ = acos((linalg.tr(R) - 1) / 2.0)
+        θ = acos((linalg.tr(R) - 1) / 2)
         return vcat(hcat(omgmat,
-                         (linalg.I - omgmat / 2.0 +
-                          (1.0 / θ - 1.0 / tan(θ / 2.0) / 2) *
+                         (linalg.I - omgmat / 2 +
+                          (1 / θ - 1 / tan(θ / 2) / 2) *
                           omgmat * omgmat / θ) * T[1:3, 4]),
                     [0 0 0 0])
     end
@@ -823,7 +823,7 @@ function InverseDynamics(thetalist::Array,
     AdTi = Array{Array{Float64, 2}}(undef, n + 1)
     Vi = zeros(6, n + 1)
     Vdi = zeros(6, n + 1)
-    Vdi[:, 1] = vcat([0, 0, 0], -g)
+    Vdi[:, 1] = vcat(zeros(3), -g)
     AdTi[n+1] = Adjoint(TransInv(Mlist[n+1]))
     Fi = copy(Ftip)
     taulist = zeros(n)
@@ -871,8 +871,8 @@ function MassMatrix(thetalist::Array,
     for i = 1:n
         ddthetalist = zeros(n)
         ddthetalist[i] = 1
-        M[:, i] = InverseDynamics(thetalist, zeros(n), ddthetalist, [0, 0, 0],
-                                  [0, 0, 0, 0, 0, 0], Mlist, Glist, Slist)
+        M[:, i] = InverseDynamics(thetalist, zeros(n), ddthetalist, zeros(3),
+                                  zeros(6), Mlist, Glist, Slist)
     end
 
     return M
@@ -898,7 +898,7 @@ function VelQuadraticForces(thetalist::Array,
                                 Glist::Array,
                                 Slist::AbstractMatrix)
     InverseDynamics(thetalist, dthetalist, zeros(length(thetalist)),
-                    [0, 0, 0], [0, 0, 0, 0, 0, 0], Mlist, Glist, Slist)
+                    zeros(3), zeros(6), Mlist, Glist, Slist)
 end
 
 """
@@ -921,7 +921,7 @@ function GravityForces(thetalist::Array,
                            Glist::Array,
                            Slist::AbstractMatrix)
     n = length(thetalist)
-    InverseDynamics(thetalist, zeros(n), zeros(n), g, [0, 0, 0, 0, 0, 0], Mlist, Glist, Slist)
+    InverseDynamics(thetalist, zeros(n), zeros(n), g, zeros(6), Mlist, Glist, Slist)
 end
 
 """
@@ -1064,7 +1064,7 @@ function EndEffectorForces(thetalist::Array,
                                Glist::Array,
                                Slist::AbstractMatrix)
     n = length(thetalist)
-    InverseDynamics(thetalist, zeros(n), zeros(n), [0, 0, 0], Ftip, Mlist, Glist, Slist)
+    InverseDynamics(thetalist, zeros(n), zeros(n), zeros(3), Ftip, Mlist, Glist, Slist)
 end
 
 """
@@ -1310,7 +1310,7 @@ function ComputedTorque(thetalist::Array,
     MassMatrix(thetalist, Mlist, Glist, Slist) *
     (Kp * e + Ki * (eint + e) + Kd * (dthetalistd - dthetalist)) +
     InverseDynamics(thetalist, dthetalist, ddthetalistd, g,
-                    [0, 0, 0, 0, 0, 0], Mlist, Glist, Slist)
+                    zeros(6), Mlist, Glist, Slist)
 end
 
 """
