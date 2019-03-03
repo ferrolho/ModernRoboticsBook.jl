@@ -101,6 +101,8 @@ const linalg = LinearAlgebra
                        [ 0.679011  0.148945   0.718859
                          0.373207  0.773196  -0.512723
                         -0.632187  0.616428   0.469421]; rtol=1e-6)
+        @test ProjectToSO3([-1 0 0; 0 -1 0; 0 0 -1]) == [1 0 0; 0 -1 0; 0 0 -1]
+
         @test isapprox(ProjectToSE3([ 0.675  0.150  0.720  1.2;
                                       0.370  0.771 -0.511  5.4;
                                      -0.630  0.619  0.472  3.6;
@@ -109,6 +111,7 @@ const linalg = LinearAlgebra
                                       0.373207  0.773196  -0.512723  5.4
                                      -0.632187  0.616428   0.469421  3.6
                                       0.0       0.0        0.0       1.0]; rtol=1e-6)
+
         @test DistanceToSO3([1.0  0.0  0.0 ;
                              0.0  0.1 -0.95;
                              0.0  1.0  0.1 ]) == 0.08835298523536149
@@ -279,7 +282,7 @@ const linalg = LinearAlgebra
 
         @test hcat(EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)...) ≈ hcat([0.11, 0.12, 0.13], [0.3, 0.35, 0.4])
 
-        @testset "chapter 8: dynamics of open chains" begin
+        @testset "inverse dynamics trajectory" begin
             thetastart = [0, 0, 0]
             thetaend = [π/2, π/2, π/2]
             Tf = 3
@@ -316,10 +319,136 @@ const linalg = LinearAlgebra
 
             @test taumat_actual ≈ taumat_expected
         end
+        @testset "forward dynamics trajectory" begin
+            taumat = [ 3.63 -6.58 -5.57 ; 3.74 -5.55 -5.5  ;
+                       4.31 -0.68 -5.19 ; 5.18  5.63 -4.31 ;
+                       5.85  8.17 -2.59 ; 5.78  2.79 -1.7  ;
+                       4.99 -5.3  -1.19 ; 4.08 -9.41  0.07 ;
+                       3.56 -10.1  0.97 ; 3.49 -9.41  1.23 ]
+
+            Ftipmat = ones(size(taumat, 1), 6)
+
+            dt = 0.1
+            intRes = 8
+
+            thetamat_expected = [ 0.1         0.1         0.1        ;
+                                  0.10643138  0.2625997  -0.22664947 ;
+                                  0.10197954  0.71581297 -1.22521632 ;
+                                  0.0801044   1.33930884 -2.28074132 ;
+                                  0.0282165   2.11957376 -3.07544297 ;
+                                 -0.07123855  2.87726666 -3.83289684 ;
+                                 -0.20136466  3.397858   -4.83821609 ;
+                                 -0.32380092  3.73338535 -5.98695747 ;
+                                 -0.41523262  3.85883317 -7.01130559 ;
+                                 -0.4638099   3.63178793 -7.63190052 ]
+
+            dthetamat_expected = [ 0.1          0.2          0.3        ;
+                                   0.01212502   3.42975773  -7.74792602 ;
+                                  -0.13052771   5.55997471 -11.22722784 ;
+                                  -0.35521041   7.11775879  -9.18173035 ;
+                                  -0.77358795   8.17307573  -7.05744594 ;
+                                  -1.2350231    6.35907497  -8.99784746 ;
+                                  -1.31426299   4.07685875 -11.18480509 ;
+                                  -1.06794821   2.49227786 -11.69748583 ;
+                                  -0.70264871  -0.55925705  -8.16067131 ;
+                                  -0.1455669   -4.57149985  -3.43135114 ]
+
+            thetamat_actual, dthetamat_actual = ForwardDynamicsTrajectory(thetalist, dthetalist, taumat, g, Ftipmat, Mlist, Glist, Slist, dt, intRes)
+
+            @test thetamat_actual ≈ thetamat_expected
+            @test dthetamat_actual ≈ dthetamat_expected
+        end
     end
     @testset "chapter 9: trajectory generation" begin
         @test CubicTimeScaling(2, 0.6) == 0.21600000000000003
         @test QuinticTimeScaling(2, 0.6) == 0.16308
+        @testset "joint trajectory" begin
+            thetastart = [1, 0, 0, 1, 1, 0.2, 0,1]
+            thetaend = [1.2, 0.5, 0.6, 1.1, 2, 2, 0.9, 1]
+            Tf = 4
+            N = 6
+            method = 3
+
+            expected = [     1     0      0      1     1    0.2      0 1 ;
+                        1.0208 0.052 0.0624 1.0104 1.104 0.3872 0.0936 1 ;
+                        1.0704 0.176 0.2112 1.0352 1.352 0.8336 0.3168 1 ;
+                        1.1296 0.324 0.3888 1.0648 1.648 1.3664 0.5832 1 ;
+                        1.1792 0.448 0.5376 1.0896 1.896 1.8128 0.8064 1 ;
+                           1.2   0.5    0.6    1.1     2      2    0.9 1 ]
+
+            @test JointTrajectory(thetastart, thetaend, Tf, N, method) ≈ expected
+        end
+        @testset "screw trajectory" begin
+            Xstart = [1 0 0 1 ;
+                      0 1 0 0 ;
+                      0 0 1 1 ;
+                      0 0 0 1 ]
+            Xend = [0 0 1 0.1 ;
+                    1 0 0   0 ;
+                    0 1 0 4.1 ;
+                    0 0 0   1 ]
+
+            Tf = 5
+            N = 4
+            method = 3
+
+            expected =  [[ 1 0 0 1 ;
+                           0 1 0 0 ;
+                           0 0 1 1 ;
+                           0 0 0 1 ],
+                         [ 0.904 -0.25   0.346  0.441 ;
+                           0.346  0.904 -0.25   0.529 ;
+                          -0.25   0.346  0.904  1.601 ;
+                           0      0      0      1     ],
+                         [ 0.346 -0.25   0.904 -0.117 ;
+                           0.904  0.346 -0.25   0.473 ;
+                          -0.25   0.904  0.346  3.274 ;
+                           0      0      0      1     ],
+                         [ 0 0 1 0.1 ;
+                           1 0 0 0   ;
+                           0 1 0 4.1 ;
+                           0 0 0 1   ]]
+
+            actual = ScrewTrajectory(Xstart, Xend, Tf, N, method)
+
+            @test isapprox(actual, expected; rtol=1e-3)
+        end
+        @testset "cartesian trajectory" begin
+            Xstart = [ 1 0 0 1 ;
+                       0 1 0 0 ;
+                       0 0 1 1 ;
+                       0 0 0 1 ]
+            Xend = [ 0 0 1 0.1 ;
+                     1 0 0 0   ;
+                     0 1 0 4.1 ;
+                     0 0 0 1   ]
+
+            Tf = 5
+            N = 4
+            method = 5
+
+
+            expected = [[ 1 0 0 1 ;
+                          0 1 0 0 ;
+                          0 0 1 1 ;
+                          0 0 0 1 ],
+                        [ 0.937 -0.214  0.277 0.811 ;
+                          0.277  0.937 -0.214     0 ;
+                         -0.214  0.277  0.937 1.651 ;
+                          0      0      0     1     ],
+                        [ 0.277 -0.214  0.937 0.289 ;
+                          0.937  0.277 -0.214     0 ;
+                         -0.214  0.937  0.277 3.449 ;
+                          0      0      0     1     ],
+                        [ 0 0 1 0.1 ;
+                          1 0 0 0   ;
+                          0 1 0 4.1 ;
+                          0 0 0 1   ]]
+
+            actual = CartesianTrajectory(Xstart, Xend, Tf, N, method)
+
+            @test isapprox(actual, expected; rtol=1e-3)
+        end
     end
     @testset "chapter 11: robot control" begin
         thetalist = [0.1, 0.1, 0.1]

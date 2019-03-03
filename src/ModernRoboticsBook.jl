@@ -441,7 +441,8 @@ function ProjectToSO3(mat::Array)
     R = F.U * F.Vt
     if linalg.det(R) < 0
         # In this case the result may be far from mat.
-        R[:, F.s[3, 3]] = -R[:, F.s[3, 3]]
+        # Hmm, I think this needs to be double-checked...
+        R[:, Int(F.S[3])] = -R[:, Int(F.S[3])]
     end
     return R
 end
