@@ -237,7 +237,7 @@ const linalg = LinearAlgebra
 
         taulist_actual = InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
 
-        @test taulist_actual == [74.69616155287451, -33.06766015851458, -3.230573137901424]
+        @test taulist_actual ≈ [74.69616155287451, -33.06766015851458, -3.230573137901424]
 
         @test isapprox(MassMatrix(thetalist, Mlist, Glist, Slist),
                        [ 22.5433      -0.307147  -0.00718426;
@@ -306,5 +306,142 @@ const linalg = LinearAlgebra
         @test QuinticTimeScaling(2, 0.6) == 0.16308
     end
     @testset "chapter 11: robot control" begin
+        thetalist = [0.1, 0.1, 0.1]
+        dthetalist = [0.1, 0.2, 0.3]
+
+        # Initialise robot description (Example with 3 links)
+        g = [0, 0, -9.8]
+
+        M01 = [1  0  0         0 ;
+               0  1  0         0 ;
+               0  0  1  0.089159 ;
+               0  0  0         1 ]
+        M12 = [0  0  1     0.28 ;
+               0  1  0  0.13585 ;
+              -1  0  0        0 ;
+               0  0  0        1 ]
+        M23 = [1  0  0        0 ;
+               0  1  0  -0.1197 ;
+               0  0  1    0.395 ;
+               0  0  0        1 ]
+        M34 = [1  0  0        0 ;
+               0  1  0        0 ;
+               0  0  1  0.14225 ;
+               0  0  0        1 ]
+
+        G1 = linalg.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
+        G2 = linalg.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
+        G3 = linalg.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
+
+        Mlist = [M01, M12, M23, M34]
+        Glist = [G1, G2, G3]
+
+        Slist = [ 1  0  1      0  1      0 ;
+                0  1  0 -0.089  0      0 ;
+                0  1  0 -0.089  0  0.425 ]'
+
+        # Create a trajectory to follow
+        thetaend = [π / 2, π, 1.5 * π]
+
+        Tf = 1
+        dt = 0.05
+        N = Int(Tf / dt)
+        method = 5
+
+        traj = JointTrajectory(thetalist, thetaend, Tf, N, method)
+
+        thetamatd = copy(traj)
+        dthetamatd = zeros(N, 3)
+        ddthetamatd = zeros(N, 3)
+        dt = Tf / (N - 1)
+
+        for i = 1:size(traj, 1) - 1
+            dthetamatd[i + 1, :] = (thetamatd[i + 1, :] - thetamatd[i, :]) / dt
+            ddthetamatd[i + 1, :] = (dthetamatd[i + 1, :] - dthetamatd[i, :]) / dt
+        end
+
+        # Possibly wrong robot description (Example with 3 links)
+        gtilde = [0.8, 0.2, -8.8]
+
+        Mhat01 = [1 0 0   0;
+                  0 1 0   0;
+                  0 0 1 0.1;
+                  0 0 0   1]
+        Mhat12 = [0 0 1 0.3;
+                  0 1 0 0.2;
+                 -1 0 0   0;
+                  0 0 0   1]
+        Mhat23 = [1 0 0    0;
+                  0 1 0 -0.2;
+                  0 0 1  0.4;
+                  0 0 0    1]
+        Mhat34 = [1 0 0   0;
+                  0 1 0   0;
+                  0 0 1 0.2;
+                  0 0 0   1]
+
+        Ghat1 = linalg.Diagonal([0.1, 0.1, 0.1, 4, 4, 4])
+        Ghat2 = linalg.Diagonal([0.3, 0.3, 0.1, 9, 9, 9])
+        Ghat3 = linalg.Diagonal([0.1, 0.1, 0.1, 3, 3, 3])
+
+        Gtildelist = [Ghat1, Ghat2, Ghat3]
+        Mtildelist = [Mhat01, Mhat12, Mhat23, Mhat34]
+
+        # Other required arguments
+        Ftipmat = ones(size(traj, 1), 6)
+
+        Kp = 20
+        Ki = 10
+        Kd = 18
+        intRes = 8
+
+        taumat_expected = [ -14.2640765   -54.06797429  -11.265448   ;
+                             71.7014572   -17.58330542    3.86417108 ;
+                            208.80692807    6.94442209    8.4352746  ;
+                            269.9223766    14.44412677   11.24081382 ;
+                            316.48343344    6.4020598    10.60970699 ;
+                            327.82241593   -3.98984379   14.31752441 ;
+                            248.33306921  -16.39336633   21.61795095 ;
+                             93.7564835   -28.5575642    28.0092122  ;
+                             13.12918592  -44.38407547   19.04258057 ;
+                             56.35246455   -8.56189073    1.69770764 ;
+                             32.68030349   39.77791901   -5.94800597 ;
+                            -49.85502041   37.95496258  -15.10367806 ;
+                           -104.48630504   24.8129766   -16.25667052 ;
+                           -123.14920836   -3.62727714  -14.4680164  ;
+                            -84.15220471  -25.40152665  -12.85439272 ;
+                            -50.09890916  -33.73575763  -12.38441089 ;
+                            -30.41466046  -34.03362524  -11.30974711 ;
+                            -13.90701987  -26.40700004   -9.50026445 ;
+                              7.93416317  -12.95474009   -6.58132646 ;
+                             44.38627151    4.53534718   -2.32611269 ]
+
+        thetamat_expected = [ 0.1028237  0.10738308 0.07715206 ;
+                              0.10475535 0.11170712 0.05271794 ;
+                              0.11930448 0.13796752 0.12315113 ;
+                              0.1582068  0.21615938 0.27654789 ;
+                              0.22464764 0.35314707 0.51117109 ;
+                              0.31872944 0.54551689 0.81897456 ;
+                              0.4377715  0.78011155 1.21554584 ;
+                              0.57501633 1.03974866 1.71548388 ;
+                              0.72137128 1.30551854 2.2916328  ;
+                              0.87221934 1.56564069 2.84693996 ;
+                              1.0257972  1.841874   3.32092634 ;
+                              1.17352729 2.14460368 3.72255083 ;
+                              1.30459739 2.44287634 4.03953656 ;
+                              1.41155584 2.71108778 4.28079221 ;
+                              1.49166143 2.92224332 4.45724092 ;
+                              1.54707169 3.06503575 4.57357234 ;
+                              1.579692   3.14295613 4.62867261 ;
+                              1.59184568 3.1665363  4.62924012 ;
+                              1.58827951 3.15316968 4.59115503 ;
+                              1.57746305 3.12631855 4.54394792 ]
+
+        taumat_actual, thetamat_actual = SimulateControl(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
+                                                         Slist, thetamatd, dthetamatd, ddthetamatd, gtilde,
+                                                         Mtildelist, Gtildelist, Kp, Ki, Kd, dt, intRes)
+
+        @test taumat_actual ≈ taumat_expected
+        @test thetamat_actual ≈ thetamat_expected
     end
 end
