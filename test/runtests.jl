@@ -244,22 +244,22 @@ const linalg = LinearAlgebra
                          -0.307147     1.96851    0.432157  ;
                          -0.00718426   0.432157   0.191631  ]; rtol=1e-5)
 
-        @test VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist) == [  0.26453118054501235 ;
-                                                                                  -0.0550515682891655  ;
-                                                                                  -0.006891320068248911]
+        @test VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist) ≈ [  0.26453118054501235 ;
+                                                                                 -0.0550515682891655  ;
+                                                                                 -0.006891320068248911]
 
         @test GravityForces(thetalist, g, Mlist, Glist, Slist) == [  28.40331261821983  ;
                                                                     -37.64094817177068  ;
                                                                      -5.4415891999683605]
 
-        @test EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist) == [ 1.4095460782639782;
-                                                                           1.8577149723180628;
-                                                                           1.392409          ]
+        @test EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist) ≈ [ 1.4095460782639782;
+                                                                          1.8577149723180628;
+                                                                          1.392409          ]
 
         taulist = [0.5, 0.6, 0.7]
-        @test ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist) == [  -0.9739290670855626;
-                                                                                                  25.584667840340558 ;
-                                                                                                 -32.91499212478149  ]
+        @test ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist) ≈ [ -0.9739290670855626;
+                                                                                                25.584667840340558 ;
+                                                                                               -32.91499212478149  ]
 
         @test hcat(EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)...) ≈ hcat([0.11, 0.12, 0.13], [0.3, 0.35, 0.4])
 
