@@ -469,7 +469,7 @@ var documenterSearchIndex = {"docs": [
     "page": "Public",
     "title": "ModernRoboticsBook.VecToso3",
     "category": "method",
-    "text": "VecToso3(omg)\n\nConverts a 3-vector to an so(3) representation.\n\nExamples\n\njulia> VecToso3([1 2 3])\n3×3 Array{Int64,2}:\n  0  -3   2\n  3   0  -1\n -2   1   0\n\n\n\n\n\n"
+    "text": "VecToso3(ω)\n\nConverts a 3-vector to an so(3) representation.\n\nExamples\n\njulia> VecToso3([1 2 3])\n3×3 Array{Int64,2}:\n  0  -3   2\n  3   0  -1\n -2   1   0\n\n\n\n\n\n"
 },
 
 {
