@@ -34,6 +34,9 @@ const linalg = LinearAlgebra
                          1.2092  0.0    -1.2092
                         -1.2092  1.2092  0.0   ]; rtol=1e-6)
         @test MatrixLog3(zeros(3, 3)) == zeros(3, 3)
+        @test MatrixLog3([-3 0 0; 0 1 0; 0 0  1]) == [0 -π 0; π 0 0; 0 0 0]
+        @test MatrixLog3([-2 0 0; 0 1 0; 0 0 -1]) == [0 0 π; 0 0 0; -π 0 0]
+        @test MatrixLog3([1 0 0; 0 -1 0; 0 0 -1]) == [0 0 0; 0 0 -π; 0 π 0]
 
         @test RpToTrans([1 0  0;
                          0 0 -1;
@@ -72,7 +75,10 @@ const linalg = LinearAlgebra
                                         3  0  0  0  0 -1
                                         0  0  0  0  1  0]
         @test ScrewToAxis([3; 0; 0], [0; 0; 1], 2) == [0, 0, 1, 0, -3, 2]
+
         @test AxisAng6([1, 0, 0, 1, 2, 3]) == ([1, 0, 0, 1, 2, 3], 1)
+        @test AxisAng6([0, 0, 0, 0, 0, 4]) == ([0, 0, 0, 0, 0, 1], 4)
+
         @test MatrixExp6([0    0    0    0   ;
                           0    0   -π/2  3π/4;
                           0    π/2  0    3π/4;
@@ -87,6 +93,8 @@ const linalg = LinearAlgebra
                                           0    0   -π/2  3π/4;
                                           0    π/2  0    3π/4;
                                           0    0    0    0   ]
+        @test MatrixLog6(Array(linalg.Diagonal(ones(4)))) == zeros(4, 4)
+
         @test isapprox(ProjectToSO3([ 0.675  0.150  0.720;
                                       0.370  0.771 -0.511;
                                      -0.630  0.619  0.472]),
@@ -104,10 +112,13 @@ const linalg = LinearAlgebra
         @test DistanceToSO3([1.0  0.0  0.0 ;
                              0.0  0.1 -0.95;
                              0.0  1.0  0.1 ]) == 0.08835298523536149
+
         @test DistanceToSE3([1.0  0.0  0.0   1.2 ;
                              0.0  0.1 -0.95  1.5 ;
                              0.0  1.0  0.1  -0.9 ;
                              0.0  0.0  0.1   0.98]) == 0.13493053768513638
+        @test DistanceToSE3(Array(reshape(1:9, (3, 3)))) >= 1e+9
+
         @test !TestIfSO3([1.0  0.0  0.0 ;
                           0.0  0.1 -0.95;
                           0.0  1.0  0.1 ])
