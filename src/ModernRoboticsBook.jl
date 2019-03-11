@@ -820,14 +820,14 @@ function InverseDynamics(thetalist::Array,
                              Slist::AbstractMatrix)
     n = length(thetalist)
     Mi = linalg.I
-    Ai = zeros(6, n)
-    AdTi = Array{Array{Float64, 2}}(undef, n + 1)
-    Vi = zeros(6, n + 1)
-    Vdi = zeros(6, n + 1)
-    Vdi[:, 1] = vcat(zeros(3), -g)
+    Ai = zeros(eltype(thetalist), 6, n)
+    AdTi = Array{Array{eltype(thetalist), 2}}(undef, n + 1)
+    Vi = zeros(eltype(thetalist), 6, n + 1)
+    Vdi = zeros(eltype(thetalist), 6, n + 1)
+    Vdi[:, 1] = vcat(zeros(eltype(thetalist), 3), -g)
     AdTi[n+1] = Adjoint(TransInv(Mlist[n+1]))
     Fi = copy(Ftip)
-    taulist = zeros(n)
+    taulist = zeros(eltype(thetalist), n)
 
     for i = 1:n
         Mi *= Mlist[i]
