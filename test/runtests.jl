@@ -269,9 +269,9 @@ Aqua.test_all(ModernRoboticsBook)
                                                                                  -0.0550515682891655  ;
                                                                                  -0.006891320068248911]
 
-        @test GravityForces(thetalist, g, Mlist, Glist, Slist) == [  28.40331261821983  ;
-                                                                    -37.64094817177068  ;
-                                                                     -5.4415891999683605]
+        @test GravityForces(thetalist, g, Mlist, Glist, Slist) ≈ [  28.40331261821983  ;
+                                                                   -37.64094817177068  ;
+                                                                    -5.4415891999683605]
 
         @test EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist) ≈ [ 1.4095460782639782;
                                                                           1.8577149723180628;
@@ -362,8 +362,8 @@ Aqua.test_all(ModernRoboticsBook)
         end
     end
     @testset "chapter 9: trajectory generation" begin
-        @test CubicTimeScaling(2, 0.6) == 0.21600000000000003
-        @test QuinticTimeScaling(2, 0.6) == 0.16308
+        @test CubicTimeScaling(2, 0.6) ≈ 0.216
+        @test QuinticTimeScaling(2, 0.6) ≈ 0.16308
         @testset "joint trajectory" begin
             thetastart = [1, 0, 0, 1, 1, 0.2, 0,1]
             thetaend = [1.2, 0.5, 0.6, 1.1, 2, 2, 0.9, 1]
