@@ -1,7 +1,10 @@
+using Aqua
 using ModernRoboticsBook
 using Test
 
 import LinearAlgebra as LA
+
+Aqua.test_all(ModernRoboticsBook)
 
 @testset "ModernRoboticsBook.jl" begin
     @testset "basic helper functions" begin
