@@ -1,8 +1,7 @@
 using ModernRoboticsBook
 using Test
 
-import LinearAlgebra
-const linalg = LinearAlgebra
+import LinearAlgebra as LA
 
 @testset "ModernRoboticsBook.jl" begin
     @testset "basic helper functions" begin
@@ -93,7 +92,7 @@ const linalg = LinearAlgebra
                                           0    0   -π/2  3π/4;
                                           0    π/2  0    3π/4;
                                           0    0    0    0   ]
-        @test MatrixLog6(Array(linalg.Diagonal(ones(4)))) == zeros(4, 4)
+        @test MatrixLog6(Array(LA.Diagonal(ones(4)))) == zeros(4, 4)
 
         @test isapprox(ProjectToSO3([ 0.675  0.150  0.720;
                                       0.370  0.771 -0.511;
@@ -245,9 +244,9 @@ const linalg = LinearAlgebra
                0  1  0        0 ;
                0  0  1  0.14225 ;
                0  0  0        1 ]
-        G1 = linalg.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
-        G2 = linalg.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
-        G3 = linalg.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
+        G1 = LA.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
+        G2 = LA.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
+        G3 = LA.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
         Glist = [G1, G2, G3]
         Mlist = [M01, M12, M23, M34]
         Slist = [ 1  0  1      0  1      0 ;
@@ -474,9 +473,9 @@ const linalg = LinearAlgebra
                0  0  1  0.14225 ;
                0  0  0        1 ]
 
-        G1 = linalg.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
-        G2 = linalg.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
-        G3 = linalg.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
+        G1 = LA.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
+        G2 = LA.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
+        G3 = LA.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
 
         Mlist = [M01, M12, M23, M34]
         Glist = [G1, G2, G3]
@@ -525,9 +524,9 @@ const linalg = LinearAlgebra
                   0 0 1 0.2;
                   0 0 0   1]
 
-        Ghat1 = linalg.Diagonal([0.1, 0.1, 0.1, 4, 4, 4])
-        Ghat2 = linalg.Diagonal([0.3, 0.3, 0.1, 9, 9, 9])
-        Ghat3 = linalg.Diagonal([0.1, 0.1, 0.1, 3, 3, 3])
+        Ghat1 = LA.Diagonal([0.1, 0.1, 0.1, 4, 4, 4])
+        Ghat2 = LA.Diagonal([0.3, 0.3, 0.1, 9, 9, 9])
+        Ghat3 = LA.Diagonal([0.1, 0.1, 0.1, 3, 3, 3])
 
         Gtildelist = [Ghat1, Ghat2, Ghat3]
         Mtildelist = [Mhat01, Mhat12, Mhat23, Mhat34]
