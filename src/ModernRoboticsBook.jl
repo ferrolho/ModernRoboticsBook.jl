@@ -1,7 +1,6 @@
 module ModernRoboticsBook
 
-import LinearAlgebra
-const linalg = LinearAlgebra
+import LinearAlgebra as LA
 
 export NearZero,
        Normalize,
@@ -76,13 +75,13 @@ Normalizes a vector.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> Normalize([1, 2, 3])
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  0.2672612419124244
  0.5345224838248488
  0.8017837257372732
 ```
 """
-Normalize(V::Array) = V / linalg.norm(V)
+Normalize(V::Array) = V / LA.norm(V)
 
 # """
 # *** CHAPTER 3: RIGID-BODY MOTIONS ***
@@ -96,7 +95,7 @@ Inverts a rotation matrix.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> RotInv([0 0 1; 1 0 0; 0 1 0])
-3×3 LinearAlgebra.Adjoint{Int64,Array{Int64,2}}:
+3×3 adjoint(::Matrix{Int64}) with eltype Int64:
  0  1  0
  0  0  1
  1  0  0
@@ -112,7 +111,7 @@ Converts a 3-vector to an so(3) representation.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> VecToso3([1 2 3])
-3×3 Array{Int64,2}:
+3×3 Matrix{Int64}:
   0  -3   2
   3   0  -1
  -2   1   0
@@ -132,7 +131,7 @@ Converts an so(3) representation to a 3-vector.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> so3ToVec([0 -3 2; 3 0 -1; -2 1 0])
-3-element Array{Int64,1}:
+3-element Vector{Int64}:
  1
  2
  3
@@ -153,7 +152,7 @@ julia> AxisAng3([1, 2, 3])
 ([0.267261, 0.534522, 0.801784], 3.7416573867739413)
 ```
 """
-AxisAng3(expc3::Array) = Normalize(expc3), linalg.norm(expc3)
+AxisAng3(expc3::Array) = Normalize(expc3), LA.norm(expc3)
 
 """
     MatrixExp3(so3mat)
@@ -163,7 +162,7 @@ Computes the matrix exponential of a matrix in so(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixExp3([0 -3 2; 3 0 -1; -2 1 0])
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  -0.694921   0.713521  0.0892929
  -0.192007  -0.303785  0.933192 
   0.692978   0.63135   0.348107 
@@ -171,12 +170,12 @@ julia> MatrixExp3([0 -3 2; 3 0 -1; -2 1 0])
 """
 function MatrixExp3(so3mat::Array)
     omgtheta = so3ToVec(so3mat)
-    if NearZero(linalg.norm(omgtheta))
-        return linalg.I
+    if NearZero(LA.norm(omgtheta))
+        return LA.I
     else
         θ = AxisAng3(omgtheta)[2]
         omgmat = so3mat / θ
-        return linalg.I + sin(θ) * omgmat + (1 - cos(θ)) * omgmat * omgmat
+        return LA.I + sin(θ) * omgmat + (1 - cos(θ)) * omgmat * omgmat
     end
 end
 
@@ -188,14 +187,14 @@ Computes the matrix logarithm of a rotation matrix.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixLog3([0 0 1; 1 0 0; 0 1 0])
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
   0.0     -1.2092   1.2092
   1.2092   0.0     -1.2092
  -1.2092   1.2092   0.0   
 ```
 """
 function MatrixLog3(R::Array)
-    acosinput = (linalg.tr(R) - 1) / 2
+    acosinput = (LA.tr(R) - 1) / 2
     if acosinput >= 1
         return zeros(3, 3)
     elseif acosinput <= -1
@@ -221,7 +220,7 @@ Converts a rotation matrix and a position vector into homogeneous transformation
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> RpToTrans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
-4×4 Array{Int64,2}:
+4×4 Matrix{Int64}:
  1  0   0  1
  0  0  -1  2
  0  1   0  5
@@ -251,7 +250,7 @@ Inverts a homogeneous transformation matrix.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> TransInv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
-4×4 Array{Int64,2}:
+4×4 Matrix{Int64}:
  1   0  0   0
  0   0  1  -3
  0  -1  0   0
@@ -271,7 +270,7 @@ Converts a spatial velocity vector into a 4x4 matrix in se3.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> VecTose3([1 2 3 4 5 6])
-4×4 Array{Float64,2}:
+4×4 Matrix{Float64}:
   0.0  -3.0   2.0  4.0
   3.0   0.0  -1.0  5.0
  -2.0   1.0   0.0  6.0
@@ -288,7 +287,7 @@ Converts an se3 matrix into a spatial velocity vector.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> se3ToVec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
-6-element Array{Int64,1}:
+6-element Vector{Int64}:
  1
  2
  3
@@ -309,7 +308,7 @@ Computes the adjoint representation of a homogeneous transformation matrix.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> Adjoint([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
-6×6 Array{Float64,2}:
+6×6 Matrix{Float64}:
  1.0  0.0   0.0  0.0  0.0   0.0
  0.0  0.0  -1.0  0.0  0.0   0.0
  0.0  1.0   0.0  0.0  0.0   0.0
@@ -331,7 +330,7 @@ Takes a parametric description of a screw axis and converts it to a normalized s
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)
-6-element Array{Int64,1}:
+6-element Vector{Int64}:
   0
   0
   1
@@ -340,7 +339,7 @@ julia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)
   2
 ```
 """
-ScrewToAxis(q::Array, s::Array, h::Number) = vcat(s, linalg.cross(q, s) + h * s)
+ScrewToAxis(q::Array, s::Array, h::Number) = vcat(s, LA.cross(q, s) + h * s)
 
 """
     AxisAng6(expc6)
@@ -354,9 +353,9 @@ julia> AxisAng6([1, 0, 0, 1, 2, 3])
 ```
 """
 function AxisAng6(expc6::Array)
-    θ = linalg.norm(expc6[1:3])
+    θ = LA.norm(expc6[1:3])
     if NearZero(θ)
-        θ = linalg.norm(expc6[3:6])
+        θ = LA.norm(expc6[3:6])
     end
     expc6 / θ, θ
 end
@@ -369,7 +368,7 @@ Computes the matrix exponential of an se3 representation of exponential coordina
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.35619449; 0 0 0 0])
-4×4 Array{Float64,2}:
+4×4 Matrix{Float64}:
  1.0  0.0         0.0        0.0       
  0.0  6.7949e-9  -1.0        1.01923e-8
  0.0  1.0         6.7949e-9  3.0       
@@ -378,13 +377,13 @@ julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.3561944
 """
 function MatrixExp6(se3mat::Array)
     omgtheta = so3ToVec(se3mat[1:3, 1:3])
-    if NearZero(linalg.norm(omgtheta))
-        return vcat(hcat(linalg.I, se3mat[1:3, 4]), [0 0 0 1])
+    if NearZero(LA.norm(omgtheta))
+        return vcat(hcat(LA.I, se3mat[1:3, 4]), [0 0 0 1])
     else
         θ = AxisAng3(omgtheta)[2]
         omgmat = se3mat[1:3, 1:3] / θ
         return vcat(hcat(MatrixExp3(se3mat[1:3, 1:3]),
-                         (linalg.I * θ +
+                         (LA.I * θ +
                           (1 - cos(θ)) * omgmat +
                           (θ - sin(θ)) * omgmat * omgmat) *
                          se3mat[1:3, 4] / θ),
@@ -400,7 +399,7 @@ Computes the matrix logarithm of a homogeneous transformation matrix.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixLog6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
-4×4 Array{Float64,2}:
+4×4 Matrix{Float64}:
  0.0  0.0      0.0     0.0    
  0.0  0.0     -1.5708  2.35619
  0.0  1.5708   0.0     2.35619
@@ -413,9 +412,9 @@ function MatrixLog6(T::Array)
     if omgmat == zeros(3, 3)
         return vcat(hcat(zeros(3, 3), T[1:3, 4]), [0 0 0 0])
     else
-        θ = acos((linalg.tr(R) - 1) / 2)
+        θ = acos((LA.tr(R) - 1) / 2)
         return vcat(hcat(omgmat,
-                         (linalg.I - omgmat / 2 +
+                         (LA.I - omgmat / 2 +
                           (1 / θ - 1 / tan(θ / 2) / 2) *
                           omgmat * omgmat / θ) * T[1:3, 4]),
                     [0 0 0 0])
@@ -430,16 +429,16 @@ Returns a projection of mat into SO(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ProjectToSO3([0.675 0.150  0.720; 0.370 0.771 -0.511; -0.630 0.619  0.472])
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
   0.679011  0.148945   0.718859
   0.373207  0.773196  -0.512723
  -0.632187  0.616428   0.469421
 ```
 """
 function ProjectToSO3(mat::Array)
-    F  = linalg.svd(mat)
+    F  = LA.svd(mat)
     R = F.U * F.Vt
-    if linalg.det(R) < 0
+    if LA.det(R) < 0
         # In this case the result may be far from mat.
         # Hmm, I think this needs to be double-checked...
         R[:, Int(F.S[3])] = -R[:, Int(F.S[3])]
@@ -455,7 +454,7 @@ Returns a projection of mat into SE(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ProjectToSE3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.619 0.472 3.6; 0.003 0.002 0.010 0.9])
-4×4 Array{Float64,2}:
+4×4 Matrix{Float64}:
   0.679011  0.148945   0.718859  1.2
   0.373207  0.773196  -0.512723  5.4
  -0.632187  0.616428   0.469421  3.6
@@ -475,7 +474,7 @@ julia> DistanceToSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 0.08835298523536149
 ```
 """
-DistanceToSO3(mat::Array) = linalg.det(mat) > 0 ? linalg.norm(mat'mat - linalg.I) : 1e+9
+DistanceToSO3(mat::Array) = LA.det(mat) > 0 ? LA.norm(mat'mat - LA.I) : 1e+9
 
 """
     DistanceToSE3(mat)
@@ -490,8 +489,8 @@ julia> DistanceToSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 
 """
 function DistanceToSE3(mat::Array)
     matR = mat[1:3, 1:3]
-    if linalg.det(matR) > 0
-        linalg.norm(hcat(vcat(matR'matR, zeros(1, 3)), mat[4, :]) - linalg.I)
+    if LA.det(matR) > 0
+        LA.norm(hcat(vcat(matR'matR, zeros(1, 3)), mat[4, :]) - LA.I)
     else
         1e+9
     end
@@ -546,7 +545,7 @@ julia> Blist = [  0  0 -1  2  0  0   ;
 julia> thetalist = [ π/2, 3, π ];
 
 julia> FKinBody(M, Blist, thetalist)
-4×4 Array{Float64,2}:
+4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0    
   1.0          1.14424e-17   0.0   4.0    
   0.0          0.0          -1.0   1.68584
@@ -579,7 +578,7 @@ julia> Slist = [  0  0  1  4  0  0   ;
 julia> thetalist = [ π/2, 3, π ];
 
 julia> FKinSpace(M, Slist, thetalist)
-4×4 Array{Float64,2}:
+4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0    
   1.0          1.14424e-17   0.0   4.0    
   0.0          0.0          -1.0   1.68584
@@ -612,7 +611,7 @@ julia> Blist = [0 0 1   0 0.2 0.2;
 julia> thetalist = [0.2, 1.1, 0.1, 1.2];
 
 julia> JacobianBody(Blist, thetalist)
-6×4 Array{Float64,2}:
+6×4 Matrix{Float64}:
  -0.0452841  0.995004    0.0       1.0
   0.743593   0.0930486   0.362358  0.0
  -0.667097   0.0361754  -0.932039  0.0
@@ -622,7 +621,7 @@ julia> JacobianBody(Blist, thetalist)
 ```
 """
 function JacobianBody(Blist::AbstractMatrix, thetalist::Array)
-    T = linalg.I
+    T = LA.I
     Jb = copy(Blist)
     for i = length(thetalist)-1:-1:1
         T *= MatrixExp6(VecTose3(Blist[:, i+1] * -thetalist[i+1]))
@@ -646,7 +645,7 @@ julia> Slist = [0 0 1   0 0.2 0.2;
 julia> thetalist = [0.2, 1.1, 0.1, 1.2];
 
 julia> JacobianSpace(Slist, thetalist)
-6×4 Array{Float64,2}:
+6×4 Matrix{Float64}:
  0.0  0.980067  -0.0901156   0.957494 
  0.0  0.198669   0.444554    0.284876 
  1.0  0.0        0.891207   -0.0452841
@@ -656,7 +655,7 @@ julia> JacobianSpace(Slist, thetalist)
 ```
 """
 function JacobianSpace(Slist::AbstractMatrix, thetalist::Array)
-    T = linalg.I
+    T = LA.I
     Js = copy(Slist)
     for i = 2:length(thetalist)
         T *= MatrixExp6(VecTose3(Slist[:, i - 1] * thetalist[i - 1]))
@@ -695,7 +694,7 @@ julia> thetalist0 = [1.5, 2.5, 3];
 julia> eomg, ev = 0.01, 0.001;
 
 julia> IKinBody(Blist, M, T, thetalist0, eomg, ev)
-([1.57074, 2.99967, 3.14154], true)
+([1.5707381937148923, 2.999666997382942, 3.141539129217613], true)
 ```
 """
 function IKinBody(Blist::AbstractMatrix,
@@ -708,12 +707,12 @@ function IKinBody(Blist::AbstractMatrix,
     i = 0
     maxiterations = 20
     Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
-    err = linalg.norm(Vb[1:3]) > eomg || linalg.norm(Vb[4:6]) > ev
+    err = LA.norm(Vb[1:3]) > eomg || LA.norm(Vb[4:6]) > ev
     while err && i < maxiterations
-        thetalist += linalg.pinv(JacobianBody(Blist, thetalist)) * Vb
+        thetalist += LA.pinv(JacobianBody(Blist, thetalist)) * Vb
         i += 1
         Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
-        err = linalg.norm(Vb[1:3]) > eomg || linalg.norm(Vb[4:6]) > ev
+        err = LA.norm(Vb[1:3]) > eomg || LA.norm(Vb[4:6]) > ev
     end
     return thetalist, !err
 end
@@ -744,7 +743,7 @@ julia> thetalist0 = [1.5, 2.5, 3];
 julia> eomg, ev = 0.01, 0.001;
 
 julia> IKinSpace(Slist, M, T, thetalist0, eomg, ev)
-([1.57074, 2.99966, 3.14153], true)
+([1.5707378296567203, 2.999663844672524, 3.141534199856583], true)
 ```
 """
 function IKinSpace(Slist::AbstractMatrix,
@@ -758,13 +757,13 @@ function IKinSpace(Slist::AbstractMatrix,
     maxiterations = 20
     Tsb = FKinSpace(M, Slist, thetalist)
     Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))
-    err = linalg.norm(Vs[1:3]) > eomg || linalg.norm(Vs[4:6]) > ev
+    err = LA.norm(Vs[1:3]) > eomg || LA.norm(Vs[4:6]) > ev
     while err && i < maxiterations
-        thetalist += linalg.pinv(JacobianSpace(Slist, thetalist)) * Vs
+        thetalist += LA.pinv(JacobianSpace(Slist, thetalist)) * Vs
         i += 1
         Tsb = FKinSpace(M, Slist, thetalist)
         Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))
-        err = linalg.norm(Vs[1:3]) > eomg || linalg.norm(Vs[4:6]) > ev
+        err = LA.norm(Vs[1:3]) > eomg || LA.norm(Vs[4:6]) > ev
     end
     thetalist, !err
 end
@@ -781,7 +780,7 @@ Calculate the 6x6 matrix [adV] of the given 6-vector.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ad([1, 2, 3, 4, 5, 6])
-6×6 Array{Float64,2}:
+6×6 Matrix{Float64}:
   0.0  -3.0   2.0   0.0   0.0   0.0
   3.0   0.0  -1.0   0.0   0.0   0.0
  -2.0   1.0   0.0   0.0   0.0   0.0
@@ -804,7 +803,7 @@ Computes inverse dynamics in the space frame for an open chain robot.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
   74.69616155287451 
  -33.06766015851458 
   -3.230573137901424
@@ -819,7 +818,7 @@ function InverseDynamics(thetalist::Array,
                              Glist::Array,
                              Slist::AbstractMatrix)
     n = length(thetalist)
-    Mi = linalg.I
+    Mi = LA.I
     Ai = zeros(eltype(thetalist), 6, n)
     AdTi = Array{Array{eltype(thetalist), 2}}(undef, n + 1)
     Vi = zeros(eltype(thetalist), 6, n + 1)
@@ -856,7 +855,7 @@ Computes the mass matrix of an open chain robot based on the given configuration
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MassMatrix(thetalist, Mlist, Glist, Slist)
-3×3 Array{Float64,2}:
+3×3 Matrix{Float64}:
  22.5433      -0.307147  -0.00718426
  -0.307147     1.96851    0.432157  
  -0.00718426   0.432157   0.191631  
@@ -887,7 +886,7 @@ Computes the Coriolis and centripetal terms in the inverse dynamics of an open c
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
   0.26453118054501235 
  -0.0550515682891655  
  -0.006891320068248911
@@ -910,7 +909,7 @@ Computes the joint forces/torques an open chain robot requires to overcome gravi
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> GravityForces(thetalist, g, Mlist, Glist, Slist)
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
   28.40331261821983  
  -37.64094817177068  
   -5.4415891999683605
@@ -942,18 +941,16 @@ This function calls InverseDynamics with `g = 0`, `dthetalist = 0`, and `ddtheta
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> import LinearAlgebra
-
-julia> const linalg = LinearAlgebra;
+julia> import LinearAlgebra as LA
 
 julia> thetalist = [0.1, 0.1, 0.1]
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  0.1
  0.1
  0.1
 
 julia> Ftip = [1, 1, 1, 1, 1, 1]
-6-element Array{Int64,1}:
+6-element Vector{Int64}:
  1
  1
  1
@@ -965,51 +962,51 @@ julia> M01 = [1 0 0        0;
               0 1 0        0;
               0 0 1 0.089159;
               0 0 0        1]
-4×4 Array{Float64,2}:
- 1.0  0.0  0.0  0.0     
- 0.0  1.0  0.0  0.0     
+4×4 Matrix{Float64}:
+ 1.0  0.0  0.0  0.0
+ 0.0  1.0  0.0  0.0
  0.0  0.0  1.0  0.089159
- 0.0  0.0  0.0  1.0     
+ 0.0  0.0  0.0  1.0
 
 julia> M12 = [ 0 0 1    0.28;
                0 1 0 0.13585;
               -1 0 0       0;
                0 0 0       1]
-4×4 Array{Float64,2}:
-  0.0  0.0  1.0  0.28   
+4×4 Matrix{Float64}:
+  0.0  0.0  1.0  0.28
   0.0  1.0  0.0  0.13585
- -1.0  0.0  0.0  0.0    
-  0.0  0.0  0.0  1.0    
+ -1.0  0.0  0.0  0.0
+  0.0  0.0  0.0  1.0
 
 julia> M23 = [1 0 0       0;
               0 1 0 -0.1197;
               0 0 1   0.395;
               0 0 0       1]
-4×4 Array{Float64,2}:
- 1.0  0.0  0.0   0.0   
+4×4 Matrix{Float64}:
+ 1.0  0.0  0.0   0.0
  0.0  1.0  0.0  -0.1197
- 0.0  0.0  1.0   0.395 
- 0.0  0.0  0.0   1.0   
+ 0.0  0.0  1.0   0.395
+ 0.0  0.0  0.0   1.0
 
 julia> M34 = [1 0 0       0;
               0 1 0       0;
               0 0 1 0.14225;
               0 0 0       1]
-4×4 Array{Float64,2}:
- 1.0  0.0  0.0  0.0    
- 0.0  1.0  0.0  0.0    
+4×4 Matrix{Float64}:
+ 1.0  0.0  0.0  0.0
+ 0.0  1.0  0.0  0.0
  0.0  0.0  1.0  0.14225
- 0.0  0.0  0.0  1.0    
+ 0.0  0.0  0.0  1.0
 
 julia> Mlist = [M01, M12, M23, M34]
-4-element Array{Array{Float64,2},1}:
- [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.089159; 0.0 0.0 0.0 1.0] 
+4-element Vector{Matrix{Float64}}:
+ [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.089159; 0.0 0.0 0.0 1.0]
  [0.0 0.0 1.0 0.28; 0.0 1.0 0.0 0.13585; -1.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.0]
  [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 -0.1197; 0.0 0.0 1.0 0.395; 0.0 0.0 0.0 1.0]
- [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.14225; 0.0 0.0 0.0 1.0]  
+ [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.14225; 0.0 0.0 0.0 1.0]
 
-julia> G1 = linalg.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
-6×6 LinearAlgebra.Diagonal{Float64,Array{Float64,1}}:
+julia> G1 = LA.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
+6×6 LinearAlgebra.Diagonal{Float64, Vector{Float64}}:
  0.010267   ⋅         ⋅        ⋅    ⋅    ⋅ 
   ⋅        0.010267   ⋅        ⋅    ⋅    ⋅ 
   ⋅         ⋅        0.00666   ⋅    ⋅    ⋅ 
@@ -1017,46 +1014,46 @@ julia> G1 = linalg.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
   ⋅         ⋅         ⋅        ⋅   3.7   ⋅ 
   ⋅         ⋅         ⋅        ⋅    ⋅   3.7
 
-julia> G2 = linalg.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
-6×6 LinearAlgebra.Diagonal{Float64,Array{Float64,1}}:
- 0.22689   ⋅        ⋅          ⋅      ⋅      ⋅   
-  ⋅       0.22689   ⋅          ⋅      ⋅      ⋅   
-  ⋅        ⋅       0.0151074   ⋅      ⋅      ⋅   
-  ⋅        ⋅        ⋅         8.393   ⋅      ⋅   
-  ⋅        ⋅        ⋅          ⋅     8.393   ⋅   
+julia> G2 = LA.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
+6×6 LinearAlgebra.Diagonal{Float64, Vector{Float64}}:
+ 0.22689   ⋅        ⋅          ⋅      ⋅      ⋅ 
+  ⋅       0.22689   ⋅          ⋅      ⋅      ⋅ 
+  ⋅        ⋅       0.0151074   ⋅      ⋅      ⋅ 
+  ⋅        ⋅        ⋅         8.393   ⋅      ⋅ 
+  ⋅        ⋅        ⋅          ⋅     8.393   ⋅ 
   ⋅        ⋅        ⋅          ⋅      ⋅     8.393
 
-julia> G3 = linalg.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
-6×6 LinearAlgebra.Diagonal{Float64,Array{Float64,1}}:
- 0.0494433   ⋅          ⋅         ⋅      ⋅      ⋅   
-  ⋅         0.0494433   ⋅         ⋅      ⋅      ⋅   
-  ⋅          ⋅         0.004095   ⋅      ⋅      ⋅   
-  ⋅          ⋅          ⋅        2.275   ⋅      ⋅   
-  ⋅          ⋅          ⋅         ⋅     2.275   ⋅   
+julia> G3 = LA.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
+6×6 LinearAlgebra.Diagonal{Float64, Vector{Float64}}:
+ 0.0494433   ⋅          ⋅         ⋅      ⋅      ⋅ 
+  ⋅         0.0494433   ⋅         ⋅      ⋅      ⋅ 
+  ⋅          ⋅         0.004095   ⋅      ⋅      ⋅ 
+  ⋅          ⋅          ⋅        2.275   ⋅      ⋅ 
+  ⋅          ⋅          ⋅         ⋅     2.275   ⋅ 
   ⋅          ⋅          ⋅         ⋅      ⋅     2.275
 
 julia> Glist = [G1, G2, G3]
-3-element Array{LinearAlgebra.Diagonal{Float64,Array{Float64,1}},1}:
- [0.010267 0.0 … 0.0 0.0; 0.0 0.010267 … 0.0 0.0; … ; 0.0 0.0 … 3.7 0.0; 0.0 0.0 … 0.0 3.7]      
- [0.22689 0.0 … 0.0 0.0; 0.0 0.22689 … 0.0 0.0; … ; 0.0 0.0 … 8.393 0.0; 0.0 0.0 … 0.0 8.393]    
+3-element Vector{LinearAlgebra.Diagonal{Float64, Vector{Float64}}}:
+ [0.010267 0.0 … 0.0 0.0; 0.0 0.010267 … 0.0 0.0; … ; 0.0 0.0 … 3.7 0.0; 0.0 0.0 … 0.0 3.7]
+ [0.22689 0.0 … 0.0 0.0; 0.0 0.22689 … 0.0 0.0; … ; 0.0 0.0 … 8.393 0.0; 0.0 0.0 … 0.0 8.393]
  [0.0494433 0.0 … 0.0 0.0; 0.0 0.0494433 … 0.0 0.0; … ; 0.0 0.0 … 2.275 0.0; 0.0 0.0 … 0.0 2.275]
 
 julia> Slist = [ 1  0  1      0  1      0;
                  0  1  0 -0.089  0      0;
                  0  1  0 -0.089  0  0.425]'
-6×3 LinearAlgebra.Adjoint{Float64,Array{Float64,2}}:
- 1.0   0.0     0.0  
- 0.0   1.0     1.0  
- 1.0   0.0     0.0  
+6×3 adjoint(::Matrix{Float64}) with eltype Float64:
+ 1.0   0.0     0.0
+ 0.0   1.0     1.0
+ 1.0   0.0     0.0
  0.0  -0.089  -0.089
- 1.0   0.0     0.0  
+ 1.0   0.0     0.0
  0.0   0.0     0.425
 
 julia> EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist)
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
  1.4095460782639782
- 1.8577149723180628
- 1.392409          
+ 1.857714972318063
+ 1.392409
 ```
 """
 function EndEffectorForces(thetalist::Array,
@@ -1076,7 +1073,7 @@ Computes forward dynamics in the space frame for an open chain robot.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist)
-3-element Array{Float64,1}:
+3-element Vector{Float64}:
   -0.9739290670855626
   25.584667840340558 
  -32.91499212478149  
@@ -1090,7 +1087,7 @@ function ForwardDynamics(thetalist::Array,
                              Mlist::Array,
                              Glist::Array,
                              Slist::AbstractMatrix)
-    linalg.inv(MassMatrix(thetalist, Mlist, Glist, Slist)) *
+    LA.inv(MassMatrix(thetalist, Mlist, Glist, Slist)) *
     (taulist - VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
              - GravityForces(thetalist, g, Mlist, Glist, Slist)
              - EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist))
@@ -1114,7 +1111,7 @@ Compute the joint angles and velocities at the next timestep using first order E
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)
-([0.11, 0.12, 0.13], [0.3, 0.35, 0.4])
+([0.11000000000000001, 0.12000000000000001, 0.13], [0.30000000000000004, 0.35000000000000003, 0.4])
 ```
 """
 function EulerStep(thetalist::Array, dthetalist::Array, ddthetalist::Array, dt::Number)
