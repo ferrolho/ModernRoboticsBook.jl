@@ -149,7 +149,7 @@ Converts a 3-vector of exponential coordinates for rotation into axis-angle form
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> AxisAng3([1, 2, 3])
-([0.267261, 0.534522, 0.801784], 3.7416573867739413)
+([0.2672612419124244, 0.5345224838248488, 0.8017837257372732], 3.7416573867739413)
 ```
 """
 AxisAng3(expc3::Array) = Normalize(expc3), LA.norm(expc3)
@@ -799,15 +799,6 @@ end
     InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
 
 Computes inverse dynamics in the space frame for an open chain robot.
-
-# Examples
-```jldoctest; setup = :(using ModernRoboticsBook)
-julia> InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
-3-element Vector{Float64}:
-  74.69616155287451 
- -33.06766015851458 
-  -3.230573137901424
-```
 """
 function InverseDynamics(thetalist::Array,
                         dthetalist::Array,
@@ -851,15 +842,6 @@ end
     MassMatrix(thetalist, Mlist, Glist, Slist)
 
 Computes the mass matrix of an open chain robot based on the given configuration.
-
-# Examples
-```jldoctest; setup = :(using ModernRoboticsBook)
-julia> MassMatrix(thetalist, Mlist, Glist, Slist)
-3×3 Matrix{Float64}:
- 22.5433      -0.307147  -0.00718426
- -0.307147     1.96851    0.432157  
- -0.00718426   0.432157   0.191631  
-```
 """
 function MassMatrix(thetalist::Array,
                         Mlist::Array,
@@ -882,15 +864,6 @@ end
     VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
 
 Computes the Coriolis and centripetal terms in the inverse dynamics of an open chain robot.
-
-# Examples
-```jldoctest; setup = :(using ModernRoboticsBook)
-julia> VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
-3-element Vector{Float64}:
-  0.26453118054501235 
- -0.0550515682891655  
- -0.006891320068248911
-```
 """
 function VelQuadraticForces(thetalist::Array,
                            dthetalist::Array,
@@ -905,15 +878,6 @@ end
     GravityForces(thetalist, g, Mlist, Glist, Slist)
 
 Computes the joint forces/torques an open chain robot requires to overcome gravity at its configuration.
-
-# Examples
-```jldoctest; setup = :(using ModernRoboticsBook)
-julia> GravityForces(thetalist, g, Mlist, Glist, Slist)
-3-element Vector{Float64}:
-  28.40331261821983  
- -37.64094817177068  
-  -5.4415891999683605
-```
 """
 function GravityForces(thetalist::Array,
                                g::Array,
@@ -1069,15 +1033,6 @@ end
     ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist)
 
 Computes forward dynamics in the space frame for an open chain robot.
-
-# Examples
-```jldoctest; setup = :(using ModernRoboticsBook)
-julia> ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist)
-3-element Vector{Float64}:
-  -0.9739290670855626
-  25.584667840340558 
- -32.91499212478149  
-```
 """
 function ForwardDynamics(thetalist::Array,
                         dthetalist::Array,
