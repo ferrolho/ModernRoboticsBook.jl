@@ -13,23 +13,22 @@ julia:
 codecov: true
 coveralls: true
 
-# Uncomment the following lines to allow failures on nightly julia
-# (tests will run but not make your overall status red)
-matrix:
-  allow_failures:
-    - julia: nightly
-  fast_finish: true
-
 notifications:
   email: false
 
 jobs:
+  # Uncomment the following lines to allow failures on nightly julia
+  # (tests will run but not make your overall status red)
+  allow_failures:
+    - julia: nightly
+  fast_finish: true
+
   include:
-    - stage: Documentation
+    - stage: "Documentation"
       julia: 1.6
-      script: julia --project=docs -e '
-          using Pkg;
-          Pkg.develop(PackageSpec(path=pwd()));
-          Pkg.instantiate();
-          include("docs/make.jl");'
+      os: linux
+      script:
+        - julia --project=docs/ -e 'using Pkg; Pkg.develop(PackageSpec(path=pwd()));
+                                               Pkg.instantiate()'
+        - julia --project=docs/ docs/make.jl
       after_success: skip

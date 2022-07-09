@@ -26,8 +26,8 @@ julia> import Pkg; Pkg.add("ModernRoboticsBook")
 [docs-dev-img]: https://img.shields.io/badge/docs-dev-blue.svg
 [docs-dev-url]: https://ferrolho.github.io/ModernRoboticsBook.jl/dev
 
-[travis-img]: https://travis-ci.com/ferrolho/ModernRoboticsBook.jl.svg?branch=master
-[travis-url]: https://travis-ci.com/ferrolho/ModernRoboticsBook.jl
+[travis-img]: https://app.travis-ci.com/ferrolho/ModernRoboticsBook.jl.svg?branch=master
+[travis-url]: https://app.travis-ci.com/ferrolho/ModernRoboticsBook.jl
 
 [appveyor-img]: https://ci.appveyor.com/api/projects/status/github/ferrolho/ModernRoboticsBook.jl?svg=true
 [appveyor-url]: https://ci.appveyor.com/project/ferrolho/ModernRoboticsBook-jl
