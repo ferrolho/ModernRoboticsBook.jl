@@ -1,15 +1,12 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · ModernRoboticsBook.jl</title><script>(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-})(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
-
-ga('create', 'UA-72743607-4', 'auto');
-ga('send', 'pageview');
-</script><link href="https://cdnjs.cloudflare.com/ajax/libs/normalize/4.2.0/normalize.min.css" rel="stylesheet" type="text/css"/><link href="https://fonts.googleapis.com/css?family=Lato|Roboto+Mono" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.2.0/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link href="../../assets/documenter.css" rel="stylesheet" type="text/css"/></head><body><nav class="toc"><h1>ModernRoboticsBook.jl</h1><select id="version-selector" onChange="window.location.href=this.value" style="visibility: hidden"></select><form class="search" id="search-form" action="../../search/"><input id="search-query" name="q" type="text" placeholder="Search docs"/></form><ul><li><a class="toctext" href="../../">Home</a></li><li><span class="toctext">Manual</span><ul><li class="current"><a class="toctext" href>Examples</a><ul class="internal"><li><a class="toctext" href="#Contents-1">Contents</a></li><li><a class="toctext" href="#Inverse-Dynamics-Trajectory-1">Inverse Dynamics Trajectory</a></li><li><a class="toctext" href="#Forward-Dynamics-Trajectory-1">Forward Dynamics Trajectory</a></li><li><a class="toctext" href="#Simulate-Control-1">Simulate Control</a></li></ul></li></ul></li><li><span class="toctext">Library</span><ul><li><a class="toctext" href="../../lib/public/">Public</a></li></ul></li></ul></nav><article id="docs"><header><nav><ul><li>Manual</li><li><a href>Examples</a></li></ul><a class="edit-page" href="https://github.com/ferrolho/ModernRoboticsBook.jl/blob/master/docs/src/man/examples.md#L"><span class="fa"></span> Edit on GitHub</a></nav><hr/><div id="topbar"><span>Examples</span><a class="fa fa-bars" href="#"></a></div></header><h1><a class="nav-anchor" id="Examples-1" href="#Examples-1">Examples</a></h1><p>Here are some examples for Forward and Inverse Dynamics Trajectories, and Control Simulation.</p><h2><a class="nav-anchor" id="Contents-1" href="#Contents-1">Contents</a></h2><ul><li><a href="#Examples-1">Examples</a></li><ul><li><a href="#Contents-1">Contents</a></li><li><a href="#Inverse-Dynamics-Trajectory-1">Inverse Dynamics Trajectory</a></li><li><a href="#Forward-Dynamics-Trajectory-1">Forward Dynamics Trajectory</a></li><li><a href="#Simulate-Control-1">Simulate Control</a></li></ul></ul><h2><a class="nav-anchor" id="Inverse-Dynamics-Trajectory-1" href="#Inverse-Dynamics-Trajectory-1">Inverse Dynamics Trajectory</a></h2><pre><code class="language-julia">using ModernRoboticsBook
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Examples · ModernRoboticsBook.jl</title><script async src="https://www.googletagmanager.com/gtag/js?id=UA-72743607-4"></script><script>  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'UA-72743607-4', {'page_path': location.pathname + location.search + location.hash});
+</script><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.045/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.13.24/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">ModernRoboticsBook.jl</a></span></div><form class="docs-search" action="../../search/"><input class="docs-search-query" id="documenter-search-query" name="q" type="text" placeholder="Search docs"/></form><ul class="docs-menu"><li><a class="tocitem" href="../../">Home</a></li><li><span class="tocitem">Manual</span><ul><li class="is-active"><a class="tocitem" href>Examples</a><ul class="internal"><li><a class="tocitem" href="#Contents"><span>Contents</span></a></li><li><a class="tocitem" href="#Inverse-Dynamics-Trajectory"><span>Inverse Dynamics Trajectory</span></a></li><li><a class="tocitem" href="#Forward-Dynamics-Trajectory"><span>Forward Dynamics Trajectory</span></a></li><li><a class="tocitem" href="#Simulate-Control"><span>Simulate Control</span></a></li></ul></li></ul></li><li><span class="tocitem">Library</span><ul><li><a class="tocitem" href="../../lib/public/">Public</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Manual</a></li><li class="is-active"><a href>Examples</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Examples</a></li></ul></nav><div class="docs-right"><a class="docs-edit-link" href="https://github.com/ferrolho/ModernRoboticsBook.jl/blob/master/docs/src/man/examples.md#L" title="Edit on GitHub"><span class="docs-icon fab"></span><span class="docs-label is-hidden-touch">Edit on GitHub</span></a><a class="docs-settings-button fas fa-cog" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-sidebar-button fa fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a></div></header><article class="content" id="documenter-page"><h1 id="Examples"><a class="docs-heading-anchor" href="#Examples">Examples</a><a id="Examples-1"></a><a class="docs-heading-anchor-permalink" href="#Examples" title="Permalink"></a></h1><p>Here are some examples for Forward and Inverse Dynamics Trajectories, and Control Simulation.</p><h2 id="Contents"><a class="docs-heading-anchor" href="#Contents">Contents</a><a id="Contents-1"></a><a class="docs-heading-anchor-permalink" href="#Contents" title="Permalink"></a></h2><ul><li><a href="#Examples">Examples</a></li><li class="no-marker"><ul><li><a href="#Contents">Contents</a></li><li><a href="#Inverse-Dynamics-Trajectory">Inverse Dynamics Trajectory</a></li><li><a href="#Forward-Dynamics-Trajectory">Forward Dynamics Trajectory</a></li><li><a href="#Simulate-Control">Simulate Control</a></li></ul></li></ul><h2 id="Inverse-Dynamics-Trajectory"><a class="docs-heading-anchor" href="#Inverse-Dynamics-Trajectory">Inverse Dynamics Trajectory</a><a id="Inverse-Dynamics-Trajectory-1"></a><a class="docs-heading-anchor-permalink" href="#Inverse-Dynamics-Trajectory" title="Permalink"></a></h2><pre><code class="language-julia hljs">using ModernRoboticsBook
 
 import LinearAlgebra
-const linalg = LinearAlgebra;</code></pre><p>Create a trajectory to follow using functions from Chapter 9:</p><pre><code class="language-julia">thetastart = [0, 0, 0]
+const linalg = LinearAlgebra;</code></pre><p>Create a trajectory to follow using functions from Chapter 9:</p><pre><code class="language-julia hljs">thetastart = [0, 0, 0]
 
 thetaend = [π / 2, π / 2, π / 2]
 
@@ -30,7 +27,7 @@ dt = Tf / (N - 1.0)
 for i = 1:size(traj, 1) - 1
     dthetamat[i + 1, :] = (thetamat[i + 1, :] - thetamat[i, :]) / dt
     ddthetamat[i + 1, :] = (dthetamat[i + 1, :] - dthetamat[i, :]) / dt
-end</code></pre><p>Initialize robot description (example with 3 links):</p><pre><code class="language-julia">g = [0, 0, -9.8]
+end</code></pre><p>Initialize robot description (example with 3 links):</p><pre><code class="language-julia hljs">g = [0, 0, -9.8]
 
 Ftipmat = ones(N, 6)
 
@@ -66,7 +63,7 @@ Slist = [ 1 0 1      0 1     0 ;
           0 1 0 -0.089 0     0 ;
           0 1 0 -0.089 0 0.425 ]&#39;
 
-taumat = InverseDynamicsTrajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)</code></pre><p>Plot the joint forces/torques:</p><pre><code class="language-julia">using Plots
+taumat = InverseDynamicsTrajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)</code></pre><p>Plot the joint forces/torques:</p><pre><code class="language-julia hljs">using Plots
 gr()
 
 timestamp = range(1, Tf, length=N)
@@ -77,7 +74,7 @@ plot!(timestamp, taumat[:, 3], linewidth=2, label=&quot;Tau 3&quot;)
 
 xlabel!(&quot;Time&quot;)
 ylabel!(&quot;Torque&quot;)
-title!(&quot;Plot of Torque Trajectories&quot;)</code></pre><p><img src="../../assets/examples/inverse_dynamics_trajectory.svg" alt="inverse_dynamics_trajectory"/></p><h2><a class="nav-anchor" id="Forward-Dynamics-Trajectory-1" href="#Forward-Dynamics-Trajectory-1">Forward Dynamics Trajectory</a></h2><pre><code class="language-julia">dt = 0.1
+title!(&quot;Plot of Torque Trajectories&quot;)</code></pre><p><img src="../../assets/examples/inverse_dynamics_trajectory.svg" alt="inverse_dynamics_trajectory"/></p><h2 id="Forward-Dynamics-Trajectory"><a class="docs-heading-anchor" href="#Forward-Dynamics-Trajectory">Forward Dynamics Trajectory</a><a id="Forward-Dynamics-Trajectory-1"></a><a class="docs-heading-anchor-permalink" href="#Forward-Dynamics-Trajectory" title="Permalink"></a></h2><pre><code class="language-julia hljs">dt = 0.1
 
 intRes = 8
 
@@ -94,7 +91,7 @@ taumat = [[3.63, -6.58, -5.57], [3.74, -5.55,  -5.5],
 taumat = cat(taumat..., dims=2)&#39;
 
 thetamat, dthetamat = ForwardDynamicsTrajectory(thetalist, dthetalist, taumat, g,
-                                                Ftipmat, Mlist, Glist, Slist, dt, intRes)</code></pre><p>Plot the joint angle/velocities:</p><pre><code class="language-julia">theta1 = thetamat[:, 1]
+                                                Ftipmat, Mlist, Glist, Slist, dt, intRes)</code></pre><p>Plot the joint angle/velocities:</p><pre><code class="language-julia hljs">theta1 = thetamat[:, 1]
 theta2 = thetamat[:, 2]
 theta3 = thetamat[:, 3]
 
@@ -117,7 +114,7 @@ plot!(timestamp, dtheta3, linewidth=2, label=&quot;DTheta3&quot;)
 
 xlabel!(&quot;Time&quot;)
 ylabel!(&quot;Joint Angles/Velocities&quot;)
-title!(&quot;Plot of Joint Angles and Joint Velocities&quot;)</code></pre><p><img src="../../assets/examples/forward_dynamics_trajectory.svg" alt="forward_dynamics_trajectory"/></p><h2><a class="nav-anchor" id="Simulate-Control-1" href="#Simulate-Control-1">Simulate Control</a></h2><p>Create a trajectory to follow:</p><pre><code class="language-julia">thetaend = [π / 2, π, 1.5 * π]
+title!(&quot;Plot of Joint Angles and Joint Velocities&quot;)</code></pre><p><img src="../../assets/examples/forward_dynamics_trajectory.svg" alt="forward_dynamics_trajectory"/></p><h2 id="Simulate-Control"><a class="docs-heading-anchor" href="#Simulate-Control">Simulate Control</a><a id="Simulate-Control-1"></a><a class="docs-heading-anchor-permalink" href="#Simulate-Control" title="Permalink"></a></h2><p>Create a trajectory to follow:</p><pre><code class="language-julia hljs">thetaend = [π / 2, π, 1.5 * π]
 
 Tf = 1
 dt = 0.01
@@ -135,7 +132,7 @@ dt = Tf / (N - 1)
 for i = 1:size(traj, 1)-1
     dthetamatd[i + 1, :] = (thetamatd[i + 1, :] - thetamatd[i, :]) / dt
     ddthetamatd[i + 1, :] = (dthetamatd[i + 1, :] - dthetamatd[i, :]) / dt
-end</code></pre><p>Create a (possibly) wrong robot description:</p><pre><code class="language-julia">gtilde = [0.8, 0.2, -8.8]
+end</code></pre><p>Create a (possibly) wrong robot description:</p><pre><code class="language-julia hljs">gtilde = [0.8, 0.2, -8.8]
 
 Mhat01 = [1 0 0   0 ;
           0 1 0   0 ;
@@ -175,7 +172,7 @@ intRes = 8
 
 taumat, thetamat = SimulateControl(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
                                    Slist, thetamatd, dthetamatd, ddthetamatd, gtilde,
-                                   Mtildelist, Gtildelist, Kp, Ki, Kd, dt, intRes)</code></pre><p>Finally, plot the results:</p><pre><code class="language-julia">N, links = size(thetamat)
+                                   Mtildelist, Gtildelist, Kp, Ki, Kd, dt, intRes)</code></pre><p>Finally, plot the results:</p><pre><code class="language-julia hljs">N, links = size(thetamat)
 
 Tf = N * dt
 
@@ -190,4 +187,4 @@ end
 
 xlabel!(&quot;Time&quot;)
 ylabel!(&quot;Joint Angles&quot;)
-title!(&quot;Plot of Actual and Desired Joint Angles&quot;)</code></pre><p><img src="../../assets/examples/simulated_control.svg" alt="simulated_control"/></p><footer><hr/><a class="previous" href="../../"><span class="direction">Previous</span><span class="title">Home</span></a><a class="next" href="../../lib/public/"><span class="direction">Next</span><span class="title">Public</span></a></footer></article></body></html>
+title!(&quot;Plot of Actual and Desired Joint Angles&quot;)</code></pre><p><img src="../../assets/examples/simulated_control.svg" alt="simulated_control"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../lib/public/">Public »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 0.27.20 on <span class="colophon-date" title="Sunday 10 July 2022 20:46">Sunday 10 July 2022</span>. Using Julia version 1.6.6.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
