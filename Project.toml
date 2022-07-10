@@ -1,7 +1,7 @@
 name = "ModernRoboticsBook"
 uuid = "5e1d693a-52d4-54aa-90a0-6f94c7384aed"
 authors = ["Henrique Ferrolho <henriqueferrolho@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
