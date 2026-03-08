@@ -81,7 +81,7 @@ julia> Normalize([1, 2, 3])
  0.8017837257372732
 ```
 """
-Normalize(V::Array) = V / LA.norm(V)
+Normalize(V::AbstractVector) = V / LA.norm(V)
 
 # """
 # *** CHAPTER 3: RIGID-BODY MOTIONS ***
@@ -101,7 +101,7 @@ julia> RotInv([0 0 1; 1 0 0; 0 1 0])
  1  0  0
 ```
 """
-RotInv(R::Array) = R'
+RotInv(R::AbstractMatrix) = R'
 
 """
     VecToso3(ω)
@@ -117,7 +117,7 @@ julia> VecToso3([1 2 3])
  -2   1   0
 ```
 """
-function VecToso3(ω::Array)
+function VecToso3(ω::AbstractArray)
     [ 0    -ω[3]  ω[2];
       ω[3]  0    -ω[1];
      -ω[2]  ω[1]  0   ]
@@ -137,7 +137,7 @@ julia> so3ToVec([0 -3 2; 3 0 -1; -2 1 0])
  3
 ```
 """
-function so3ToVec(so3mat::Array)
+function so3ToVec(so3mat::AbstractMatrix)
     [so3mat[3, 2], so3mat[1, 3], so3mat[2, 1]]
 end
 
@@ -152,7 +152,7 @@ julia> AxisAng3([1, 2, 3])
 ([0.2672612419124244, 0.5345224838248488, 0.8017837257372732], 3.7416573867739413)
 ```
 """
-AxisAng3(expc3::Array) = Normalize(expc3), LA.norm(expc3)
+AxisAng3(expc3::AbstractVector) = Normalize(expc3), LA.norm(expc3)
 
 """
     MatrixExp3(so3mat)
@@ -168,7 +168,7 @@ julia> MatrixExp3([0 -3 2; 3 0 -1; -2 1 0])
   0.692978   0.63135   0.348107 
 ```
 """
-function MatrixExp3(so3mat::Array)
+function MatrixExp3(so3mat::AbstractMatrix)
     omgtheta = so3ToVec(so3mat)
     if NearZero(LA.norm(omgtheta))
         return Matrix{Float64}(LA.I, 3, 3)
@@ -193,7 +193,7 @@ julia> MatrixLog3([0 0 1; 1 0 0; 0 1 0])
  -1.2092   1.2092   0.0   
 ```
 """
-function MatrixLog3(R::Array)
+function MatrixLog3(R::AbstractMatrix)
     acosinput = (LA.tr(R) - 1) / 2
     if acosinput >= 1
         return zeros(3, 3)
@@ -227,7 +227,7 @@ julia> RpToTrans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
  0  0   0  1
 ```
 """
-RpToTrans(R::Array, p::Array) = vcat(hcat(R, p), [0 0 0 1])
+RpToTrans(R::AbstractMatrix, p::AbstractVector) = vcat(hcat(R, p), [0 0 0 1])
 
 """
     TransToRp(T)
@@ -240,7 +240,7 @@ julia> TransToRp([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ([1 0 0; 0 0 -1; 0 1 0], [0, 0, 3])
 ```
 """
-TransToRp(T::Array) = T[1:3, 1:3], T[1:3, 4]
+TransToRp(T::AbstractMatrix) = T[1:3, 1:3], T[1:3, 4]
 
 """
     TransInv(T)
@@ -257,7 +257,7 @@ julia> TransInv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
  0   0  0   1
 ```
 """
-function TransInv(T::Array)
+function TransInv(T::AbstractMatrix)
     R, p = TransToRp(T)
     vcat(hcat(R', -R' * p), [0 0 0 1])
 end
@@ -277,7 +277,7 @@ julia> VecTose3([1 2 3 4 5 6])
   0.0   0.0   0.0  0.0
 ```
 """
-VecTose3(V::Array) = vcat(hcat(VecToso3(V[1:3]), V[4:6]), zeros(1, 4))
+VecTose3(V::AbstractArray) = vcat(hcat(VecToso3(V[1:3]), V[4:6]), zeros(1, 4))
 
 """
     se3ToVec(se3mat)
@@ -296,7 +296,7 @@ julia> se3ToVec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
  6
 ```
 """
-se3ToVec(se3mat::Array) = vcat([se3mat[3, 2],
+se3ToVec(se3mat::AbstractMatrix) = vcat([se3mat[3, 2],
                                 se3mat[1, 3],
                                 se3mat[2, 1]], se3mat[1:3, 4])
 
@@ -317,7 +317,7 @@ julia> Adjoint([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
  0.0  0.0   0.0  0.0  1.0   0.0
 ```
 """
-function Adjoint(T::Array)
+function Adjoint(T::AbstractMatrix)
     R, p = TransToRp(T)
     vcat(hcat(R, zeros(3, 3)), hcat(VecToso3(p) * R, R))
 end
@@ -339,7 +339,7 @@ julia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)
   2
 ```
 """
-ScrewToAxis(q::Array, s::Array, h::Number) = vcat(s, LA.cross(q, s) + h * s)
+ScrewToAxis(q::AbstractVector, s::AbstractVector, h::Number) = vcat(s, LA.cross(q, s) + h * s)
 
 """
     AxisAng6(expc6)
@@ -352,7 +352,7 @@ julia> AxisAng6([1, 0, 0, 1, 2, 3])
 ([1.0, 0.0, 0.0, 1.0, 2.0, 3.0], 1.0)
 ```
 """
-function AxisAng6(expc6::Array)
+function AxisAng6(expc6::AbstractVector)
     θ = LA.norm(expc6[1:3])
     if NearZero(θ)
         θ = LA.norm(expc6[3:6])
@@ -375,7 +375,7 @@ julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.3561944
  0.0  0.0         0.0        1.0       
 ```
 """
-function MatrixExp6(se3mat::Array)
+function MatrixExp6(se3mat::AbstractMatrix)
     omgtheta = so3ToVec(se3mat[1:3, 1:3])
     if NearZero(LA.norm(omgtheta))
         return vcat(hcat(Matrix{Float64}(LA.I, 3, 3), se3mat[1:3, 4]), [0 0 0 1])
@@ -406,7 +406,7 @@ julia> MatrixLog6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
  0.0  0.0      0.0     0.0    
 ```
 """
-function MatrixLog6(T::Array)
+function MatrixLog6(T::AbstractMatrix)
     R, p = TransToRp(T)
     omgmat = MatrixLog3(R)
     if iszero(omgmat)
@@ -435,7 +435,7 @@ julia> ProjectToSO3([0.675 0.150  0.720; 0.370 0.771 -0.511; -0.630 0.619  0.472
  -0.632187  0.616428   0.469421
 ```
 """
-function ProjectToSO3(mat::Array)
+function ProjectToSO3(mat::AbstractMatrix)
     F  = LA.svd(mat)
     R = F.U * F.Vt
     if LA.det(R) < 0
@@ -461,7 +461,7 @@ julia> ProjectToSE3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.619
   0.0       0.0        0.0       1.0
 ```
 """
-ProjectToSE3(mat::Array) = RpToTrans(ProjectToSO3(mat[1:3, 1:3]), mat[1:3, 4])
+ProjectToSE3(mat::AbstractMatrix) = RpToTrans(ProjectToSO3(mat[1:3, 1:3]), mat[1:3, 4])
 
 """
     DistanceToSO3(mat)
@@ -474,7 +474,7 @@ julia> DistanceToSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 0.08835298523536149
 ```
 """
-DistanceToSO3(mat::Array) = LA.det(mat) > 0 ? LA.norm(mat'mat - LA.I) : 1e+9
+DistanceToSO3(mat::AbstractMatrix) = LA.det(mat) > 0 ? LA.norm(mat'mat - LA.I) : 1e+9
 
 """
     DistanceToSE3(mat)
@@ -487,7 +487,7 @@ julia> DistanceToSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 
 0.13493053768513638
 ```
 """
-function DistanceToSE3(mat::Array)
+function DistanceToSE3(mat::AbstractMatrix)
     matR = mat[1:3, 1:3]
     if LA.det(matR) > 0
         LA.norm(hcat(vcat(matR'matR, zeros(1, 3)), mat[4, :]) - LA.I)
@@ -507,7 +507,7 @@ julia> TestIfSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 false
 ```
 """
-TestIfSO3(mat::Array) = abs(DistanceToSO3(mat)) < 1e-3
+TestIfSO3(mat::AbstractMatrix) = abs(DistanceToSO3(mat)) < 1e-3
 
 """
     TestIfSE3(mat)
@@ -520,7 +520,7 @@ julia> TestIfSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 
 false
 ```
 """
-TestIfSE3(mat::Array) = abs(DistanceToSE3(mat)) < 1e-3
+TestIfSE3(mat::AbstractMatrix) = abs(DistanceToSE3(mat)) < 1e-3
 
 # """
 # *** CHAPTER 4: FORWARD KINEMATICS ***
@@ -552,7 +552,7 @@ julia> FKinBody(M, Blist, thetalist)
   0.0          0.0           0.0   1.0    
 ```
 """
-function FKinBody(M::AbstractMatrix, Blist::AbstractMatrix, thetalist::Array)
+function FKinBody(M::AbstractMatrix, Blist::AbstractMatrix, thetalist::AbstractVector)
     for i = 1:length(thetalist)
         M *= MatrixExp6(VecTose3(Blist[:, i] * thetalist[i]))
     end
@@ -585,7 +585,7 @@ julia> FKinSpace(M, Slist, thetalist)
   0.0          0.0           0.0   1.0    
 ```
 """
-function FKinSpace(M::AbstractMatrix, Slist::AbstractMatrix, thetalist::Array)
+function FKinSpace(M::AbstractMatrix, Slist::AbstractMatrix, thetalist::AbstractVector)
     for i = length(thetalist):-1:1
         M = MatrixExp6(VecTose3(Slist[:, i] * thetalist[i])) * M
     end
@@ -620,7 +620,7 @@ julia> JacobianBody(Blist, thetalist)
  -2.0664     1.82882    -1.58869   0.4
 ```
 """
-function JacobianBody(Blist::AbstractMatrix, thetalist::Array)
+function JacobianBody(Blist::AbstractMatrix, thetalist::AbstractVector)
     T = LA.I
     Jb = copy(Blist)
     for i = length(thetalist)-1:-1:1
@@ -654,7 +654,7 @@ julia> JacobianSpace(Slist, thetalist)
  0.2  2.96027    3.23573     2.22512  
 ```
 """
-function JacobianSpace(Slist::AbstractMatrix, thetalist::Array)
+function JacobianSpace(Slist::AbstractMatrix, thetalist::AbstractVector)
     T = LA.I
     Js = copy(Slist)
     for i = 2:length(thetalist)
@@ -700,7 +700,7 @@ julia> IKinBody(Blist, M, T, thetalist0, eomg, ev)
 function IKinBody(Blist::AbstractMatrix,
                       M::AbstractMatrix,
                       T::AbstractMatrix,
-             thetalist0::Array,
+             thetalist0::AbstractVector,
                    eomg::Number,
                      ev::Number)
     thetalist = copy(thetalist0)
@@ -749,7 +749,7 @@ julia> IKinSpace(Slist, M, T, thetalist0, eomg, ev)
 function IKinSpace(Slist::AbstractMatrix,
                        M::AbstractMatrix,
                        T::AbstractMatrix,
-              thetalist0::Array,
+              thetalist0::AbstractVector,
                     eomg::Number,
                       ev::Number)
     thetalist = copy(thetalist0)
@@ -789,7 +789,7 @@ julia> ad([1, 2, 3, 4, 5, 6])
  -5.0   4.0   0.0  -2.0   1.0   0.0
 ```
 """
-function ad(V::Array)
+function ad(V::AbstractVector)
     omgmat = VecToso3(V[1:3])
     vcat(hcat(omgmat, zeros(3, 3)),
          hcat(VecToso3(V[4:6]), omgmat))
@@ -800,13 +800,13 @@ end
 
 Computes inverse dynamics in the space frame for an open chain robot.
 """
-function InverseDynamics(thetalist::Array,
-                        dthetalist::Array,
-                       ddthetalist::Array,
-                                 g::Array,
-                              Ftip::Array,
-                             Mlist::Array,
-                             Glist::Array,
+function InverseDynamics(thetalist::AbstractVector,
+                        dthetalist::AbstractVector,
+                       ddthetalist::AbstractVector,
+                                 g::AbstractVector,
+                              Ftip::AbstractVector,
+                             Mlist::AbstractVector,
+                             Glist::AbstractVector,
                              Slist::AbstractMatrix)
     n = length(thetalist)
     Mi = LA.I
@@ -843,9 +843,9 @@ end
 
 Computes the mass matrix of an open chain robot based on the given configuration.
 """
-function MassMatrix(thetalist::Array,
-                        Mlist::Array,
-                        Glist::Array,
+function MassMatrix(thetalist::AbstractVector,
+                        Mlist::AbstractVector,
+                        Glist::AbstractVector,
                         Slist::AbstractMatrix)
     n = length(thetalist)
     M = zeros(n, n)
@@ -865,10 +865,10 @@ end
 
 Computes the Coriolis and centripetal terms in the inverse dynamics of an open chain robot.
 """
-function VelQuadraticForces(thetalist::Array,
-                           dthetalist::Array,
-                                Mlist::Array,
-                                Glist::Array,
+function VelQuadraticForces(thetalist::AbstractVector,
+                           dthetalist::AbstractVector,
+                                Mlist::AbstractVector,
+                                Glist::AbstractVector,
                                 Slist::AbstractMatrix)
     InverseDynamics(thetalist, dthetalist, zeros(length(thetalist)),
                     zeros(3), zeros(6), Mlist, Glist, Slist)
@@ -879,10 +879,10 @@ end
 
 Computes the joint forces/torques an open chain robot requires to overcome gravity at its configuration.
 """
-function GravityForces(thetalist::Array,
-                               g::Array,
-                           Mlist::Array,
-                           Glist::Array,
+function GravityForces(thetalist::AbstractVector,
+                               g::AbstractVector,
+                           Mlist::AbstractVector,
+                           Glist::AbstractVector,
                            Slist::AbstractMatrix)
     n = length(thetalist)
     InverseDynamics(thetalist, zeros(n), zeros(n), g, zeros(6), Mlist, Glist, Slist)
@@ -1020,10 +1020,10 @@ julia> EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist)
  1.392409
 ```
 """
-function EndEffectorForces(thetalist::Array,
-                                Ftip::Array,
-                               Mlist::Array,
-                               Glist::Array,
+function EndEffectorForces(thetalist::AbstractVector,
+                                Ftip::AbstractVector,
+                               Mlist::AbstractVector,
+                               Glist::AbstractVector,
                                Slist::AbstractMatrix)
     n = length(thetalist)
     InverseDynamics(thetalist, zeros(n), zeros(n), zeros(3), Ftip, Mlist, Glist, Slist)
@@ -1034,13 +1034,13 @@ end
 
 Computes forward dynamics in the space frame for an open chain robot.
 """
-function ForwardDynamics(thetalist::Array,
-                        dthetalist::Array,
-                           taulist::Array,
-                                 g::Array,
-                              Ftip::Array,
-                             Mlist::Array,
-                             Glist::Array,
+function ForwardDynamics(thetalist::AbstractVector,
+                        dthetalist::AbstractVector,
+                           taulist::AbstractVector,
+                                 g::AbstractVector,
+                              Ftip::AbstractVector,
+                             Mlist::AbstractVector,
+                             Glist::AbstractVector,
                              Slist::AbstractMatrix)
     LA.inv(MassMatrix(thetalist, Mlist, Glist, Slist)) *
     (taulist - VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
@@ -1069,7 +1069,7 @@ julia> EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)
 ([0.11000000000000001, 0.12000000000000001, 0.13], [0.30000000000000004, 0.35000000000000003, 0.4])
 ```
 """
-function EulerStep(thetalist::Array, dthetalist::Array, ddthetalist::Array, dt::Number)
+function EulerStep(thetalist::AbstractVector, dthetalist::AbstractVector, ddthetalist::AbstractVector, dt::Number)
     thetalist + dt * dthetalist, dthetalist + dt * ddthetalist
 end
 
@@ -1078,13 +1078,13 @@ end
 
 Calculates the joint forces/torques required to move the serial chain along the given trajectory using inverse dynamics.
 """
-function InverseDynamicsTrajectory(thetamat::Array,
-                                  dthetamat::Array,
-                                 ddthetamat::Array,
-                                          g::Array,
-                                    Ftipmat::Array,
-                                      Mlist::Array,
-                                      Glist::Array,
+function InverseDynamicsTrajectory(thetamat::AbstractMatrix,
+                                  dthetamat::AbstractMatrix,
+                                 ddthetamat::AbstractMatrix,
+                                          g::AbstractVector,
+                                    Ftipmat::AbstractMatrix,
+                                      Mlist::AbstractVector,
+                                      Glist::AbstractVector,
                                       Slist::AbstractMatrix)
     thetamat = thetamat'
     dthetamat = dthetamat'
@@ -1106,13 +1106,13 @@ end
 
 Simulates the motion of a serial chain given an open-loop history of joint forces/torques.
 """
-function ForwardDynamicsTrajectory(thetalist::Array,
-                                  dthetalist::Array,
+function ForwardDynamicsTrajectory(thetalist::AbstractVector,
+                                  dthetalist::AbstractVector,
                                       taumat::AbstractMatrix,
-                                           g::Array,
-                                     Ftipmat::Array,
-                                       Mlist::Array,
-                                       Glist::Array,
+                                           g::AbstractVector,
+                                     Ftipmat::AbstractMatrix,
+                                       Mlist::AbstractVector,
+                                       Glist::AbstractVector,
                                        Slist::AbstractMatrix,
                                           dt::Number,
                                       intRes::Number)
@@ -1173,7 +1173,7 @@ QuinticTimeScaling(Tf::Number, t::Number) = 10(t / Tf)^3 - 15(t / Tf)^4 + 6(t / 
 
 Computes a straight-line trajectory in joint space.
 """
-function JointTrajectory(thetastart::Array, thetaend::Array, Tf::Number, N::Integer, method::Integer)
+function JointTrajectory(thetastart::AbstractVector, thetaend::AbstractVector, Tf::Number, N::Integer, method::Integer)
     timegap = Tf / (N - 1)
     traj = zeros(length(thetastart), N)
 
@@ -1195,7 +1195,7 @@ end
 
 Computes a trajectory as a list of N SE(3) matrices corresponding to the screw motion about a space screw axis.
 """
-function ScrewTrajectory(Xstart::Array, Xend::Array, Tf::Number, N::Integer, method::Integer)
+function ScrewTrajectory(Xstart::AbstractMatrix, Xend::AbstractMatrix, Tf::Number, N::Integer, method::Integer)
     timegap = Tf / (N - 1)
     traj = Array{Array{Float64, 2}}(undef, N)
 
@@ -1217,7 +1217,7 @@ end
 
 Computes a trajectory as a list of N SE(3) matrices corresponding to the origin of the end-effector frame following a straight line.
 """
-function CartesianTrajectory(Xstart::Array, Xend::Array, Tf::Number, N::Integer, method::Integer)
+function CartesianTrajectory(Xstart::AbstractMatrix, Xend::AbstractMatrix, Tf::Number, N::Integer, method::Integer)
     timegap = Tf / (N - 1)
     traj = Array{Array{Float64, 2}}(undef, N)
 
@@ -1246,16 +1246,16 @@ end
 
 Computes the joint control torques at a particular time instant.
 """
-function ComputedTorque(thetalist::Array,
-                       dthetalist::Array,
-                             eint::Array,
-                                g::Array,
-                            Mlist::Array,
-                            Glist::Array,
+function ComputedTorque(thetalist::AbstractVector,
+                       dthetalist::AbstractVector,
+                             eint::AbstractVector,
+                                g::AbstractVector,
+                            Mlist::AbstractVector,
+                            Glist::AbstractVector,
                             Slist::AbstractMatrix,
-                       thetalistd::Array,
-                      dthetalistd::Array,
-                     ddthetalistd::Array,
+                       thetalistd::AbstractVector,
+                      dthetalistd::AbstractVector,
+                     ddthetalistd::AbstractVector,
                                Kp::Number,
                                Ki::Number,
                                Kd::Number)
@@ -1273,19 +1273,19 @@ end
 
 Simulates the computed torque controller over a given desired trajectory.
 """
-function SimulateControl(thetalist::Array,
-                        dthetalist::Array,
-                                 g::Array,
-                           Ftipmat::Array,
-                             Mlist::Array,
-                             Glist::Array,
+function SimulateControl(thetalist::AbstractVector,
+                        dthetalist::AbstractVector,
+                                 g::AbstractVector,
+                           Ftipmat::AbstractMatrix,
+                             Mlist::AbstractVector,
+                             Glist::AbstractVector,
                              Slist::AbstractMatrix,
-                         thetamatd::Array,
-                        dthetamatd::Array,
-                       ddthetamatd::Array,
-                            gtilde::Array,
-                        Mtildelist::Array,
-                        Gtildelist::Array,
+                         thetamatd::AbstractMatrix,
+                        dthetamatd::AbstractMatrix,
+                       ddthetamatd::AbstractMatrix,
+                            gtilde::AbstractVector,
+                        Mtildelist::AbstractVector,
+                        Gtildelist::AbstractVector,
                                 Kp::Number,
                                 Ki::Number,
                                 Kd::Number,
