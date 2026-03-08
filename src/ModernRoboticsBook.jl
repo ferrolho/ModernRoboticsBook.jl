@@ -441,7 +441,7 @@ function ProjectToSO3(mat::Array)
     if LA.det(R) < 0
         # In this case the result may be far from mat.
         # Hmm, I think this needs to be double-checked...
-        R[:, Int(F.S[3])] = -R[:, Int(F.S[3])]
+        R[:, 3] = -R[:, 3]
     end
     return R
 end
