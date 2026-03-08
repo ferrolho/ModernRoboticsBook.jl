@@ -355,7 +355,7 @@ julia> AxisAng6([1, 0, 0, 1, 2, 3])
 function AxisAng6(expc6::AbstractVector)
     θ = LA.norm(expc6[1:3])
     if NearZero(θ)
-        θ = LA.norm(expc6[3:6])
+        θ = LA.norm(expc6[4:6])
     end
     expc6 / θ, θ
 end
