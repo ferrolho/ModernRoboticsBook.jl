@@ -553,7 +553,7 @@ julia> FKinBody(M, Blist, thetalist)
 ```
 """
 function FKinBody(M::AbstractMatrix, Blist::AbstractMatrix, thetalist::AbstractVector)
-    for i = 1:length(thetalist)
+    for i in 1:length(thetalist)
         M *= MatrixExp6(VecTose3(Blist[:, i] * thetalist[i]))
     end
     M
@@ -586,7 +586,7 @@ julia> FKinSpace(M, Slist, thetalist)
 ```
 """
 function FKinSpace(M::AbstractMatrix, Slist::AbstractMatrix, thetalist::AbstractVector)
-    for i = length(thetalist):-1:1
+    for i in length(thetalist):-1:1
         M = MatrixExp6(VecTose3(Slist[:, i] * thetalist[i])) * M
     end
     M
@@ -623,7 +623,7 @@ julia> JacobianBody(Blist, thetalist)
 function JacobianBody(Blist::AbstractMatrix, thetalist::AbstractVector)
     T = LA.I
     Jb = copy(Blist)
-    for i = length(thetalist)-1:-1:1
+    for i in length(thetalist)-1:-1:1
         T *= MatrixExp6(VecTose3(Blist[:, i+1] * -thetalist[i+1]))
         Jb[:, i] = Adjoint(T) * Blist[:, i]
     end
@@ -657,7 +657,7 @@ julia> JacobianSpace(Slist, thetalist)
 function JacobianSpace(Slist::AbstractMatrix, thetalist::AbstractVector)
     T = LA.I
     Js = copy(Slist)
-    for i = 2:length(thetalist)
+    for i in 2:length(thetalist)
         T *= MatrixExp6(VecTose3(Slist[:, i - 1] * thetalist[i - 1]))
         Js[:, i] = Adjoint(T) * Slist[:, i]
     end
@@ -819,7 +819,7 @@ function InverseDynamics(thetalist::AbstractVector,
     Fi = copy(Ftip)
     taulist = zeros(eltype(thetalist), n)
 
-    for i = 1:n
+    for i in 1:n
         Mi *= Mlist[i]
         Ai[:, i] = Adjoint(TransInv(Mi)) * Slist[:, i]
         AdTi[i] = Adjoint(MatrixExp6(VecTose3(Ai[:, i] * -thetalist[i])) *
@@ -829,7 +829,7 @@ function InverseDynamics(thetalist::AbstractVector,
                         ad(Vi[:, i + 1]) * Ai[:, i] * dthetalist[i]
     end
 
-    for i = n:-1:1
+    for i in n:-1:1
         Fi = AdTi[i + 1]' * Fi + Glist[i] * Vdi[:, i + 1] -
              ad(Vi[:, i + 1])' * Glist[i] * Vi[:, i + 1]
         taulist[i] = Fi' * Ai[:, i]
@@ -850,7 +850,7 @@ function MassMatrix(thetalist::AbstractVector,
     n = length(thetalist)
     M = zeros(n, n)
 
-    for i = 1:n
+    for i in 1:n
         ddthetalist = zeros(n)
         ddthetalist[i] = 1
         M[:, i] = InverseDynamics(thetalist, zeros(n), ddthetalist, zeros(3),
@@ -1092,7 +1092,7 @@ function InverseDynamicsTrajectory(thetamat::AbstractMatrix,
     Ftipmat = Ftipmat'
     taumat = copy(thetamat)
 
-    for i = 1:size(thetamat, 2)
+    for i in 1:size(thetamat, 2)
         taumat[:, i] = InverseDynamics(thetamat[:, i], dthetamat[:, i],
                                        ddthetamat[:, i], g, Ftipmat[:, i],
                                        Mlist, Glist, Slist)
@@ -1123,8 +1123,8 @@ function ForwardDynamicsTrajectory(thetalist::AbstractVector,
     dthetamat = copy(taumat)
     dthetamat[:, 1] = dthetalist
 
-    for i = 1:size(taumat, 2)-1
-        for j = 1:intRes
+    for i in 1:size(taumat, 2)-1
+        for j in 1:intRes
             ddthetalist = ForwardDynamics(thetalist, dthetalist, taumat[:, i], g, Ftipmat[:, i], Mlist, Glist, Slist)
             thetalist, dthetalist = EulerStep(thetalist, dthetalist, ddthetalist, 1.0 * dt / intRes)
         end
@@ -1177,7 +1177,7 @@ function JointTrajectory(thetastart::AbstractVector, thetaend::AbstractVector, T
     timegap = Tf / (N - 1)
     traj = zeros(length(thetastart), N)
 
-    for i = 1:N
+    for i in 1:N
         if method == 3
             s = CubicTimeScaling(Tf, timegap * (i - 1))
         else
@@ -1199,7 +1199,7 @@ function ScrewTrajectory(Xstart::AbstractMatrix, Xend::AbstractMatrix, Tf::Numbe
     timegap = Tf / (N - 1)
     traj = Array{Array{Float64, 2}}(undef, N)
 
-    for i = 1:N
+    for i in 1:N
         if method == 3
             s = CubicTimeScaling(Tf, timegap * (i - 1))
         else
@@ -1224,7 +1224,7 @@ function CartesianTrajectory(Xstart::AbstractMatrix, Xend::AbstractMatrix, Tf::N
     Rstart, pstart = TransToRp(Xstart)
     Rend, pend = TransToRp(Xend)
 
-    for i = 1:N
+    for i in 1:N
         if method == 3
             s = CubicTimeScaling(Tf, timegap * (i - 1))
         else
@@ -1305,10 +1305,10 @@ function SimulateControl(thetalist::AbstractVector,
     taumat = zeros(size(thetamatd))
     thetamat = zeros(size(thetamatd))
 
-    for i = 1:n
+    for i in 1:n
         taulist = ComputedTorque(thetacurrent, dthetacurrent, eint, gtilde, Mtildelist, Gtildelist, Slist, thetamatd[:, i], dthetamatd[:, i], ddthetamatd[:, i], Kp, Ki, Kd)
 
-        for j = 1:intRes
+        for j in 1:intRes
             ddthetalist = ForwardDynamics(thetacurrent, dthetacurrent, taulist, g, Ftipmat[:, i], Mlist, Glist, Slist)
             thetacurrent, dthetacurrent = EulerStep(thetacurrent, dthetacurrent, ddthetalist, dt / intRes)
         end
