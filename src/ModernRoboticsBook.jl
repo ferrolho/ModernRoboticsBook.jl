@@ -171,7 +171,7 @@ julia> MatrixExp3([0 -3 2; 3 0 -1; -2 1 0])
 function MatrixExp3(so3mat::Array)
     omgtheta = so3ToVec(so3mat)
     if NearZero(LA.norm(omgtheta))
-        return LA.I
+        return Matrix{Float64}(LA.I, 3, 3)
     else
         θ = AxisAng3(omgtheta)[2]
         omgmat = so3mat / θ
@@ -378,12 +378,12 @@ julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.3561944
 function MatrixExp6(se3mat::Array)
     omgtheta = so3ToVec(se3mat[1:3, 1:3])
     if NearZero(LA.norm(omgtheta))
-        return vcat(hcat(LA.I, se3mat[1:3, 4]), [0 0 0 1])
+        return vcat(hcat(Matrix{Float64}(LA.I, 3, 3), se3mat[1:3, 4]), [0 0 0 1])
     else
         θ = AxisAng3(omgtheta)[2]
         omgmat = se3mat[1:3, 1:3] / θ
         return vcat(hcat(MatrixExp3(se3mat[1:3, 1:3]),
-                         (LA.I * θ +
+                         (Matrix{Float64}(LA.I, 3, 3) * θ +
                           (1 - cos(θ)) * omgmat +
                           (θ - sin(θ)) * omgmat * omgmat) *
                          se3mat[1:3, 4] / θ),
@@ -409,7 +409,7 @@ julia> MatrixLog6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 function MatrixLog6(T::Array)
     R, p = TransToRp(T)
     omgmat = MatrixLog3(R)
-    if omgmat == zeros(3, 3)
+    if iszero(omgmat)
         return vcat(hcat(zeros(3, 3), T[1:3, 4]), [0 0 0 0])
     else
         θ = acos((LA.tr(R) - 1) / 2)
