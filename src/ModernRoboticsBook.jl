@@ -169,13 +169,13 @@ julia> MatrixExp3([0 -3 2; 3 0 -1; -2 1 0])
 ```
 """
 function MatrixExp3(so3mat::AbstractMatrix)
-    omgtheta = so3ToVec(so3mat)
-    if NearZero(LA.norm(omgtheta))
+    ωθ = so3ToVec(so3mat)
+    if NearZero(LA.norm(ωθ))
         return Matrix{Float64}(LA.I, 3, 3)
     else
-        θ = AxisAng3(omgtheta)[2]
-        omgmat = so3mat / θ
-        return LA.I + sin(θ) * omgmat + (1 - cos(θ)) * omgmat * omgmat
+        θ = AxisAng3(ωθ)[2]
+        ωmat = so3mat / θ
+        return LA.I + sin(θ) * ωmat + (1 - cos(θ)) * ωmat * ωmat
     end
 end
 
@@ -199,13 +199,13 @@ function MatrixLog3(R::AbstractMatrix)
         return zeros(3, 3)
     elseif acosinput <= -1
         if !NearZero(1 + R[3, 3])
-            omg = (1 / √(2 * (1 + R[3, 3]))) * [R[1, 3], R[2, 3], 1 + R[3, 3]]
+            ω = (1 / √(2 * (1 + R[3, 3]))) * [R[1, 3], R[2, 3], 1 + R[3, 3]]
         elseif !NearZero(1 + R[2, 2])
-            omg = (1 / √(2 * (1 + R[2, 2]))) * [R[1, 2], 1 + R[2, 2], R[3, 2]]
+            ω = (1 / √(2 * (1 + R[2, 2]))) * [R[1, 2], 1 + R[2, 2], R[3, 2]]
         else
-            omg = (1 / √(2 * (1 + R[1, 1]))) * [1 + R[1, 1], R[2, 1], R[3, 1]]
+            ω = (1 / √(2 * (1 + R[1, 1]))) * [1 + R[1, 1], R[2, 1], R[3, 1]]
         end
-        return VecToso3(π * omg)
+        return VecToso3(π * ω)
     else
         θ = acos(acosinput)
         return θ / 2 / sin(θ) * (R - R')
@@ -376,16 +376,16 @@ julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.3561944
 ```
 """
 function MatrixExp6(se3mat::AbstractMatrix)
-    omgtheta = so3ToVec(se3mat[1:3, 1:3])
-    if NearZero(LA.norm(omgtheta))
+    ωθ = so3ToVec(se3mat[1:3, 1:3])
+    if NearZero(LA.norm(ωθ))
         return vcat(hcat(Matrix{Float64}(LA.I, 3, 3), se3mat[1:3, 4]), [0 0 0 1])
     else
-        θ = AxisAng3(omgtheta)[2]
-        omgmat = se3mat[1:3, 1:3] / θ
+        θ = AxisAng3(ωθ)[2]
+        ωmat = se3mat[1:3, 1:3] / θ
         return vcat(hcat(MatrixExp3(se3mat[1:3, 1:3]),
                          (Matrix{Float64}(LA.I, 3, 3) * θ +
-                          (1 - cos(θ)) * omgmat +
-                          (θ - sin(θ)) * omgmat * omgmat) *
+                          (1 - cos(θ)) * ωmat +
+                          (θ - sin(θ)) * ωmat * ωmat) *
                          se3mat[1:3, 4] / θ),
                     [0 0 0 1])
     end
@@ -408,15 +408,15 @@ julia> MatrixLog6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 """
 function MatrixLog6(T::AbstractMatrix)
     R, p = TransToRp(T)
-    omgmat = MatrixLog3(R)
-    if iszero(omgmat)
+    ωmat = MatrixLog3(R)
+    if iszero(ωmat)
         return vcat(hcat(zeros(3, 3), T[1:3, 4]), [0 0 0 0])
     else
         θ = acos((LA.tr(R) - 1) / 2)
-        return vcat(hcat(omgmat,
-                         (LA.I - omgmat / 2 +
+        return vcat(hcat(ωmat,
+                         (LA.I - ωmat / 2 +
                           (1 / θ - 1 / tan(θ / 2) / 2) *
-                          omgmat * omgmat / θ) * T[1:3, 4]),
+                          ωmat * ωmat / θ) * T[1:3, 4]),
                     [0 0 0 0])
     end
 end
@@ -788,9 +788,9 @@ julia> ad([1, 2, 3, 4, 5, 6])
 ```
 """
 function ad(V::AbstractVector)
-    omgmat = VecToso3(V[1:3])
-    vcat(hcat(omgmat, zeros(3, 3)),
-         hcat(VecToso3(V[4:6]), omgmat))
+    ωmat = VecToso3(V[1:3])
+    vcat(hcat(ωmat, zeros(3, 3)),
+         hcat(VecToso3(V[4:6]), ωmat))
 end
 
 """
