@@ -133,53 +133,53 @@ Aqua.test_all(ModernRoboticsBook)
                           0.0  0.0  0.1   0.98])
     end
     @testset "chapter 4: forward kinematics" begin
-        M = [-1  0  0  0 ;
+        home_config = [-1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ]
 
-        Blist = [ 0  0 -1  2  0  0   ;
+        body_screw_axes = [ 0  0 -1  2  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0  1  0  0  0.1 ]'
 
-        Slist = [ 0  0  1  4  0  0   ;
+        screw_axes = [ 0  0  1  4  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0 -1 -6  0 -0.1 ]'
 
-        thetalist = [ π/2, 3, π ]
+        joint_positions = [ π/2, 3, π ]
 
-        @test isapprox(FKinBody(M, Blist, thetalist),
+        @test isapprox(FKinBody(home_config, body_screw_axes, joint_positions),
                        [-1.14424e-17  1.0           0.0  -5.0     ;
                          1.0          1.14424e-17   0.0   4.0     ;
                          0.0          0.0          -1.0   1.68584 ;
                          0.0          0.0           0.0   1.0     ]; rtol=1e-6)
-        @test isapprox(FKinSpace(M, Slist, thetalist),
+        @test isapprox(FKinSpace(home_config, screw_axes, joint_positions),
                        [-1.14424e-17  1.0           0.0  -5.0     ;
                          1.0          1.14424e-17   0.0   4.0     ;
                          0.0          0.0          -1.0   1.68584 ;
                          0.0          0.0           0.0   1.0     ]; rtol=1e-6)
     end
     @testset "chapter 5: velocity kinematics and statics" begin
-        Blist = [0 0 1   0 0.2 0.2;
+        body_screw_axes = [0 0 1   0 0.2 0.2;
                  1 0 0   2   0   3;
                  0 1 0   0   2   1;
                  1 0 0 0.2 0.3 0.4]'
 
-        Slist = [0 0 1   0 0.2 0.2;
+        screw_axes = [0 0 1   0 0.2 0.2;
                  1 0 0   2   0   3;
                  0 1 0   0   2   1;
                  1 0 0 0.2 0.3 0.4]'
 
-        thetalist = [0.2, 1.1, 0.1, 1.2]
+        joint_positions = [0.2, 1.1, 0.1, 1.2]
 
-        @test isapprox(JacobianBody(Blist, thetalist),
+        @test isapprox(JacobianBody(body_screw_axes, joint_positions),
                        [ -0.0452841  0.995004    0.0       1.0 ;
                           0.743593   0.0930486   0.362358  0.0 ;
                          -0.667097   0.0361754  -0.932039  0.0 ;
                           2.32586    1.66809     0.564108  0.2 ;
                          -1.44321    2.94561     1.43307   0.3 ;
                          -2.0664     1.82882    -1.58869   0.4 ]; rtol=1e-5)
-        @test isapprox(JacobianSpace(Slist, thetalist),
+        @test isapprox(JacobianSpace(screw_axes, joint_positions),
                        [0.0  0.980067  -0.0901156   0.957494 ;
                         0.0  0.198669   0.444554    0.284876 ;
                         1.0  0.0        0.891207   -0.0452841;
@@ -188,34 +188,34 @@ Aqua.test_all(ModernRoboticsBook)
                         0.2  2.96027    3.23573     2.22512  ]; rtol=1e-5)
     end
     @testset "chapter 6: inverse kinematics" begin
-        Blist = [ 0  0 -1  2  0  0   ;
+        body_screw_axes = [ 0  0 -1  2  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0  1  0  0  0.1 ]'
 
-        Slist = [ 0  0  1  4  0  0   ;
+        screw_axes = [ 0  0  1  4  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0 -1 -6  0 -0.1 ]'
 
-        M = [ -1  0  0  0 ;
+        home_config = [ -1  0  0  0 ;
                0  1  0  6 ;
                0  0 -1  2 ;
                0  0  0  1 ]
 
-        T = [ 0  1  0     -5 ;
+        target_config = [ 0  1  0     -5 ;
               1  0  0      4 ;
               0  0 -1 1.6858 ;
               0  0  0      1 ]
 
-        thetalist0 = [1.5, 2.5, 3]
+        initial_guess = [1.5, 2.5, 3]
 
-        eomg, ev = 0.01, 0.001
+        angular_tolerance, linear_tolerance = 0.01, 0.001
 
-        thetalist, success = IKinBody(Blist, M, T, thetalist0, eomg, ev)
-        @test isapprox(thetalist, [1.57074, 2.99967, 3.14154]; rtol=1e-5)
+        joint_positions, success = IKinBody(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+        @test isapprox(joint_positions, [1.57074, 2.99967, 3.14154]; rtol=1e-5)
         @test success
 
-        thetalist, success = IKinSpace(Slist, M, T, thetalist0, eomg, ev)
-        @test isapprox(thetalist, [1.57074, 2.99966, 3.14153]; rtol=1e-5)
+        joint_positions, success = IKinSpace(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+        @test isapprox(joint_positions, [1.57074, 2.99966, 3.14153]; rtol=1e-5)
         @test success
     end
     @testset "chapter 8: dynamics of open chains" begin
@@ -226,11 +226,11 @@ Aqua.test_all(ModernRoboticsBook)
                                           6.0   0.0  -4.0   3.0   0.0  -1.0
                                          -5.0   4.0   0.0  -2.0   1.0   0.0 ]
 
-        thetalist = [0.1, 0.1, 0.1]
-        dthetalist = [0.1, 0.2, 0.3]
-        ddthetalist = [2, 1.5, 1]
-        g = [0, 0, -9.8]
-        Ftip = [1, 1, 1, 1, 1, 1]
+        joint_positions = [0.1, 0.1, 0.1]
+        joint_velocities = [0.1, 0.2, 0.3]
+        joint_accelerations = [2, 1.5, 1]
+        gravity = [0, 0, -9.8]
+        tip_wrench = [1, 1, 1, 1, 1, 1]
         M01 = [1  0  0         0 ;
                0  1  0         0 ;
                0  0  1  0.089159 ;
@@ -250,65 +250,65 @@ Aqua.test_all(ModernRoboticsBook)
         G1 = LA.Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
         G2 = LA.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
         G3 = LA.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
-        Glist = [G1, G2, G3]
-        Mlist = [M01, M12, M23, M34]
-        Slist = [ 1  0  1      0  1      0 ;
+        spatial_inertias = [G1, G2, G3]
+        link_frames = [M01, M12, M23, M34]
+        screw_axes = [ 1  0  1      0  1      0 ;
                   0  1  0 -0.089  0      0 ;
                   0  1  0 -0.089  0  0.425 ]'
 
-        taulist_actual = InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
+        joint_torques_actual = InverseDynamics(joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
-        @test taulist_actual ≈ [74.69616155287451, -33.06766015851458, -3.230573137901424]
+        @test joint_torques_actual ≈ [74.69616155287451, -33.06766015851458, -3.230573137901424]
 
-        @test isapprox(MassMatrix(thetalist, Mlist, Glist, Slist),
+        @test isapprox(MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes),
                        [ 22.5433      -0.307147  -0.00718426;
                          -0.307147     1.96851    0.432157  ;
                          -0.00718426   0.432157   0.191631  ]; rtol=1e-5)
 
-        @test VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist) ≈ [  0.26453118054501235 ;
+        @test VelQuadraticForces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes) ≈ [  0.26453118054501235 ;
                                                                                  -0.0550515682891655  ;
                                                                                  -0.006891320068248911]
 
-        @test GravityForces(thetalist, g, Mlist, Glist, Slist) ≈ [  28.40331261821983  ;
+        @test GravityForces(joint_positions, gravity, link_frames, spatial_inertias, screw_axes) ≈ [  28.40331261821983  ;
                                                                    -37.64094817177068  ;
                                                                     -5.4415891999683605]
 
-        @test EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist) ≈ [ 1.4095460782639782;
+        @test EndEffectorForces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes) ≈ [ 1.4095460782639782;
                                                                           1.8577149723180628;
                                                                           1.392409          ]
 
-        taulist = [0.5, 0.6, 0.7]
-        @test ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist) ≈ [ -0.9739290670855626;
+        joint_torques = [0.5, 0.6, 0.7]
+        @test ForwardDynamics(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes) ≈ [ -0.9739290670855626;
                                                                                                 25.584667840340558 ;
                                                                                                -32.91499212478149  ]
 
         @test hcat(EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)...) ≈ hcat([0.11, 0.12, 0.13], [0.3, 0.35, 0.4])
 
         @testset "inverse dynamics trajectory" begin
-            thetastart = [0, 0, 0]
-            thetaend = [π/2, π/2, π/2]
-            Tf = 3
+            joint_position_start = [0, 0, 0]
+            joint_position_end = [π/2, π/2, π/2]
+            total_time = 3
             N = 10
             method = 5
 
-            traj = JointTrajectory(thetastart, thetaend, Tf, N, method)
+            traj = JointTrajectory(joint_position_start, joint_position_end, total_time, N, method)
 
-            thetamat = copy(traj)
-            dthetamat = zeros(N, 3)
-            ddthetamat = zeros(N, 3)
+            joint_position_traj = copy(traj)
+            joint_velocity_traj = zeros(N, 3)
+            joint_acceleration_traj = zeros(N, 3)
 
-            dt = Tf / (N - 1)
+            timestep = total_time / (N - 1)
 
             for i = 1:size(traj, 1) - 1
-                dthetamat[i + 1, :] = (thetamat[i + 1, :] - thetamat[i, :]) / dt
-                ddthetamat[i + 1, :] = (dthetamat[i + 1, :] - dthetamat[i, :]) / dt
+                joint_velocity_traj[i + 1, :] = (joint_position_traj[i + 1, :] - joint_position_traj[i, :]) / timestep
+                joint_acceleration_traj[i + 1, :] = (joint_velocity_traj[i + 1, :] - joint_velocity_traj[i, :]) / timestep
             end
 
-            Ftipmat = ones(N, 6)
+            tip_wrench_traj = ones(N, 6)
 
-            taumat_actual = InverseDynamicsTrajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)
+            joint_torque_traj_actual = InverseDynamicsTrajectory(joint_position_traj, joint_velocity_traj, joint_acceleration_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes)
 
-            taumat_expected = [ 1.32297079e+01 -3.62621080e+01 -4.18134100e+00 ;
+            joint_torque_traj_expected = [ 1.32297079e+01 -3.62621080e+01 -4.18134100e+00 ;
                                 1.96974217e+01 -3.59188701e+01 -4.07919728e+00 ;
                                 5.11979532e+01 -3.44705050e+01 -3.59488765e+00 ;
                                 9.41368122e+01 -3.14099606e+01 -2.41622731e+00 ;
@@ -319,21 +319,21 @@ Aqua.test_all(ModernRoboticsBook)
                                 6.44365965e+01 -2.46704062e+01  2.07890001e+00 ;
                                 6.72354909e+01 -2.47008371e+01  2.19474783e+00 ]
 
-            @test taumat_actual ≈ taumat_expected
+            @test joint_torque_traj_actual ≈ joint_torque_traj_expected
         end
         @testset "forward dynamics trajectory" begin
-            taumat = [ 3.63 -6.58 -5.57 ; 3.74 -5.55 -5.5  ;
+            joint_torque_traj = [ 3.63 -6.58 -5.57 ; 3.74 -5.55 -5.5  ;
                        4.31 -0.68 -5.19 ; 5.18  5.63 -4.31 ;
                        5.85  8.17 -2.59 ; 5.78  2.79 -1.7  ;
                        4.99 -5.3  -1.19 ; 4.08 -9.41  0.07 ;
                        3.56 -10.1  0.97 ; 3.49 -9.41  1.23 ]
 
-            Ftipmat = ones(size(taumat, 1), 6)
+            tip_wrench_traj = ones(size(joint_torque_traj, 1), 6)
 
-            dt = 0.1
-            intRes = 8
+            timestep = 0.1
+            integration_resolution = 8
 
-            thetamat_expected = [ 0.1         0.1         0.1        ;
+            joint_position_traj_expected = [ 0.1         0.1         0.1        ;
                                   0.10643138  0.2625997  -0.22664947 ;
                                   0.10197954  0.71581297 -1.22521632 ;
                                   0.0801044   1.33930884 -2.28074132 ;
@@ -344,7 +344,7 @@ Aqua.test_all(ModernRoboticsBook)
                                  -0.41523262  3.85883317 -7.01130559 ;
                                  -0.4638099   3.63178793 -7.63190052 ]
 
-            dthetamat_expected = [ 0.1          0.2          0.3        ;
+            joint_velocity_traj_expected = [ 0.1          0.2          0.3        ;
                                    0.01212502   3.42975773  -7.74792602 ;
                                   -0.13052771   5.55997471 -11.22722784 ;
                                   -0.35521041   7.11775879  -9.18173035 ;
@@ -355,19 +355,19 @@ Aqua.test_all(ModernRoboticsBook)
                                   -0.70264871  -0.55925705  -8.16067131 ;
                                   -0.1455669   -4.57149985  -3.43135114 ]
 
-            thetamat_actual, dthetamat_actual = ForwardDynamicsTrajectory(thetalist, dthetalist, taumat, g, Ftipmat, Mlist, Glist, Slist, dt, intRes)
+            joint_position_traj_actual, joint_velocity_traj_actual = ForwardDynamicsTrajectory(joint_positions, joint_velocities, joint_torque_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, timestep, integration_resolution)
 
-            @test thetamat_actual ≈ thetamat_expected
-            @test dthetamat_actual ≈ dthetamat_expected
+            @test joint_position_traj_actual ≈ joint_position_traj_expected
+            @test joint_velocity_traj_actual ≈ joint_velocity_traj_expected
         end
     end
     @testset "chapter 9: trajectory generation" begin
         @test CubicTimeScaling(2, 0.6) ≈ 0.216
         @test QuinticTimeScaling(2, 0.6) ≈ 0.16308
         @testset "joint trajectory" begin
-            thetastart = [1, 0, 0, 1, 1, 0.2, 0,1]
-            thetaend = [1.2, 0.5, 0.6, 1.1, 2, 2, 0.9, 1]
-            Tf = 4
+            joint_position_start = [1, 0, 0, 1, 1, 0.2, 0,1]
+            joint_position_end = [1.2, 0.5, 0.6, 1.1, 2, 2, 0.9, 1]
+            total_time = 4
             N = 6
             method = 3
 
@@ -378,19 +378,19 @@ Aqua.test_all(ModernRoboticsBook)
                         1.1792 0.448 0.5376 1.0896 1.896 1.8128 0.8064 1 ;
                            1.2   0.5    0.6    1.1     2      2    0.9 1 ]
 
-            @test JointTrajectory(thetastart, thetaend, Tf, N, method) ≈ expected
+            @test JointTrajectory(joint_position_start, joint_position_end, total_time, N, method) ≈ expected
         end
         @testset "screw trajectory" begin
-            Xstart = [1 0 0 1 ;
+            transform_start = [1 0 0 1 ;
                       0 1 0 0 ;
                       0 0 1 1 ;
                       0 0 0 1 ]
-            Xend = [0 0 1 0.1 ;
+            transform_end = [0 0 1 0.1 ;
                     1 0 0   0 ;
                     0 1 0 4.1 ;
                     0 0 0   1 ]
 
-            Tf = 5
+            total_time = 5
             N = 4
             method = 3
 
@@ -411,21 +411,21 @@ Aqua.test_all(ModernRoboticsBook)
                            0 1 0 4.1 ;
                            0 0 0 1   ]]
 
-            actual = ScrewTrajectory(Xstart, Xend, Tf, N, method)
+            actual = ScrewTrajectory(transform_start, transform_end, total_time, N, method)
 
             @test isapprox(actual, expected; rtol=1e-3)
         end
         @testset "cartesian trajectory" begin
-            Xstart = [ 1 0 0 1 ;
+            transform_start = [ 1 0 0 1 ;
                        0 1 0 0 ;
                        0 0 1 1 ;
                        0 0 0 1 ]
-            Xend = [ 0 0 1 0.1 ;
+            transform_end = [ 0 0 1 0.1 ;
                      1 0 0 0   ;
                      0 1 0 4.1 ;
                      0 0 0 1   ]
 
-            Tf = 5
+            total_time = 5
             N = 4
             method = 5
 
@@ -447,17 +447,17 @@ Aqua.test_all(ModernRoboticsBook)
                           0 1 0 4.1 ;
                           0 0 0 1   ]]
 
-            actual = CartesianTrajectory(Xstart, Xend, Tf, N, method)
+            actual = CartesianTrajectory(transform_start, transform_end, total_time, N, method)
 
             @test isapprox(actual, expected; rtol=1e-3)
         end
     end
     @testset "chapter 11: robot control" begin
-        thetalist = [0.1, 0.1, 0.1]
-        dthetalist = [0.1, 0.2, 0.3]
+        joint_positions = [0.1, 0.1, 0.1]
+        joint_velocities = [0.1, 0.2, 0.3]
 
         # Initialise robot description (Example with 3 links)
-        g = [0, 0, -9.8]
+        gravity = [0, 0, -9.8]
 
         M01 = [1  0  0         0 ;
                0  1  0         0 ;
@@ -480,35 +480,35 @@ Aqua.test_all(ModernRoboticsBook)
         G2 = LA.Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
         G3 = LA.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
 
-        Mlist = [M01, M12, M23, M34]
-        Glist = [G1, G2, G3]
+        link_frames = [M01, M12, M23, M34]
+        spatial_inertias = [G1, G2, G3]
 
-        Slist = [ 1  0  1      0  1      0 ;
+        screw_axes = [ 1  0  1      0  1      0 ;
                 0  1  0 -0.089  0      0 ;
                 0  1  0 -0.089  0  0.425 ]'
 
         # Create a trajectory to follow
-        thetaend = [π / 2, π, 1.5 * π]
+        joint_position_end = [π / 2, π, 1.5 * π]
 
-        Tf = 1
-        dt = 0.05
-        N = Int(Tf / dt)
+        total_time = 1
+        timestep = 0.05
+        N = Int(total_time / timestep)
         method = 5
 
-        traj = JointTrajectory(thetalist, thetaend, Tf, N, method)
+        traj = JointTrajectory(joint_positions, joint_position_end, total_time, N, method)
 
-        thetamatd = copy(traj)
-        dthetamatd = zeros(N, 3)
-        ddthetamatd = zeros(N, 3)
-        dt = Tf / (N - 1)
+        desired_joint_position_traj = copy(traj)
+        desired_joint_velocity_traj = zeros(N, 3)
+        desired_joint_acceleration_traj = zeros(N, 3)
+        timestep = total_time / (N - 1)
 
         for i = 1:size(traj, 1) - 1
-            dthetamatd[i + 1, :] = (thetamatd[i + 1, :] - thetamatd[i, :]) / dt
-            ddthetamatd[i + 1, :] = (dthetamatd[i + 1, :] - dthetamatd[i, :]) / dt
+            desired_joint_velocity_traj[i + 1, :] = (desired_joint_position_traj[i + 1, :] - desired_joint_position_traj[i, :]) / timestep
+            desired_joint_acceleration_traj[i + 1, :] = (desired_joint_velocity_traj[i + 1, :] - desired_joint_velocity_traj[i, :]) / timestep
         end
 
         # Possibly wrong robot description (Example with 3 links)
-        gtilde = [0.8, 0.2, -8.8]
+        estimated_gravity = [0.8, 0.2, -8.8]
 
         Mhat01 = [1 0 0   0;
                   0 1 0   0;
@@ -531,18 +531,18 @@ Aqua.test_all(ModernRoboticsBook)
         Ghat2 = LA.Diagonal([0.3, 0.3, 0.1, 9, 9, 9])
         Ghat3 = LA.Diagonal([0.1, 0.1, 0.1, 3, 3, 3])
 
-        Gtildelist = [Ghat1, Ghat2, Ghat3]
-        Mtildelist = [Mhat01, Mhat12, Mhat23, Mhat34]
+        estimated_spatial_inertias = [Ghat1, Ghat2, Ghat3]
+        estimated_link_frames = [Mhat01, Mhat12, Mhat23, Mhat34]
 
         # Other required arguments
-        Ftipmat = ones(size(traj, 1), 6)
+        tip_wrench_traj = ones(size(traj, 1), 6)
 
         Kp = 20
         Ki = 10
         Kd = 18
-        intRes = 8
+        integration_resolution = 8
 
-        taumat_expected = [ -14.2640765   -54.06797429  -11.265448   ;
+        joint_torque_traj_expected = [ -14.2640765   -54.06797429  -11.265448   ;
                              71.7014572   -17.58330542    3.86417108 ;
                             208.80692807    6.94442209    8.4352746  ;
                             269.9223766    14.44412677   11.24081382 ;
@@ -563,7 +563,7 @@ Aqua.test_all(ModernRoboticsBook)
                               7.93416317  -12.95474009   -6.58132646 ;
                              44.38627151    4.53534718   -2.32611269 ]
 
-        thetamat_expected = [ 0.1028237  0.10738308 0.07715206 ;
+        joint_position_traj_expected = [ 0.1028237  0.10738308 0.07715206 ;
                               0.10475535 0.11170712 0.05271794 ;
                               0.11930448 0.13796752 0.12315113 ;
                               0.1582068  0.21615938 0.27654789 ;
@@ -584,11 +584,11 @@ Aqua.test_all(ModernRoboticsBook)
                               1.58827951 3.15316968 4.59115503 ;
                               1.57746305 3.12631855 4.54394792 ]
 
-        taumat_actual, thetamat_actual = SimulateControl(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
-                                                         Slist, thetamatd, dthetamatd, ddthetamatd, gtilde,
-                                                         Mtildelist, Gtildelist, Kp, Ki, Kd, dt, intRes)
+        joint_torque_traj_actual, joint_position_traj_actual = SimulateControl(joint_positions, joint_velocities, gravity, tip_wrench_traj, link_frames, spatial_inertias,
+                                                         screw_axes, desired_joint_position_traj, desired_joint_velocity_traj, desired_joint_acceleration_traj, estimated_gravity,
+                                                         estimated_link_frames, estimated_spatial_inertias, Kp, Ki, Kd, timestep, integration_resolution)
 
-        @test taumat_actual ≈ taumat_expected
-        @test thetamat_actual ≈ thetamat_expected
+        @test joint_torque_traj_actual ≈ joint_torque_traj_expected
+        @test joint_position_traj_actual ≈ joint_position_traj_expected
     end
 end

@@ -525,69 +525,69 @@ TestIfSE3(mat::AbstractMatrix) = abs(DistanceToSE3(mat)) < 1e-3
 # """
 
 """
-    FKinBody(M, Blist, thetalist)
+    FKinBody(home_config, body_screw_axes, joint_positions)
 
 Computes forward kinematics in the body frame for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> M = [ -1  0  0  0 ;
+julia> home_config = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ];
 
-julia> Blist = [  0  0 -1  2  0  0   ;
+julia> body_screw_axes = [  0  0 -1  2  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0  1  0  0  0.1 ]';
 
-julia> thetalist = [ π/2, 3, π ];
+julia> joint_positions = [ π/2, 3, π ];
 
-julia> FKinBody(M, Blist, thetalist)
+julia> FKinBody(home_config, body_screw_axes, joint_positions)
 4×4 Matrix{Float64}:
- -1.14424e-17  1.0           0.0  -5.0    
-  1.0          1.14424e-17   0.0   4.0    
+ -1.14424e-17  1.0           0.0  -5.0
+  1.0          1.14424e-17   0.0   4.0
   0.0          0.0          -1.0   1.68584
-  0.0          0.0           0.0   1.0    
+  0.0          0.0           0.0   1.0
 ```
 """
-function FKinBody(M::AbstractMatrix, Blist::AbstractMatrix, thetalist::AbstractVector)
-    for i in 1:length(thetalist)
-        M *= MatrixExp6(VecTose3(Blist[:, i] * thetalist[i]))
+function FKinBody(home_config::AbstractMatrix, body_screw_axes::AbstractMatrix, joint_positions::AbstractVector)
+    for i in 1:length(joint_positions)
+        home_config *= MatrixExp6(VecTose3(body_screw_axes[:, i] * joint_positions[i]))
     end
-    M
+    home_config
 end
 
 """
-    FKinSpace(M, Slist, thetalist)
+    FKinSpace(home_config, screw_axes, joint_positions)
 
 Computes forward kinematics in the space frame for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> M = [ -1  0  0  0 ;
+julia> home_config = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ];
 
-julia> Slist = [  0  0  1  4  0  0   ;
+julia> screw_axes = [  0  0  1  4  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0 -1 -6  0 -0.1 ]';
 
-julia> thetalist = [ π/2, 3, π ];
+julia> joint_positions = [ π/2, 3, π ];
 
-julia> FKinSpace(M, Slist, thetalist)
+julia> FKinSpace(home_config, screw_axes, joint_positions)
 4×4 Matrix{Float64}:
- -1.14424e-17  1.0           0.0  -5.0    
-  1.0          1.14424e-17   0.0   4.0    
+ -1.14424e-17  1.0           0.0  -5.0
+  1.0          1.14424e-17   0.0   4.0
   0.0          0.0          -1.0   1.68584
-  0.0          0.0           0.0   1.0    
+  0.0          0.0           0.0   1.0
 ```
 """
-function FKinSpace(M::AbstractMatrix, Slist::AbstractMatrix, thetalist::AbstractVector)
-    for i in length(thetalist):-1:1
-        M = MatrixExp6(VecTose3(Slist[:, i] * thetalist[i])) * M
+function FKinSpace(home_config::AbstractMatrix, screw_axes::AbstractMatrix, joint_positions::AbstractVector)
+    for i in length(joint_positions):-1:1
+        home_config = MatrixExp6(VecTose3(screw_axes[:, i] * joint_positions[i])) * home_config
     end
-    M
+    home_config
 end
 
 # """
@@ -595,20 +595,20 @@ end
 # """
 
 """
-    JacobianBody(Blist, thetalist)
+    JacobianBody(body_screw_axes, joint_positions)
 
 Computes the body Jacobian for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> Blist = [0 0 1   0 0.2 0.2;
+julia> body_screw_axes = [0 0 1   0 0.2 0.2;
                 1 0 0   2   0   3;
                 0 1 0   0   2   1;
                 1 0 0 0.2 0.3 0.4]';
 
-julia> thetalist = [0.2, 1.1, 0.1, 1.2];
+julia> joint_positions = [0.2, 1.1, 0.1, 1.2];
 
-julia> JacobianBody(Blist, thetalist)
+julia> JacobianBody(body_screw_axes, joint_positions)
 6×4 Matrix{Float64}:
  -0.0452841  0.995004    0.0       1.0
   0.743593   0.0930486   0.362358  0.0
@@ -618,31 +618,31 @@ julia> JacobianBody(Blist, thetalist)
  -2.0664     1.82882    -1.58869   0.4
 ```
 """
-function JacobianBody(Blist::AbstractMatrix, thetalist::AbstractVector)
+function JacobianBody(body_screw_axes::AbstractMatrix, joint_positions::AbstractVector)
     T = LA.I
-    Jb = copy(Blist)
-    for i in length(thetalist)-1:-1:1
-        T *= MatrixExp6(VecTose3(Blist[:, i+1] * -thetalist[i+1]))
-        Jb[:, i] = Adjoint(T) * Blist[:, i]
+    Jb = copy(body_screw_axes)
+    for i in length(joint_positions)-1:-1:1
+        T *= MatrixExp6(VecTose3(body_screw_axes[:, i+1] * -joint_positions[i+1]))
+        Jb[:, i] = Adjoint(T) * body_screw_axes[:, i]
     end
     Jb
 end
 
 """
-    JacobianSpace(Slist, thetalist)
+    JacobianSpace(screw_axes, joint_positions)
 
 Computes the space Jacobian for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> Slist = [0 0 1   0 0.2 0.2;
+julia> screw_axes = [0 0 1   0 0.2 0.2;
                 1 0 0   2   0   3;
                 0 1 0   0   2   1;
                 1 0 0 0.2 0.3 0.4]';
 
-julia> thetalist = [0.2, 1.1, 0.1, 1.2];
+julia> joint_positions = [0.2, 1.1, 0.1, 1.2];
 
-julia> JacobianSpace(Slist, thetalist)
+julia> JacobianSpace(screw_axes, joint_positions)
 6×4 Matrix{Float64}:
  0.0  0.980067  -0.0901156   0.957494 
  0.0  0.198669   0.444554    0.284876 
@@ -652,12 +652,12 @@ julia> JacobianSpace(Slist, thetalist)
  0.2  2.96027    3.23573     2.22512  
 ```
 """
-function JacobianSpace(Slist::AbstractMatrix, thetalist::AbstractVector)
+function JacobianSpace(screw_axes::AbstractMatrix, joint_positions::AbstractVector)
     T = LA.I
-    Js = copy(Slist)
-    for i in 2:length(thetalist)
-        T *= MatrixExp6(VecTose3(Slist[:, i - 1] * thetalist[i - 1]))
-        Js[:, i] = Adjoint(T) * Slist[:, i]
+    Js = copy(screw_axes)
+    for i in 2:length(joint_positions)
+        T *= MatrixExp6(VecTose3(screw_axes[:, i - 1] * joint_positions[i - 1]))
+        Js[:, i] = Adjoint(T) * screw_axes[:, i]
     end
     Js
 end
@@ -667,103 +667,103 @@ end
 # """
 
 """
-    IKinBody(Blist, M, T, thetalist0, eomg, ev)
+    IKinBody(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the body frame for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> Blist = [  0  0 -1  2  0  0   ;
+julia> body_screw_axes = [  0  0 -1  2  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0  1  0  0  0.1 ]';
 
-julia> M = [ -1  0  0  0 ;
+julia> home_config = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ];
 
-julia> T = [ 0  1  0     -5 ;
+julia> target_config = [ 0  1  0     -5 ;
              1  0  0      4 ;
              0  0 -1 1.6858 ;
              0  0  0      1 ];
 
-julia> thetalist0 = [1.5, 2.5, 3];
+julia> initial_guess = [1.5, 2.5, 3];
 
-julia> eomg, ev = 0.01, 0.001;
+julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
-julia> IKinBody(Blist, M, T, thetalist0, eomg, ev)
+julia> IKinBody(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 ([1.5707381937148923, 2.999666997382942, 3.141539129217613], true)
 ```
 """
-function IKinBody(Blist::AbstractMatrix,
-                      M::AbstractMatrix,
-                      T::AbstractMatrix,
-             thetalist0::AbstractVector,
-                   eomg::Number,
-                     ev::Number)
-    thetalist = copy(thetalist0)
+function IKinBody(body_screw_axes::AbstractMatrix,
+                      home_config::AbstractMatrix,
+                      target_config::AbstractMatrix,
+             initial_guess::AbstractVector,
+                   angular_tolerance::Number,
+                     linear_tolerance::Number)
+    joint_positions = copy(initial_guess)
     i = 0
     maxiterations = 20
-    Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
-    err = LA.norm(Vb[1:3]) > eomg || LA.norm(Vb[4:6]) > ev
+    Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(home_config, body_screw_axes, joint_positions)) * target_config))
+    err = LA.norm(Vb[1:3]) > angular_tolerance || LA.norm(Vb[4:6]) > linear_tolerance
     while err && i < maxiterations
-        thetalist += LA.pinv(JacobianBody(Blist, thetalist)) * Vb
+        joint_positions += LA.pinv(JacobianBody(body_screw_axes, joint_positions)) * Vb
         i += 1
-        Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(M, Blist, thetalist)) * T))
-        err = LA.norm(Vb[1:3]) > eomg || LA.norm(Vb[4:6]) > ev
+        Vb = se3ToVec(MatrixLog6(TransInv(FKinBody(home_config, body_screw_axes, joint_positions)) * target_config))
+        err = LA.norm(Vb[1:3]) > angular_tolerance || LA.norm(Vb[4:6]) > linear_tolerance
     end
-    return thetalist, !err
+    return joint_positions, !err
 end
 
 """
-    IKinSpace(Slist, M, T, thetalist0, eomg, ev)
+    IKinSpace(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the space frame for an open chain robot.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> Slist = [  0  0  1  4  0  0   ;
+julia> screw_axes = [  0  0  1  4  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0 -1 -6  0 -0.1 ]';
 
-julia> M = [ -1  0  0  0 ;
+julia> home_config = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ];
 
-julia> T = [ 0  1  0     -5 ;
+julia> target_config = [ 0  1  0     -5 ;
              1  0  0      4 ;
              0  0 -1 1.6858 ;
              0  0  0      1 ];
 
-julia> thetalist0 = [1.5, 2.5, 3];
+julia> initial_guess = [1.5, 2.5, 3];
 
-julia> eomg, ev = 0.01, 0.001;
+julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
-julia> IKinSpace(Slist, M, T, thetalist0, eomg, ev)
+julia> IKinSpace(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 ([1.5707378296567203, 2.999663844672524, 3.141534199856583], true)
 ```
 """
-function IKinSpace(Slist::AbstractMatrix,
-                       M::AbstractMatrix,
-                       T::AbstractMatrix,
-              thetalist0::AbstractVector,
-                    eomg::Number,
-                      ev::Number)
-    thetalist = copy(thetalist0)
+function IKinSpace(screw_axes::AbstractMatrix,
+                       home_config::AbstractMatrix,
+                       target_config::AbstractMatrix,
+              initial_guess::AbstractVector,
+                    angular_tolerance::Number,
+                      linear_tolerance::Number)
+    joint_positions = copy(initial_guess)
     i = 0
     maxiterations = 20
-    Tsb = FKinSpace(M, Slist, thetalist)
-    Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))
-    err = LA.norm(Vs[1:3]) > eomg || LA.norm(Vs[4:6]) > ev
+    Tsb = FKinSpace(home_config, screw_axes, joint_positions)
+    Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * target_config))
+    err = LA.norm(Vs[1:3]) > angular_tolerance || LA.norm(Vs[4:6]) > linear_tolerance
     while err && i < maxiterations
-        thetalist += LA.pinv(JacobianSpace(Slist, thetalist)) * Vs
+        joint_positions += LA.pinv(JacobianSpace(screw_axes, joint_positions)) * Vs
         i += 1
-        Tsb = FKinSpace(M, Slist, thetalist)
-        Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * T))
-        err = LA.norm(Vs[1:3]) > eomg || LA.norm(Vs[4:6]) > ev
+        Tsb = FKinSpace(home_config, screw_axes, joint_positions)
+        Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * target_config))
+        err = LA.norm(Vs[1:3]) > angular_tolerance || LA.norm(Vs[4:6]) > linear_tolerance
     end
-    thetalist, !err
+    joint_positions, !err
 end
 
 # """
@@ -794,124 +794,124 @@ function ad(V::AbstractVector)
 end
 
 """
-    InverseDynamics(thetalist, dthetalist, ddthetalist, g, Ftip, Mlist, Glist, Slist)
+    InverseDynamics(joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes inverse dynamics in the space frame for an open chain robot.
 """
-function InverseDynamics(thetalist::AbstractVector,
-                        dthetalist::AbstractVector,
-                       ddthetalist::AbstractVector,
-                                 g::AbstractVector,
-                              Ftip::AbstractVector,
-                             Mlist::AbstractVector,
-                             Glist::AbstractVector,
-                             Slist::AbstractMatrix)
-    n = length(thetalist)
+function InverseDynamics(joint_positions::AbstractVector,
+                        joint_velocities::AbstractVector,
+                       joint_accelerations::AbstractVector,
+                                 gravity::AbstractVector,
+                              tip_wrench::AbstractVector,
+                             link_frames::AbstractVector,
+                             spatial_inertias::AbstractVector,
+                             screw_axes::AbstractMatrix)
+    n = length(joint_positions)
     Mi = LA.I
-    Ai = zeros(eltype(thetalist), 6, n)
-    AdTi = Array{Array{eltype(thetalist), 2}}(undef, n + 1)
-    Vi = zeros(eltype(thetalist), 6, n + 1)
-    Vdi = zeros(eltype(thetalist), 6, n + 1)
-    Vdi[:, 1] = vcat(zeros(eltype(thetalist), 3), -g)
-    AdTi[n+1] = Adjoint(TransInv(Mlist[n+1]))
-    Fi = copy(Ftip)
-    taulist = zeros(eltype(thetalist), n)
+    Ai = zeros(eltype(joint_positions), 6, n)
+    AdTi = Array{Array{eltype(joint_positions), 2}}(undef, n + 1)
+    Vi = zeros(eltype(joint_positions), 6, n + 1)
+    Vdi = zeros(eltype(joint_positions), 6, n + 1)
+    Vdi[:, 1] = vcat(zeros(eltype(joint_positions), 3), -gravity)
+    AdTi[n+1] = Adjoint(TransInv(link_frames[n+1]))
+    Fi = copy(tip_wrench)
+    joint_torques = zeros(eltype(joint_positions), n)
 
     for i in 1:n
-        Mi *= Mlist[i]
-        Ai[:, i] = Adjoint(TransInv(Mi)) * Slist[:, i]
-        AdTi[i] = Adjoint(MatrixExp6(VecTose3(Ai[:, i] * -thetalist[i])) *
-                          TransInv(Mlist[i]))
-        Vi[:, i + 1] = AdTi[i] * Vi[:,i] + Ai[:, i] * dthetalist[i]
-        Vdi[:, i + 1] = AdTi[i] * Vdi[:, i] + Ai[:, i] * ddthetalist[i] +
-                        ad(Vi[:, i + 1]) * Ai[:, i] * dthetalist[i]
+        Mi *= link_frames[i]
+        Ai[:, i] = Adjoint(TransInv(Mi)) * screw_axes[:, i]
+        AdTi[i] = Adjoint(MatrixExp6(VecTose3(Ai[:, i] * -joint_positions[i])) *
+                          TransInv(link_frames[i]))
+        Vi[:, i + 1] = AdTi[i] * Vi[:,i] + Ai[:, i] * joint_velocities[i]
+        Vdi[:, i + 1] = AdTi[i] * Vdi[:, i] + Ai[:, i] * joint_accelerations[i] +
+                        ad(Vi[:, i + 1]) * Ai[:, i] * joint_velocities[i]
     end
 
     for i in n:-1:1
-        Fi = AdTi[i + 1]' * Fi + Glist[i] * Vdi[:, i + 1] -
-             ad(Vi[:, i + 1])' * Glist[i] * Vi[:, i + 1]
-        taulist[i] = Fi' * Ai[:, i]
+        Fi = AdTi[i + 1]' * Fi + spatial_inertias[i] * Vdi[:, i + 1] -
+             ad(Vi[:, i + 1])' * spatial_inertias[i] * Vi[:, i + 1]
+        joint_torques[i] = Fi' * Ai[:, i]
     end
 
-    return taulist
+    return joint_torques
 end
 
 """
-    MassMatrix(thetalist, Mlist, Glist, Slist)
+    MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes)
 
 Computes the mass matrix of an open chain robot based on the given configuration.
 """
-function MassMatrix(thetalist::AbstractVector,
-                        Mlist::AbstractVector,
-                        Glist::AbstractVector,
-                        Slist::AbstractMatrix)
-    n = length(thetalist)
+function MassMatrix(joint_positions::AbstractVector,
+                        link_frames::AbstractVector,
+                        spatial_inertias::AbstractVector,
+                        screw_axes::AbstractMatrix)
+    n = length(joint_positions)
     M = zeros(n, n)
 
     for i in 1:n
-        ddthetalist = zeros(n)
-        ddthetalist[i] = 1
-        M[:, i] = InverseDynamics(thetalist, zeros(n), ddthetalist, zeros(3),
-                                  zeros(6), Mlist, Glist, Slist)
+        joint_accelerations = zeros(n)
+        joint_accelerations[i] = 1
+        M[:, i] = InverseDynamics(joint_positions, zeros(n), joint_accelerations, zeros(3),
+                                  zeros(6), link_frames, spatial_inertias, screw_axes)
     end
 
     return M
 end
 
 """
-    VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
+    VelQuadraticForces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes)
 
 Computes the Coriolis and centripetal terms in the inverse dynamics of an open chain robot.
 """
-function VelQuadraticForces(thetalist::AbstractVector,
-                           dthetalist::AbstractVector,
-                                Mlist::AbstractVector,
-                                Glist::AbstractVector,
-                                Slist::AbstractMatrix)
-    InverseDynamics(thetalist, dthetalist, zeros(length(thetalist)),
-                    zeros(3), zeros(6), Mlist, Glist, Slist)
+function VelQuadraticForces(joint_positions::AbstractVector,
+                           joint_velocities::AbstractVector,
+                                link_frames::AbstractVector,
+                                spatial_inertias::AbstractVector,
+                                screw_axes::AbstractMatrix)
+    InverseDynamics(joint_positions, joint_velocities, zeros(length(joint_positions)),
+                    zeros(3), zeros(6), link_frames, spatial_inertias, screw_axes)
 end
 
 """
-    GravityForces(thetalist, g, Mlist, Glist, Slist)
+    GravityForces(joint_positions, gravity, link_frames, spatial_inertias, screw_axes)
 
 Computes the joint forces/torques an open chain robot requires to overcome gravity at its configuration.
 """
-function GravityForces(thetalist::AbstractVector,
-                               g::AbstractVector,
-                           Mlist::AbstractVector,
-                           Glist::AbstractVector,
-                           Slist::AbstractMatrix)
-    n = length(thetalist)
-    InverseDynamics(thetalist, zeros(n), zeros(n), g, zeros(6), Mlist, Glist, Slist)
+function GravityForces(joint_positions::AbstractVector,
+                               gravity::AbstractVector,
+                           link_frames::AbstractVector,
+                           spatial_inertias::AbstractVector,
+                           screw_axes::AbstractMatrix)
+    n = length(joint_positions)
+    InverseDynamics(joint_positions, zeros(n), zeros(n), gravity, zeros(6), link_frames, spatial_inertias, screw_axes)
 end
 
 """
-    EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist)
+    EndEffectorForces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
-Computes the joint forces/torques an open chain robot requires only to create the end-effector force `Ftip`.
+Computes the joint forces/torques an open chain robot requires only to create the end-effector force `tip_wrench`.
 
 # Arguments
-- `thetalist`: the ``n``-vector of joint variables.
-- `Ftip`: the spatial force applied by the end-effector expressed in frame `{n+1}`.
-- `Mlist`: the list of link frames `i` relative to `i-1` at the home position.
-- `Glist`: the spatial inertia matrices `Gi` of the links.
-- `Slist`: the screw axes `Si` of the joints in a space frame, in the format of a matrix with axes as the columns.
+- `joint_positions`: the ``n``-vector of joint variables.
+- `tip_wrench`: the spatial force applied by the end-effector expressed in frame `{n+1}`.
+- `link_frames`: the list of link frames `i` relative to `i-1` at the home position.
+- `spatial_inertias`: the spatial inertia matrices `Gi` of the links.
+- `screw_axes`: the screw axes `Si` of the joints in a space frame, in the format of a matrix with axes as the columns.
 
-Returns the joint forces and torques required only to create the end-effector force `Ftip`.
-This function calls InverseDynamics with `g = 0`, `dthetalist = 0`, and `ddthetalist = 0`.
+Returns the joint forces and torques required only to create the end-effector force `tip_wrench`.
+This function calls InverseDynamics with `gravity = 0`, `joint_velocities = 0`, and `joint_accelerations = 0`.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> import LinearAlgebra as LA
 
-julia> thetalist = [0.1, 0.1, 0.1]
+julia> joint_positions = [0.1, 0.1, 0.1]
 3-element Vector{Float64}:
  0.1
  0.1
  0.1
 
-julia> Ftip = [1, 1, 1, 1, 1, 1]
+julia> tip_wrench = [1, 1, 1, 1, 1, 1]
 6-element Vector{Int64}:
  1
  1
@@ -960,7 +960,7 @@ julia> M34 = [1 0 0       0;
  0.0  0.0  1.0  0.14225
  0.0  0.0  0.0  1.0
 
-julia> Mlist = [M01, M12, M23, M34]
+julia> link_frames = [M01, M12, M23, M34]
 4-element Vector{Matrix{Float64}}:
  [1.0 0.0 0.0 0.0; 0.0 1.0 0.0 0.0; 0.0 0.0 1.0 0.089159; 0.0 0.0 0.0 1.0]
  [0.0 0.0 1.0 0.28; 0.0 1.0 0.0 0.13585; -1.0 0.0 0.0 0.0; 0.0 0.0 0.0 1.0]
@@ -994,13 +994,13 @@ julia> G3 = LA.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
   ⋅          ⋅          ⋅         ⋅     2.275   ⋅ 
   ⋅          ⋅          ⋅         ⋅      ⋅     2.275
 
-julia> Glist = [G1, G2, G3]
+julia> spatial_inertias = [G1, G2, G3]
 3-element Vector{LinearAlgebra.Diagonal{Float64, Vector{Float64}}}:
  [0.010267 0.0 … 0.0 0.0; 0.0 0.010267 … 0.0 0.0; … ; 0.0 0.0 … 3.7 0.0; 0.0 0.0 … 0.0 3.7]
  [0.22689 0.0 … 0.0 0.0; 0.0 0.22689 … 0.0 0.0; … ; 0.0 0.0 … 8.393 0.0; 0.0 0.0 … 0.0 8.393]
  [0.0494433 0.0 … 0.0 0.0; 0.0 0.0494433 … 0.0 0.0; … ; 0.0 0.0 … 2.275 0.0; 0.0 0.0 … 0.0 2.275]
 
-julia> Slist = [ 1  0  1      0  1      0;
+julia> screw_axes = [ 1  0  1      0  1      0;
                  0  1  0 -0.089  0      0;
                  0  1  0 -0.089  0  0.425]'
 6×3 adjoint(::Matrix{Float64}) with eltype Float64:
@@ -1011,55 +1011,55 @@ julia> Slist = [ 1  0  1      0  1      0;
  1.0   0.0     0.0
  0.0   0.0     0.425
 
-julia> EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist)
+julia> EndEffectorForces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
  1.4095460782639782
  1.857714972318063
  1.392409
 ```
 """
-function EndEffectorForces(thetalist::AbstractVector,
-                                Ftip::AbstractVector,
-                               Mlist::AbstractVector,
-                               Glist::AbstractVector,
-                               Slist::AbstractMatrix)
-    n = length(thetalist)
-    InverseDynamics(thetalist, zeros(n), zeros(n), zeros(3), Ftip, Mlist, Glist, Slist)
+function EndEffectorForces(joint_positions::AbstractVector,
+                                tip_wrench::AbstractVector,
+                               link_frames::AbstractVector,
+                               spatial_inertias::AbstractVector,
+                               screw_axes::AbstractMatrix)
+    n = length(joint_positions)
+    InverseDynamics(joint_positions, zeros(n), zeros(n), zeros(3), tip_wrench, link_frames, spatial_inertias, screw_axes)
 end
 
 """
-    ForwardDynamics(thetalist, dthetalist, taulist, g, Ftip, Mlist, Glist, Slist)
+    ForwardDynamics(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes forward dynamics in the space frame for an open chain robot.
 """
-function ForwardDynamics(thetalist::AbstractVector,
-                        dthetalist::AbstractVector,
-                           taulist::AbstractVector,
-                                 g::AbstractVector,
-                              Ftip::AbstractVector,
-                             Mlist::AbstractVector,
-                             Glist::AbstractVector,
-                             Slist::AbstractMatrix)
-    LA.inv(MassMatrix(thetalist, Mlist, Glist, Slist)) *
-    (taulist - VelQuadraticForces(thetalist, dthetalist, Mlist, Glist, Slist)
-             - GravityForces(thetalist, g, Mlist, Glist, Slist)
-             - EndEffectorForces(thetalist, Ftip, Mlist, Glist, Slist))
+function ForwardDynamics(joint_positions::AbstractVector,
+                        joint_velocities::AbstractVector,
+                           joint_torques::AbstractVector,
+                                 gravity::AbstractVector,
+                              tip_wrench::AbstractVector,
+                             link_frames::AbstractVector,
+                             spatial_inertias::AbstractVector,
+                             screw_axes::AbstractMatrix)
+    LA.inv(MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes)) *
+    (joint_torques - VelQuadraticForces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes)
+             - GravityForces(joint_positions, gravity, link_frames, spatial_inertias, screw_axes)
+             - EndEffectorForces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes))
 end
 
 """
-    EulerStep(thetalist, dthetalist, ddthetalist, dt)
+    EulerStep(joint_positions, joint_velocities, joint_accelerations, timestep)
 
 Compute the joint angles and velocities at the next timestep using first order Euler integration.
 
 # Arguments
-- `thetalist`: the ``n``-vector of joint variables.
-- `dthetalist`: the ``n``-vector of joint rates.
-- `ddthetalist`: the ``n``-vector of joint accelerations.
-- `dt`: the timestep delta t.
+- `joint_positions`: the ``n``-vector of joint variables.
+- `joint_velocities`: the ``n``-vector of joint rates.
+- `joint_accelerations`: the ``n``-vector of joint accelerations.
+- `timestep`: the timestep delta t.
 
 # Return
-- `thetalistNext`: the vector of joint variables after `dt` from first order Euler integration.
-- `dthetalistNext`: the vector of joint rates after `dt` from first order Euler integration.
+- `joint_positionsNext`: the vector of joint variables after `timestep` from first order Euler integration.
+- `joint_velocitiesNext`: the vector of joint rates after `timestep` from first order Euler integration.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -1067,73 +1067,73 @@ julia> EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)
 ([0.11000000000000001, 0.12000000000000001, 0.13], [0.30000000000000004, 0.35000000000000003, 0.4])
 ```
 """
-function EulerStep(thetalist::AbstractVector, dthetalist::AbstractVector, ddthetalist::AbstractVector, dt::Number)
-    thetalist + dt * dthetalist, dthetalist + dt * ddthetalist
+function EulerStep(joint_positions::AbstractVector, joint_velocities::AbstractVector, joint_accelerations::AbstractVector, timestep::Number)
+    joint_positions + timestep * joint_velocities, joint_velocities + timestep * joint_accelerations
 end
 
 """
-    InverseDynamicsTrajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)
+    InverseDynamicsTrajectory(joint_position_traj, joint_velocity_traj, joint_acceleration_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes)
 
 Calculates the joint forces/torques required to move the serial chain along the given trajectory using inverse dynamics.
 """
-function InverseDynamicsTrajectory(thetamat::AbstractMatrix,
-                                  dthetamat::AbstractMatrix,
-                                 ddthetamat::AbstractMatrix,
-                                          g::AbstractVector,
-                                    Ftipmat::AbstractMatrix,
-                                      Mlist::AbstractVector,
-                                      Glist::AbstractVector,
-                                      Slist::AbstractMatrix)
-    thetamat = thetamat'
-    dthetamat = dthetamat'
-    ddthetamat = ddthetamat'
-    Ftipmat = Ftipmat'
-    taumat = copy(thetamat)
+function InverseDynamicsTrajectory(joint_position_traj::AbstractMatrix,
+                                  joint_velocity_traj::AbstractMatrix,
+                                 joint_acceleration_traj::AbstractMatrix,
+                                          gravity::AbstractVector,
+                                    tip_wrench_traj::AbstractMatrix,
+                                      link_frames::AbstractVector,
+                                      spatial_inertias::AbstractVector,
+                                      screw_axes::AbstractMatrix)
+    joint_position_traj = joint_position_traj'
+    joint_velocity_traj = joint_velocity_traj'
+    joint_acceleration_traj = joint_acceleration_traj'
+    tip_wrench_traj = tip_wrench_traj'
+    joint_torque_traj = copy(joint_position_traj)
 
-    for i in 1:size(thetamat, 2)
-        taumat[:, i] = InverseDynamics(thetamat[:, i], dthetamat[:, i],
-                                       ddthetamat[:, i], g, Ftipmat[:, i],
-                                       Mlist, Glist, Slist)
+    for i in 1:size(joint_position_traj, 2)
+        joint_torque_traj[:, i] = InverseDynamics(joint_position_traj[:, i], joint_velocity_traj[:, i],
+                                       joint_acceleration_traj[:, i], gravity, tip_wrench_traj[:, i],
+                                       link_frames, spatial_inertias, screw_axes)
     end
 
-    taumat'
+    joint_torque_traj'
 end
 
 """
-    ForwardDynamicsTrajectory(thetalist, dthetalist, taumat, g, Ftipmat, Mlist, Glist, Slist, dt, intRes)
+    ForwardDynamicsTrajectory(joint_positions, joint_velocities, joint_torque_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, timestep, integration_resolution)
 
 Simulates the motion of a serial chain given an open-loop history of joint forces/torques.
 """
-function ForwardDynamicsTrajectory(thetalist::AbstractVector,
-                                  dthetalist::AbstractVector,
-                                      taumat::AbstractMatrix,
-                                           g::AbstractVector,
-                                     Ftipmat::AbstractMatrix,
-                                       Mlist::AbstractVector,
-                                       Glist::AbstractVector,
-                                       Slist::AbstractMatrix,
-                                          dt::Number,
-                                      intRes::Number)
-    taumat = taumat'
-    Ftipmat = Ftipmat'
-    thetamat = copy(taumat)
-    thetamat[:, 1] = thetalist
-    dthetamat = copy(taumat)
-    dthetamat[:, 1] = dthetalist
+function ForwardDynamicsTrajectory(joint_positions::AbstractVector,
+                                  joint_velocities::AbstractVector,
+                                      joint_torque_traj::AbstractMatrix,
+                                           gravity::AbstractVector,
+                                     tip_wrench_traj::AbstractMatrix,
+                                       link_frames::AbstractVector,
+                                       spatial_inertias::AbstractVector,
+                                       screw_axes::AbstractMatrix,
+                                          timestep::Number,
+                                      integration_resolution::Number)
+    joint_torque_traj = joint_torque_traj'
+    tip_wrench_traj = tip_wrench_traj'
+    joint_position_traj = copy(joint_torque_traj)
+    joint_position_traj[:, 1] = joint_positions
+    joint_velocity_traj = copy(joint_torque_traj)
+    joint_velocity_traj[:, 1] = joint_velocities
 
-    for i in 1:size(taumat, 2)-1
-        for j in 1:intRes
-            ddthetalist = ForwardDynamics(thetalist, dthetalist, taumat[:, i], g, Ftipmat[:, i], Mlist, Glist, Slist)
-            thetalist, dthetalist = EulerStep(thetalist, dthetalist, ddthetalist, 1.0 * dt / intRes)
+    for i in 1:size(joint_torque_traj, 2)-1
+        for j in 1:integration_resolution
+            joint_accelerations = ForwardDynamics(joint_positions, joint_velocities, joint_torque_traj[:, i], gravity, tip_wrench_traj[:, i], link_frames, spatial_inertias, screw_axes)
+            joint_positions, joint_velocities = EulerStep(joint_positions, joint_velocities, joint_accelerations, 1.0 * timestep / integration_resolution)
         end
 
-        thetamat[:, i + 1] = thetalist
-        dthetamat[:, i + 1] = dthetalist
+        joint_position_traj[:, i + 1] = joint_positions
+        joint_velocity_traj[:, i + 1] = joint_velocities
     end
 
-    thetamat = thetamat'
-    dthetamat = dthetamat'
-    return thetamat, dthetamat
+    joint_position_traj = joint_position_traj'
+    joint_velocity_traj = joint_velocity_traj'
+    return joint_position_traj, joint_velocity_traj
 end
 
 # """
@@ -1141,7 +1141,7 @@ end
 # """
 
 """
-    CubicTimeScaling(Tf, t)
+    CubicTimeScaling(total_time, t)
 
 Computes s(t) for a cubic time scaling.
 
@@ -1151,10 +1151,10 @@ julia> CubicTimeScaling(2, 0.6)
 0.21600000000000003
 ```
 """
-CubicTimeScaling(Tf::Number, t::Number) = 3(t / Tf)^2 - 2(t / Tf)^3
+CubicTimeScaling(total_time::Number, t::Number) = 3(t / total_time)^2 - 2(t / total_time)^3
 
 """
-    QuinticTimeScaling(Tf, t)
+    QuinticTimeScaling(total_time, t)
 
 Computes s(t) for a quintic time scaling.
 
@@ -1164,69 +1164,69 @@ julia> QuinticTimeScaling(2, 0.6)
 0.16308
 ```
 """
-QuinticTimeScaling(Tf::Number, t::Number) = 10(t / Tf)^3 - 15(t / Tf)^4 + 6(t / Tf)^5
+QuinticTimeScaling(total_time::Number, t::Number) = 10(t / total_time)^3 - 15(t / total_time)^4 + 6(t / total_time)^5
 
 """
-    JointTrajectory(thetastart, thetaend, Tf, N, method)
+    JointTrajectory(joint_position_start, joint_position_end, total_time, N, method)
 
 Computes a straight-line trajectory in joint space.
 """
-function JointTrajectory(thetastart::AbstractVector, thetaend::AbstractVector, Tf::Number, N::Integer, method::Integer)
-    timegap = Tf / (N - 1)
-    traj = zeros(length(thetastart), N)
+function JointTrajectory(joint_position_start::AbstractVector, joint_position_end::AbstractVector, total_time::Number, N::Integer, method::Integer)
+    timegap = total_time / (N - 1)
+    traj = zeros(length(joint_position_start), N)
 
     for i in 1:N
         if method == 3
-            s = CubicTimeScaling(Tf, timegap * (i - 1))
+            s = CubicTimeScaling(total_time, timegap * (i - 1))
         else
-            s = QuinticTimeScaling(Tf, timegap * (i - 1))
+            s = QuinticTimeScaling(total_time, timegap * (i - 1))
         end
 
-        traj[:, i] = s * thetaend + (1 - s) * thetastart
+        traj[:, i] = s * joint_position_end + (1 - s) * joint_position_start
     end
 
     traj'
 end
 
 """
-    ScrewTrajectory(Xstart, Xend, Tf, N, method)
+    ScrewTrajectory(transform_start, transform_end, total_time, N, method)
 
 Computes a trajectory as a list of N SE(3) matrices corresponding to the screw motion about a space screw axis.
 """
-function ScrewTrajectory(Xstart::AbstractMatrix, Xend::AbstractMatrix, Tf::Number, N::Integer, method::Integer)
-    timegap = Tf / (N - 1)
+function ScrewTrajectory(transform_start::AbstractMatrix, transform_end::AbstractMatrix, total_time::Number, N::Integer, method::Integer)
+    timegap = total_time / (N - 1)
     traj = Array{Array{Float64, 2}}(undef, N)
 
     for i in 1:N
         if method == 3
-            s = CubicTimeScaling(Tf, timegap * (i - 1))
+            s = CubicTimeScaling(total_time, timegap * (i - 1))
         else
-            s = QuinticTimeScaling(Tf, timegap * (i - 1))
+            s = QuinticTimeScaling(total_time, timegap * (i - 1))
         end
 
-        traj[i] = Xstart * MatrixExp6(MatrixLog6(TransInv(Xstart) * Xend) * s)
+        traj[i] = transform_start * MatrixExp6(MatrixLog6(TransInv(transform_start) * transform_end) * s)
     end
 
     return traj
 end
 
 """
-    CartesianTrajectory(Xstart, Xend, Tf, N, method)
+    CartesianTrajectory(transform_start, transform_end, total_time, N, method)
 
 Computes a trajectory as a list of N SE(3) matrices corresponding to the origin of the end-effector frame following a straight line.
 """
-function CartesianTrajectory(Xstart::AbstractMatrix, Xend::AbstractMatrix, Tf::Number, N::Integer, method::Integer)
-    timegap = Tf / (N - 1)
+function CartesianTrajectory(transform_start::AbstractMatrix, transform_end::AbstractMatrix, total_time::Number, N::Integer, method::Integer)
+    timegap = total_time / (N - 1)
     traj = Array{Array{Float64, 2}}(undef, N)
 
-    Rstart, pstart = TransToRp(Xstart)
-    Rend, pend = TransToRp(Xend)
+    Rstart, pstart = TransToRp(transform_start)
+    Rend, pend = TransToRp(transform_end)
 
     for i in 1:N
         if method == 3
-            s = CubicTimeScaling(Tf, timegap * (i - 1))
+            s = CubicTimeScaling(total_time, timegap * (i - 1))
         else
-            s = QuinticTimeScaling(Tf, timegap * (i - 1))
+            s = QuinticTimeScaling(total_time, timegap * (i - 1))
         end
 
         traj[i] = vcat(hcat(Rstart * MatrixExp3(MatrixLog3(Rstart' * Rend) * s), s * pend + (1 - s) * pstart), [0 0 0 1])
@@ -1240,84 +1240,84 @@ end
 # """
 
 """
-    ComputedTorque(thetalist, dthetalist, eint, g, Mlist, Glist, Slist, thetalistd, dthetalistd, ddthetalistd, Kp, Ki, Kd)
+    ComputedTorque(joint_positions, joint_velocities, error_integral, gravity, link_frames, spatial_inertias, screw_axes, desired_joint_positions, desired_joint_velocities, desired_joint_accelerations, Kp, Ki, Kd)
 
 Computes the joint control torques at a particular time instant.
 """
-function ComputedTorque(thetalist::AbstractVector,
-                       dthetalist::AbstractVector,
-                             eint::AbstractVector,
-                                g::AbstractVector,
-                            Mlist::AbstractVector,
-                            Glist::AbstractVector,
-                            Slist::AbstractMatrix,
-                       thetalistd::AbstractVector,
-                      dthetalistd::AbstractVector,
-                     ddthetalistd::AbstractVector,
+function ComputedTorque(joint_positions::AbstractVector,
+                       joint_velocities::AbstractVector,
+                             error_integral::AbstractVector,
+                                gravity::AbstractVector,
+                            link_frames::AbstractVector,
+                            spatial_inertias::AbstractVector,
+                            screw_axes::AbstractMatrix,
+                       desired_joint_positions::AbstractVector,
+                      desired_joint_velocities::AbstractVector,
+                     desired_joint_accelerations::AbstractVector,
                                Kp::Number,
                                Ki::Number,
                                Kd::Number)
-    e = thetalistd - thetalist
-    MassMatrix(thetalist, Mlist, Glist, Slist) *
-    (Kp * e + Ki * (eint + e) + Kd * (dthetalistd - dthetalist)) +
-    InverseDynamics(thetalist, dthetalist, ddthetalistd, g,
-                    zeros(6), Mlist, Glist, Slist)
+    e = desired_joint_positions - joint_positions
+    MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes) *
+    (Kp * e + Ki * (error_integral + e) + Kd * (desired_joint_velocities - joint_velocities)) +
+    InverseDynamics(joint_positions, joint_velocities, desired_joint_accelerations, gravity,
+                    zeros(6), link_frames, spatial_inertias, screw_axes)
 end
 
 """
-    SimulateControl(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
-                    Slist, thetamatd, dthetamatd, ddthetamatd, gtilde,
-                    Mtildelist, Gtildelist, Kp, Ki, Kd, dt, intRes)
+    SimulateControl(joint_positions, joint_velocities, gravity, tip_wrench_traj, link_frames, spatial_inertias,
+                    screw_axes, desired_joint_position_traj, desired_joint_velocity_traj, desired_joint_acceleration_traj, estimated_gravity,
+                    estimated_link_frames, estimated_spatial_inertias, Kp, Ki, Kd, timestep, integration_resolution)
 
 Simulates the computed torque controller over a given desired trajectory.
 """
-function SimulateControl(thetalist::AbstractVector,
-                        dthetalist::AbstractVector,
-                                 g::AbstractVector,
-                           Ftipmat::AbstractMatrix,
-                             Mlist::AbstractVector,
-                             Glist::AbstractVector,
-                             Slist::AbstractMatrix,
-                         thetamatd::AbstractMatrix,
-                        dthetamatd::AbstractMatrix,
-                       ddthetamatd::AbstractMatrix,
-                            gtilde::AbstractVector,
-                        Mtildelist::AbstractVector,
-                        Gtildelist::AbstractVector,
+function SimulateControl(joint_positions::AbstractVector,
+                        joint_velocities::AbstractVector,
+                                 gravity::AbstractVector,
+                           tip_wrench_traj::AbstractMatrix,
+                             link_frames::AbstractVector,
+                             spatial_inertias::AbstractVector,
+                             screw_axes::AbstractMatrix,
+                         desired_joint_position_traj::AbstractMatrix,
+                        desired_joint_velocity_traj::AbstractMatrix,
+                       desired_joint_acceleration_traj::AbstractMatrix,
+                            estimated_gravity::AbstractVector,
+                        estimated_link_frames::AbstractVector,
+                        estimated_spatial_inertias::AbstractVector,
                                 Kp::Number,
                                 Ki::Number,
                                 Kd::Number,
-                                dt::Number,
-                            intRes::Number)
-    Ftipmat = Ftipmat'
-    thetamatd = thetamatd'
-    dthetamatd = dthetamatd'
-    ddthetamatd = ddthetamatd'
+                                timestep::Number,
+                            integration_resolution::Number)
+    tip_wrench_traj = tip_wrench_traj'
+    desired_joint_position_traj = desired_joint_position_traj'
+    desired_joint_velocity_traj = desired_joint_velocity_traj'
+    desired_joint_acceleration_traj = desired_joint_acceleration_traj'
 
-    m, n = size(thetamatd)
+    m, n = size(desired_joint_position_traj)
 
-    thetacurrent = copy(thetalist)
-    dthetacurrent = copy(dthetalist)
+    current_positions = copy(joint_positions)
+    current_velocities = copy(joint_velocities)
 
-    eint = reshape(zeros(m, 1), (m,))
-    taumat = zeros(size(thetamatd))
-    thetamat = zeros(size(thetamatd))
+    error_integral = reshape(zeros(m, 1), (m,))
+    joint_torque_traj = zeros(size(desired_joint_position_traj))
+    joint_position_traj = zeros(size(desired_joint_position_traj))
 
     for i in 1:n
-        taulist = ComputedTorque(thetacurrent, dthetacurrent, eint, gtilde, Mtildelist, Gtildelist, Slist, thetamatd[:, i], dthetamatd[:, i], ddthetamatd[:, i], Kp, Ki, Kd)
+        joint_torques = ComputedTorque(current_positions, current_velocities, error_integral, estimated_gravity, estimated_link_frames, estimated_spatial_inertias, screw_axes, desired_joint_position_traj[:, i], desired_joint_velocity_traj[:, i], desired_joint_acceleration_traj[:, i], Kp, Ki, Kd)
 
-        for j in 1:intRes
-            ddthetalist = ForwardDynamics(thetacurrent, dthetacurrent, taulist, g, Ftipmat[:, i], Mlist, Glist, Slist)
-            thetacurrent, dthetacurrent = EulerStep(thetacurrent, dthetacurrent, ddthetalist, dt / intRes)
+        for j in 1:integration_resolution
+            joint_accelerations = ForwardDynamics(current_positions, current_velocities, joint_torques, gravity, tip_wrench_traj[:, i], link_frames, spatial_inertias, screw_axes)
+            current_positions, current_velocities = EulerStep(current_positions, current_velocities, joint_accelerations, timestep / integration_resolution)
         end
 
-        taumat[:, i] = taulist
-        thetamat[:, i] = thetacurrent
+        joint_torque_traj[:, i] = joint_torques
+        joint_position_traj[:, i] = current_positions
 
-        eint += dt * (thetamatd[:, i] - thetacurrent)
+        error_integral += timestep * (desired_joint_position_traj[:, i] - current_positions)
     end
 
-    taumat', thetamat'
+    joint_torque_traj', joint_position_traj'
 end
 
 end # module
