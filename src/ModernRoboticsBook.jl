@@ -110,14 +110,14 @@ Converts a 3-vector to an so(3) representation.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> VecToso3([1 2 3])
+julia> VecToso3([1, 2, 3])
 3×3 Matrix{Int64}:
   0  -3   2
   3   0  -1
  -2   1   0
 ```
 """
-function VecToso3(ω::AbstractArray)
+function VecToso3(ω::AbstractVector)
     [ 0    -ω[3]  ω[2];
       ω[3]  0    -ω[1];
      -ω[2]  ω[1]  0   ]
@@ -269,7 +269,7 @@ Converts a spatial velocity vector into a 4x4 matrix in se3.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> VecTose3([1 2 3 4 5 6])
+julia> VecTose3([1, 2, 3, 4, 5, 6])
 4×4 Matrix{Float64}:
   0.0  -3.0   2.0  4.0
   3.0   0.0  -1.0  5.0
@@ -277,7 +277,7 @@ julia> VecTose3([1 2 3 4 5 6])
   0.0   0.0   0.0  0.0
 ```
 """
-VecTose3(V::AbstractArray) = vcat(hcat(VecToso3(V[1:3]), V[4:6]), zeros(1, 4))
+VecTose3(V::AbstractVector) = vcat(hcat(VecToso3(V[1:3]), V[4:6]), zeros(1, 4))
 
 """
     se3ToVec(se3mat)
