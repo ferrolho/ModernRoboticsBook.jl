@@ -439,9 +439,7 @@ function ProjectToSO3(mat::AbstractMatrix)
     F  = LA.svd(mat)
     R = F.U * F.Vt
     if LA.det(R) < 0
-        # In this case the result may be far from mat.
-        # Hmm, I think this needs to be double-checked...
-        R[:, 3] = -R[:, 3]
+        R = F.U * LA.Diagonal([1, 1, -1]) * F.Vt
     end
     return R
 end
