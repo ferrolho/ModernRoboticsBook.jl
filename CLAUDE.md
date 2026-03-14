@@ -33,6 +33,6 @@ JuliaFormatter is installed globally (not a project dependency). To install it: 
 
 ## Conventions
 
-- **Function naming**: PascalCase (e.g., `MatrixExp3`, `FKinBody`, `TransInv`) to match the textbook's notation. The only lowercase export is `ad`.
+- **Function naming**: snake_case (e.g., `matrix_exp3`, `fkin_body`, `trans_inv`) following Julia conventions.
 - **Type signatures**: Functions accept `AbstractVector`/`AbstractMatrix` — no custom types are defined.
 - **Docstrings**: Include `jldoctest` examples with `setup = :(using ModernRoboticsBook)`. These are tested via Documenter.

@@ -30,7 +30,7 @@ N = 1000
 
 method = 5
 
-traj = JointTrajectory(thetastart, thetaend, Tf, N, method)
+traj = joint_trajectory(thetastart, thetaend, Tf, N, method)
 
 thetamat = copy(traj)
 dthetamat = zeros(1000, 3)
@@ -83,7 +83,7 @@ Slist = [ 1 0 1      0 1     0 ;
           0 1 0 -0.089 0     0 ;
           0 1 0 -0.089 0 0.425 ]'
 
-taumat = InverseDynamicsTrajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)
+taumat = inverse_dynamics_trajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)
 ```
 
 Plot the joint forces/torques:
@@ -124,7 +124,7 @@ taumat = [[3.63, -6.58, -5.57], [3.74, -5.55,  -5.5],
 
 taumat = cat(taumat..., dims=2)'
 
-thetamat, dthetamat = ForwardDynamicsTrajectory(thetalist, dthetalist, taumat, g,
+thetamat, dthetamat = forward_dynamics_trajectory(thetalist, dthetalist, taumat, g,
                                                 Ftipmat, Mlist, Glist, Slist, dt, intRes)
 ```
 
@@ -171,7 +171,7 @@ dt = 0.01
 N = round(Int, Tf / dt)
 method = 5
 
-traj = JointTrajectory(thetalist, thetaend, Tf, N, method)
+traj = joint_trajectory(thetalist, thetaend, Tf, N, method)
 
 thetamatd = copy(traj)
 dthetamatd = zeros(N, 3)
@@ -226,7 +226,7 @@ Kd = 18
 
 intRes = 8
 
-taumat, thetamat = SimulateControl(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
+taumat, thetamat = simulate_control(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
                                    Slist, thetamatd, dthetamatd, ddthetamatd, gtilde,
                                    Mtildelist, Gtildelist, Kp, Ki, Kd, dt, intRes)
 ```

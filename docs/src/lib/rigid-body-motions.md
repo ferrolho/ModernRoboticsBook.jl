@@ -6,10 +6,10 @@
 Modules = [ModernRoboticsBook]
 Pages = ["ModernRoboticsBook.jl"]
 Filter = t -> nameof(t) in [
-    :NearZero, :Normalize, :RotInv, :VecToso3, :so3ToVec, :AxisAng3,
-    :MatrixExp3, :MatrixLog3, :RpToTrans, :TransToRp, :TransInv,
-    :VecTose3, :se3ToVec, :Adjoint, :ScrewToAxis, :AxisAng6,
-    :MatrixExp6, :MatrixLog6, :ProjectToSO3, :ProjectToSE3,
-    :DistanceToSO3, :DistanceToSE3, :TestIfSO3, :TestIfSE3,
+    :near_zero, :normalize_vec, :rot_inv, :vec_to_so3, :so3_to_vec, :axis_ang3,
+    :matrix_exp3, :matrix_log3, :rp_to_trans, :trans_to_rp, :trans_inv,
+    :vec_to_se3, :se3_to_vec, :adjoint_repr, :screw_to_axis, :axis_ang6,
+    :matrix_exp6, :matrix_log6, :project_to_so3, :project_to_se3,
+    :distance_to_so3, :distance_to_se3, :test_if_so3, :test_if_se3,
 ]
 ```

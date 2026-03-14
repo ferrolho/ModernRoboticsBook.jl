@@ -34,7 +34,7 @@ body_screw_axes = [0 0 -1 2 0   0
                    0 0  1 0 0 0.1]'
 joint_positions = [π/2, 3, π]
 
-T = FKinBody(home_config, body_screw_axes, joint_positions)
+T = fkin_body(home_config, body_screw_axes, joint_positions)
 ```
 
 ## Documentation

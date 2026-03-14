@@ -2,60 +2,60 @@ module ModernRoboticsBook
 
 import LinearAlgebra as LA
 
-export NearZero,
-    Normalize,
-    RotInv,
-    VecToso3,
-    so3ToVec,
-    AxisAng3,
-    MatrixExp3,
-    MatrixLog3,
-    RpToTrans,
-    TransToRp,
-    TransInv,
-    VecTose3,
-    se3ToVec,
-    Adjoint,
-    ScrewToAxis,
-    AxisAng6,
-    MatrixExp6,
-    MatrixLog6,
-    ProjectToSO3,
-    ProjectToSE3,
-    DistanceToSO3,
-    DistanceToSE3,
-    TestIfSO3,
-    TestIfSE3,
-    FKinBody,
-    FKinSpace,
-    JacobianBody,
-    JacobianSpace,
-    IKinBody,
-    IKinSpace,
+export near_zero,
+    normalize_vec,
+    rot_inv,
+    vec_to_so3,
+    so3_to_vec,
+    axis_ang3,
+    matrix_exp3,
+    matrix_log3,
+    rp_to_trans,
+    trans_to_rp,
+    trans_inv,
+    vec_to_se3,
+    se3_to_vec,
+    adjoint_repr,
+    screw_to_axis,
+    axis_ang6,
+    matrix_exp6,
+    matrix_log6,
+    project_to_so3,
+    project_to_se3,
+    distance_to_so3,
+    distance_to_se3,
+    test_if_so3,
+    test_if_se3,
+    fkin_body,
+    fkin_space,
+    jacobian_body,
+    jacobian_space,
+    ikin_body,
+    ikin_space,
     ad,
-    InverseDynamics,
-    MassMatrix,
-    VelQuadraticForces,
-    GravityForces,
-    EndEffectorForces,
-    ForwardDynamics,
-    EulerStep,
-    InverseDynamicsTrajectory,
-    ForwardDynamicsTrajectory,
-    CubicTimeScaling,
-    QuinticTimeScaling,
-    JointTrajectory,
-    ScrewTrajectory,
-    CartesianTrajectory,
-    ComputedTorque,
-    SimulateControl
+    inverse_dynamics,
+    mass_matrix,
+    vel_quadratic_forces,
+    gravity_forces,
+    end_effector_forces,
+    forward_dynamics,
+    euler_step,
+    inverse_dynamics_trajectory,
+    forward_dynamics_trajectory,
+    cubic_time_scaling,
+    quintic_time_scaling,
+    joint_trajectory,
+    screw_trajectory,
+    cartesian_trajectory,
+    computed_torque,
+    simulate_control
 
 # """
 # *** BASIC HELPER FUNCTIONS ***
 # """
 
 """
-    NearZero(z)
+    near_zero(z)
 
 Determines whether a scalar is small enough to be treated as zero.
 
@@ -67,16 +67,16 @@ Determines whether a scalar is small enough to be treated as zero.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> NearZero(-1e-7)
+julia> near_zero(-1e-7)
 true
 ```
 """
-NearZero(z::Number) = abs(z) < 1e-6
+near_zero(z::Number) = abs(z) < 1e-6
 
 """
-    Normalize(V)
+    normalize_vec(V)
 
-Normalizes a vector.
+normalize_vecs a vector.
 
 # Arguments
 - `V`: a vector.
@@ -86,21 +86,21 @@ The unit vector in the direction of `V`.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> Normalize([1, 2, 3])
+julia> normalize_vec([1, 2, 3])
 3-element Vector{Float64}:
  0.2672612419124244
  0.5345224838248488
  0.8017837257372732
 ```
 """
-Normalize(V::AbstractVector) = V / LA.norm(V)
+normalize_vec(V::AbstractVector) = V / LA.norm(V)
 
 # """
 # *** CHAPTER 3: RIGID-BODY MOTIONS ***
 # """
 
 """
-    RotInv(R)
+    rot_inv(R)
 
 Inverts a rotation matrix.
 
@@ -112,17 +112,17 @@ The inverse of `R`, computed as ``R^T``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> RotInv([0 0 1; 1 0 0; 0 1 0])
+julia> rot_inv([0 0 1; 1 0 0; 0 1 0])
 3×3 adjoint(::Matrix{Int64}) with eltype Int64:
  0  1  0
  0  0  1
  1  0  0
 ```
 """
-RotInv(R::AbstractMatrix) = R'
+rot_inv(R::AbstractMatrix) = R'
 
 """
-    VecToso3(ω)
+    vec_to_so3(ω)
 
 Converts a 3-vector to an so(3) representation.
 
@@ -134,14 +134,14 @@ The corresponding ``3 \times 3`` skew-symmetric matrix in so(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> VecToso3([1, 2, 3])
+julia> vec_to_so3([1, 2, 3])
 3×3 Matrix{Int64}:
   0  -3   2
   3   0  -1
  -2   1   0
 ```
 """
-function VecToso3(ω::AbstractVector)
+function vec_to_so3(ω::AbstractVector)
     [
         0 -ω[3] ω[2]
         ω[3] 0 -ω[1]
@@ -150,7 +150,7 @@ function VecToso3(ω::AbstractVector)
 end
 
 """
-    so3ToVec(so3mat)
+    so3_to_vec(so3mat)
 
 Converts an so(3) representation to a 3-vector.
 
@@ -162,19 +162,19 @@ The corresponding 3-vector of angular velocities.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> so3ToVec([0 -3 2; 3 0 -1; -2 1 0])
+julia> so3_to_vec([0 -3 2; 3 0 -1; -2 1 0])
 3-element Vector{Int64}:
  1
  2
  3
 ```
 """
-function so3ToVec(so3mat::AbstractMatrix)
+function so3_to_vec(so3mat::AbstractMatrix)
     [so3mat[3, 2], so3mat[1, 3], so3mat[2, 1]]
 end
 
 """
-    AxisAng3(expc3)
+    axis_ang3(expc3)
 
 Converts a 3-vector of exponential coordinates for rotation into axis-angle form.
 
@@ -186,14 +186,14 @@ A tuple `(ω̂, θ)` of the unit rotation axis and the rotation angle.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> AxisAng3([1, 2, 3])
+julia> axis_ang3([1, 2, 3])
 ([0.2672612419124244, 0.5345224838248488, 0.8017837257372732], 3.7416573867739413)
 ```
 """
-AxisAng3(expc3::AbstractVector) = Normalize(expc3), LA.norm(expc3)
+axis_ang3(expc3::AbstractVector) = normalize_vec(expc3), LA.norm(expc3)
 
 """
-    MatrixExp3(so3mat)
+    matrix_exp3(so3mat)
 
 Computes the matrix exponential of a matrix in so(3).
 
@@ -207,26 +207,26 @@ The corresponding rotation matrix ``R`` in SO(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> MatrixExp3([0 -3 2; 3 0 -1; -2 1 0])
+julia> matrix_exp3([0 -3 2; 3 0 -1; -2 1 0])
 3×3 Matrix{Float64}:
  -0.694921   0.713521  0.0892929
  -0.192007  -0.303785  0.933192 
   0.692978   0.63135   0.348107 
 ```
 """
-function MatrixExp3(so3mat::AbstractMatrix)
-    ωθ = so3ToVec(so3mat)
-    if NearZero(LA.norm(ωθ))
+function matrix_exp3(so3mat::AbstractMatrix)
+    ωθ = so3_to_vec(so3mat)
+    if near_zero(LA.norm(ωθ))
         return Matrix{Float64}(LA.I, 3, 3)
     else
-        θ = AxisAng3(ωθ)[2]
+        θ = axis_ang3(ωθ)[2]
         ωmat = so3mat / θ
         return LA.I + sin(θ) * ωmat + (1 - cos(θ)) * ωmat * ωmat
     end
 end
 
 """
-    MatrixLog3(R)
+    matrix_log3(R)
 
 Computes the matrix logarithm of a rotation matrix.
 
@@ -238,26 +238,26 @@ The matrix logarithm of `R` in so(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> MatrixLog3([0 0 1; 1 0 0; 0 1 0])
+julia> matrix_log3([0 0 1; 1 0 0; 0 1 0])
 3×3 Matrix{Float64}:
   0.0     -1.2092   1.2092
   1.2092   0.0     -1.2092
  -1.2092   1.2092   0.0   
 ```
 """
-function MatrixLog3(R::AbstractMatrix)
+function matrix_log3(R::AbstractMatrix)
     acosinput = (LA.tr(R) - 1) / 2
     if acosinput >= 1
         return zeros(3, 3)
     elseif acosinput <= -1
-        if !NearZero(1 + R[3, 3])
+        if !near_zero(1 + R[3, 3])
             ω = (1 / √(2 * (1 + R[3, 3]))) * [R[1, 3], R[2, 3], 1 + R[3, 3]]
-        elseif !NearZero(1 + R[2, 2])
+        elseif !near_zero(1 + R[2, 2])
             ω = (1 / √(2 * (1 + R[2, 2]))) * [R[1, 2], 1 + R[2, 2], R[3, 2]]
         else
             ω = (1 / √(2 * (1 + R[1, 1]))) * [1 + R[1, 1], R[2, 1], R[3, 1]]
         end
-        return VecToso3(π * ω)
+        return vec_to_so3(π * ω)
     else
         θ = acos(acosinput)
         return θ / 2 / sin(θ) * (R - R')
@@ -265,7 +265,7 @@ function MatrixLog3(R::AbstractMatrix)
 end
 
 """
-    RpToTrans(R, p)
+    rp_to_trans(R, p)
 
 Converts a rotation matrix and a position vector into homogeneous transformation matrix.
 
@@ -278,7 +278,7 @@ The corresponding ``4 \\times 4`` homogeneous transformation matrix ``T``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> RpToTrans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
+julia> rp_to_trans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
 4×4 Matrix{Int64}:
  1  0   0  1
  0  0  -1  2
@@ -286,10 +286,10 @@ julia> RpToTrans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
  0  0   0  1
 ```
 """
-RpToTrans(R::AbstractMatrix, p::AbstractVector) = vcat(hcat(R, p), [0 0 0 1])
+rp_to_trans(R::AbstractMatrix, p::AbstractVector) = vcat(hcat(R, p), [0 0 0 1])
 
 """
-    TransToRp(T)
+    trans_to_rp(T)
 
 Converts a homogeneous transformation matrix into a rotation matrix and position vector.
 
@@ -301,14 +301,14 @@ A tuple `(R, p)` of the rotation matrix and position vector.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> TransToRp([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
+julia> trans_to_rp([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ([1 0 0; 0 0 -1; 0 1 0], [0, 0, 3])
 ```
 """
-TransToRp(T::AbstractMatrix) = T[1:3, 1:3], T[1:3, 4]
+trans_to_rp(T::AbstractMatrix) = T[1:3, 1:3], T[1:3, 4]
 
 """
-    TransInv(T)
+    trans_inv(T)
 
 Inverts a homogeneous transformation matrix.
 
@@ -320,7 +320,7 @@ The inverse ``T^{-1}``, computed using ``R^T``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> TransInv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
+julia> trans_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 4×4 Matrix{Int64}:
  1   0  0   0
  0   0  1  -3
@@ -328,13 +328,13 @@ julia> TransInv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
  0   0  0   1
 ```
 """
-function TransInv(T::AbstractMatrix)
-    R, p = TransToRp(T)
+function trans_inv(T::AbstractMatrix)
+    R, p = trans_to_rp(T)
     vcat(hcat(R', -R' * p), [0 0 0 1])
 end
 
 """
-    VecTose3(V)
+    vec_to_se3(V)
 
 Converts a spatial velocity vector into a 4x4 matrix in se3.
 
@@ -346,7 +346,7 @@ The corresponding ``4 \\times 4`` matrix in se(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> VecTose3([1, 2, 3, 4, 5, 6])
+julia> vec_to_se3([1, 2, 3, 4, 5, 6])
 4×4 Matrix{Float64}:
   0.0  -3.0   2.0  4.0
   3.0   0.0  -1.0  5.0
@@ -354,10 +354,10 @@ julia> VecTose3([1, 2, 3, 4, 5, 6])
   0.0   0.0   0.0  0.0
 ```
 """
-VecTose3(V::AbstractVector) = vcat(hcat(VecToso3(V[1:3]), V[4:6]), zeros(1, 4))
+vec_to_se3(V::AbstractVector) = vcat(hcat(vec_to_so3(V[1:3]), V[4:6]), zeros(1, 4))
 
 """
-    se3ToVec(se3mat)
+    se3_to_vec(se3mat)
 
 Converts an se3 matrix into a spatial velocity vector.
 
@@ -369,7 +369,7 @@ The corresponding 6-vector twist (angular velocity, linear velocity).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> se3ToVec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
+julia> se3_to_vec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
 6-element Vector{Int64}:
  1
  2
@@ -379,11 +379,11 @@ julia> se3ToVec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
  6
 ```
 """
-se3ToVec(se3mat::AbstractMatrix) =
+se3_to_vec(se3mat::AbstractMatrix) =
     vcat([se3mat[3, 2], se3mat[1, 3], se3mat[2, 1]], se3mat[1:3, 4])
 
 """
-    Adjoint(T)
+    adjoint_repr(T)
 
 Computes the adjoint representation of a homogeneous transformation matrix.
 
@@ -395,7 +395,7 @@ The ``6 \\times 6`` adjoint representation ``[\\text{Ad}_T]``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> Adjoint([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
+julia> adjoint_repr([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 6×6 Matrix{Float64}:
  1.0  0.0   0.0  0.0  0.0   0.0
  0.0  0.0  -1.0  0.0  0.0   0.0
@@ -405,13 +405,13 @@ julia> Adjoint([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
  0.0  0.0   0.0  0.0  1.0   0.0
 ```
 """
-function Adjoint(T::AbstractMatrix)
-    R, p = TransToRp(T)
-    vcat(hcat(R, zeros(3, 3)), hcat(VecToso3(p) * R, R))
+function adjoint_repr(T::AbstractMatrix)
+    R, p = trans_to_rp(T)
+    vcat(hcat(R, zeros(3, 3)), hcat(vec_to_so3(p) * R, R))
 end
 
 """
-    ScrewToAxis(q, s, h)
+    screw_to_axis(q, s, h)
 
 Takes a parametric description of a screw axis and converts it to a normalized screw axis.
 
@@ -425,7 +425,7 @@ The normalized 6-vector screw axis ``\\mathcal{S}``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)
+julia> screw_to_axis([3; 0; 0], [0; 0; 1], 2)
 6-element Vector{Int64}:
   0
   0
@@ -435,11 +435,11 @@ julia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)
   2
 ```
 """
-ScrewToAxis(q::AbstractVector, s::AbstractVector, h::Number) =
+screw_to_axis(q::AbstractVector, s::AbstractVector, h::Number) =
     vcat(s, LA.cross(q, s) + h * s)
 
 """
-    AxisAng6(expc6)
+    axis_ang6(expc6)
 
 Converts a 6-vector of exponential coordinates into screw axis-angle form.
 
@@ -451,20 +451,20 @@ A tuple `(S, θ)` of the screw axis and the distance travelled along the axis.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> AxisAng6([1, 0, 0, 1, 2, 3])
+julia> axis_ang6([1, 0, 0, 1, 2, 3])
 ([1.0, 0.0, 0.0, 1.0, 2.0, 3.0], 1.0)
 ```
 """
-function AxisAng6(expc6::AbstractVector)
+function axis_ang6(expc6::AbstractVector)
     θ = LA.norm(expc6[1:3])
-    if NearZero(θ)
+    if near_zero(θ)
         θ = LA.norm(expc6[4:6])
     end
     expc6 / θ, θ
 end
 
 """
-    MatrixExp6(se3mat)
+    matrix_exp6(se3mat)
 
 Computes the matrix exponential of an se3 representation of exponential coordinates.
 
@@ -476,7 +476,7 @@ The corresponding homogeneous transformation matrix ``T`` in SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.35619449; 0 0 0 0])
+julia> matrix_exp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.35619449; 0 0 0 0])
 4×4 Matrix{Float64}:
  1.0  0.0         0.0        0.0       
  0.0  6.7949e-9  -1.0        1.01923e-8
@@ -484,16 +484,16 @@ julia> MatrixExp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.3561944
  0.0  0.0         0.0        1.0       
 ```
 """
-function MatrixExp6(se3mat::AbstractMatrix)
-    ωθ = so3ToVec(se3mat[1:3, 1:3])
-    if NearZero(LA.norm(ωθ))
+function matrix_exp6(se3mat::AbstractMatrix)
+    ωθ = so3_to_vec(se3mat[1:3, 1:3])
+    if near_zero(LA.norm(ωθ))
         return vcat(hcat(Matrix{Float64}(LA.I, 3, 3), se3mat[1:3, 4]), [0 0 0 1])
     else
-        θ = AxisAng3(ωθ)[2]
+        θ = axis_ang3(ωθ)[2]
         ωmat = se3mat[1:3, 1:3] / θ
         return vcat(
             hcat(
-                MatrixExp3(se3mat[1:3, 1:3]),
+                matrix_exp3(se3mat[1:3, 1:3]),
                 (
                     Matrix{Float64}(LA.I, 3, 3) * θ +
                     (1 - cos(θ)) * ωmat +
@@ -506,7 +506,7 @@ function MatrixExp6(se3mat::AbstractMatrix)
 end
 
 """
-    MatrixLog6(T)
+    matrix_log6(T)
 
 Computes the matrix logarithm of a homogeneous transformation matrix.
 
@@ -518,7 +518,7 @@ The ``4 \\times 4`` matrix logarithm ``[\\mathcal{S}\\theta]`` in se(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> MatrixLog6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
+julia> matrix_log6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 4×4 Matrix{Float64}:
  0.0  0.0      0.0     0.0    
  0.0  0.0     -1.5708  2.35619
@@ -526,9 +526,9 @@ julia> MatrixLog6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
  0.0  0.0      0.0     0.0    
 ```
 """
-function MatrixLog6(T::AbstractMatrix)
-    R, p = TransToRp(T)
-    ωmat = MatrixLog3(R)
+function matrix_log6(T::AbstractMatrix)
+    R, p = trans_to_rp(T)
+    ωmat = matrix_log3(R)
     if iszero(ωmat)
         return vcat(hcat(zeros(3, 3), T[1:3, 4]), [0 0 0 0])
     else
@@ -545,7 +545,7 @@ function MatrixLog6(T::AbstractMatrix)
 end
 
 """
-    ProjectToSO3(mat)
+    project_to_so3(mat)
 
 Returns a projection of mat into SO(3).
 
@@ -557,14 +557,14 @@ The closest rotation matrix in SO(3), computed using SVD projection.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> ProjectToSO3([0.675 0.150  0.720; 0.370 0.771 -0.511; -0.630 0.619  0.472])
+julia> project_to_so3([0.675 0.150  0.720; 0.370 0.771 -0.511; -0.630 0.619  0.472])
 3×3 Matrix{Float64}:
   0.679011  0.148945   0.718859
   0.373207  0.773196  -0.512723
  -0.632187  0.616428   0.469421
 ```
 """
-function ProjectToSO3(mat::AbstractMatrix)
+function project_to_so3(mat::AbstractMatrix)
     F = LA.svd(mat)
     R = F.U * F.Vt
     if LA.det(R) < 0
@@ -574,7 +574,7 @@ function ProjectToSO3(mat::AbstractMatrix)
 end
 
 """
-    ProjectToSE3(mat)
+    project_to_se3(mat)
 
 Returns a projection of mat into SE(3).
 
@@ -586,7 +586,7 @@ The closest homogeneous transformation matrix in SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> ProjectToSE3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.619 0.472 3.6; 0.003 0.002 0.010 0.9])
+julia> project_to_se3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.619 0.472 3.6; 0.003 0.002 0.010 0.9])
 4×4 Matrix{Float64}:
   0.679011  0.148945   0.718859  1.2
   0.373207  0.773196  -0.512723  5.4
@@ -594,10 +594,11 @@ julia> ProjectToSE3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.619
   0.0       0.0        0.0       1.0
 ```
 """
-ProjectToSE3(mat::AbstractMatrix) = RpToTrans(ProjectToSO3(mat[1:3, 1:3]), mat[1:3, 4])
+project_to_se3(mat::AbstractMatrix) =
+    rp_to_trans(project_to_so3(mat[1:3, 1:3]), mat[1:3, 4])
 
 """
-    DistanceToSO3(mat)
+    distance_to_so3(mat)
 
 Returns the Frobenius norm to describe the distance of mat from the SO(3) manifold.
 
@@ -609,14 +610,14 @@ The Frobenius norm of ``R^T R - I``, or ``10^9`` if ``\\det(R) < 0``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> DistanceToSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
+julia> distance_to_so3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 0.08835298523536149
 ```
 """
-DistanceToSO3(mat::AbstractMatrix) = LA.det(mat) > 0 ? LA.norm(mat'mat - LA.I) : 1e+9
+distance_to_so3(mat::AbstractMatrix) = LA.det(mat) > 0 ? LA.norm(mat'mat - LA.I) : 1e+9
 
 """
-    DistanceToSE3(mat)
+    distance_to_se3(mat)
 
 Returns the Frobenius norm to describe the distance of mat from the SE(3) manifold.
 
@@ -628,11 +629,11 @@ The Frobenius distance from SE(3), or ``10^9`` if ``\\det(R) < 0``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> DistanceToSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 0.1 0.98])
+julia> distance_to_se3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 0.1 0.98])
 0.13493053768513638
 ```
 """
-function DistanceToSE3(mat::AbstractMatrix)
+function distance_to_se3(mat::AbstractMatrix)
     matR = mat[1:3, 1:3]
     if LA.det(matR) > 0
         LA.norm(hcat(vcat(matR'matR, zeros(1, 3)), mat[4, :]) - LA.I)
@@ -642,7 +643,7 @@ function DistanceToSE3(mat::AbstractMatrix)
 end
 
 """
-    TestIfSO3(mat)
+    test_if_so3(mat)
 
 Returns true if mat is close to or on the manifold SO(3).
 
@@ -654,14 +655,14 @@ Returns true if mat is close to or on the manifold SO(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> TestIfSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
+julia> test_if_so3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 false
 ```
 """
-TestIfSO3(mat::AbstractMatrix) = abs(DistanceToSO3(mat)) < 1e-3
+test_if_so3(mat::AbstractMatrix) = abs(distance_to_so3(mat)) < 1e-3
 
 """
-    TestIfSE3(mat)
+    test_if_se3(mat)
 
 Returns true if mat is close to or on the manifold SE(3).
 
@@ -673,18 +674,18 @@ Returns true if mat is close to or on the manifold SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> TestIfSE3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 0.1 0.98])
+julia> test_if_se3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 0.1 0.98])
 false
 ```
 """
-TestIfSE3(mat::AbstractMatrix) = abs(DistanceToSE3(mat)) < 1e-3
+test_if_se3(mat::AbstractMatrix) = abs(distance_to_se3(mat)) < 1e-3
 
 # """
 # *** CHAPTER 4: FORWARD KINEMATICS ***
 # """
 
 """
-    FKinBody(home_config, body_screw_axes, joint_positions)
+    fkin_body(home_config, body_screw_axes, joint_positions)
 
 Computes forward kinematics in the body frame for an open chain robot.
 
@@ -709,7 +710,7 @@ julia> body_screw_axes = [  0  0 -1  2  0  0   ;
 
 julia> joint_positions = [ π/2, 3, π ];
 
-julia> FKinBody(home_config, body_screw_axes, joint_positions)
+julia> fkin_body(home_config, body_screw_axes, joint_positions)
 4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
@@ -717,19 +718,19 @@ julia> FKinBody(home_config, body_screw_axes, joint_positions)
   0.0          0.0           0.0   1.0
 ```
 """
-function FKinBody(
+function fkin_body(
     home_config::AbstractMatrix,
     body_screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
     for i = 1:length(joint_positions)
-        home_config *= MatrixExp6(VecTose3(body_screw_axes[:, i] * joint_positions[i]))
+        home_config *= matrix_exp6(vec_to_se3(body_screw_axes[:, i] * joint_positions[i]))
     end
     home_config
 end
 
 """
-    FKinSpace(home_config, screw_axes, joint_positions)
+    fkin_space(home_config, screw_axes, joint_positions)
 
 Computes forward kinematics in the space frame for an open chain robot.
 
@@ -754,7 +755,7 @@ julia> screw_axes = [  0  0  1  4  0  0   ;
 
 julia> joint_positions = [ π/2, 3, π ];
 
-julia> FKinSpace(home_config, screw_axes, joint_positions)
+julia> fkin_space(home_config, screw_axes, joint_positions)
 4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
@@ -762,14 +763,14 @@ julia> FKinSpace(home_config, screw_axes, joint_positions)
   0.0          0.0           0.0   1.0
 ```
 """
-function FKinSpace(
+function fkin_space(
     home_config::AbstractMatrix,
     screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
     for i = length(joint_positions):-1:1
         home_config =
-            MatrixExp6(VecTose3(screw_axes[:, i] * joint_positions[i])) * home_config
+            matrix_exp6(vec_to_se3(screw_axes[:, i] * joint_positions[i])) * home_config
     end
     home_config
 end
@@ -779,7 +780,7 @@ end
 # """
 
 """
-    JacobianBody(body_screw_axes, joint_positions)
+    jacobian_body(body_screw_axes, joint_positions)
 
 Computes the body Jacobian ``J_b(\\theta)`` for an open chain robot.
 
@@ -799,7 +800,7 @@ julia> body_screw_axes = [0 0 1   0 0.2 0.2;
 
 julia> joint_positions = [0.2, 1.1, 0.1, 1.2];
 
-julia> JacobianBody(body_screw_axes, joint_positions)
+julia> jacobian_body(body_screw_axes, joint_positions)
 6×4 Matrix{Float64}:
  -0.0452841  0.995004    0.0       1.0
   0.743593   0.0930486   0.362358  0.0
@@ -809,18 +810,18 @@ julia> JacobianBody(body_screw_axes, joint_positions)
  -2.0664     1.82882    -1.58869   0.4
 ```
 """
-function JacobianBody(body_screw_axes::AbstractMatrix, joint_positions::AbstractVector)
+function jacobian_body(body_screw_axes::AbstractMatrix, joint_positions::AbstractVector)
     T = LA.I
     Jb = copy(body_screw_axes)
     for i = (length(joint_positions)-1):-1:1
-        T *= MatrixExp6(VecTose3(body_screw_axes[:, i+1] * -joint_positions[i+1]))
-        Jb[:, i] = Adjoint(T) * body_screw_axes[:, i]
+        T *= matrix_exp6(vec_to_se3(body_screw_axes[:, i+1] * -joint_positions[i+1]))
+        Jb[:, i] = adjoint_repr(T) * body_screw_axes[:, i]
     end
     Jb
 end
 
 """
-    JacobianSpace(screw_axes, joint_positions)
+    jacobian_space(screw_axes, joint_positions)
 
 Computes the space Jacobian ``J_s(\\theta)`` for an open chain robot.
 
@@ -840,7 +841,7 @@ julia> screw_axes = [0 0 1   0 0.2 0.2;
 
 julia> joint_positions = [0.2, 1.1, 0.1, 1.2];
 
-julia> JacobianSpace(screw_axes, joint_positions)
+julia> jacobian_space(screw_axes, joint_positions)
 6×4 Matrix{Float64}:
  0.0  0.980067  -0.0901156   0.957494 
  0.0  0.198669   0.444554    0.284876 
@@ -850,12 +851,12 @@ julia> JacobianSpace(screw_axes, joint_positions)
  0.2  2.96027    3.23573     2.22512  
 ```
 """
-function JacobianSpace(screw_axes::AbstractMatrix, joint_positions::AbstractVector)
+function jacobian_space(screw_axes::AbstractMatrix, joint_positions::AbstractVector)
     T = LA.I
     Js = copy(screw_axes)
     for i = 2:length(joint_positions)
-        T *= MatrixExp6(VecTose3(screw_axes[:, i-1] * joint_positions[i-1]))
-        Js[:, i] = Adjoint(T) * screw_axes[:, i]
+        T *= matrix_exp6(vec_to_se3(screw_axes[:, i-1] * joint_positions[i-1]))
+        Js[:, i] = adjoint_repr(T) * screw_axes[:, i]
     end
     Js
 end
@@ -865,7 +866,7 @@ end
 # """
 
 """
-    IKinBody(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+    ikin_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the body frame for an open chain robot using Newton-Raphson iteration.
 
@@ -900,11 +901,11 @@ julia> initial_guess = [1.5, 2.5, 3];
 
 julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
-julia> IKinBody(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+julia> ikin_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 ([1.5707381937148923, 2.999666997382943, 3.141539129217613], true)
 ```
 """
-function IKinBody(
+function ikin_body(
     body_screw_axes::AbstractMatrix,
     home_config::AbstractMatrix,
     target_config::AbstractMatrix,
@@ -915,19 +916,19 @@ function IKinBody(
     joint_positions = copy(initial_guess)
     i = 0
     maxiterations = 20
-    Vb = se3ToVec(
-        MatrixLog6(
-            TransInv(FKinBody(home_config, body_screw_axes, joint_positions)) *
+    Vb = se3_to_vec(
+        matrix_log6(
+            trans_inv(fkin_body(home_config, body_screw_axes, joint_positions)) *
             target_config,
         ),
     )
     err = LA.norm(Vb[1:3]) > angular_tolerance || LA.norm(Vb[4:6]) > linear_tolerance
     while err && i < maxiterations
-        joint_positions += LA.pinv(JacobianBody(body_screw_axes, joint_positions)) * Vb
+        joint_positions += LA.pinv(jacobian_body(body_screw_axes, joint_positions)) * Vb
         i += 1
-        Vb = se3ToVec(
-            MatrixLog6(
-                TransInv(FKinBody(home_config, body_screw_axes, joint_positions)) *
+        Vb = se3_to_vec(
+            matrix_log6(
+                trans_inv(fkin_body(home_config, body_screw_axes, joint_positions)) *
                 target_config,
             ),
         )
@@ -937,7 +938,7 @@ function IKinBody(
 end
 
 """
-    IKinSpace(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+    ikin_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the space frame for an open chain robot using Newton-Raphson iteration.
 
@@ -972,11 +973,11 @@ julia> initial_guess = [1.5, 2.5, 3];
 
 julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
-julia> IKinSpace(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+julia> ikin_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 ([1.57073782965672, 2.999663844672525, 3.141534199856583], true)
 ```
 """
-function IKinSpace(
+function ikin_space(
     screw_axes::AbstractMatrix,
     home_config::AbstractMatrix,
     target_config::AbstractMatrix,
@@ -987,14 +988,14 @@ function IKinSpace(
     joint_positions = copy(initial_guess)
     i = 0
     maxiterations = 20
-    Tsb = FKinSpace(home_config, screw_axes, joint_positions)
-    Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * target_config))
+    Tsb = fkin_space(home_config, screw_axes, joint_positions)
+    Vs = adjoint_repr(Tsb) * se3_to_vec(matrix_log6(trans_inv(Tsb) * target_config))
     err = LA.norm(Vs[1:3]) > angular_tolerance || LA.norm(Vs[4:6]) > linear_tolerance
     while err && i < maxiterations
-        joint_positions += LA.pinv(JacobianSpace(screw_axes, joint_positions)) * Vs
+        joint_positions += LA.pinv(jacobian_space(screw_axes, joint_positions)) * Vs
         i += 1
-        Tsb = FKinSpace(home_config, screw_axes, joint_positions)
-        Vs = Adjoint(Tsb) * se3ToVec(MatrixLog6(TransInv(Tsb) * target_config))
+        Tsb = fkin_space(home_config, screw_axes, joint_positions)
+        Vs = adjoint_repr(Tsb) * se3_to_vec(matrix_log6(trans_inv(Tsb) * target_config))
         err = LA.norm(Vs[1:3]) > angular_tolerance || LA.norm(Vs[4:6]) > linear_tolerance
     end
     joint_positions, !err
@@ -1028,12 +1029,12 @@ julia> ad([1, 2, 3, 4, 5, 6])
 ```
 """
 function ad(V::AbstractVector)
-    ωmat = VecToso3(V[1:3])
-    vcat(hcat(ωmat, zeros(3, 3)), hcat(VecToso3(V[4:6]), ωmat))
+    ωmat = vec_to_so3(V[1:3])
+    vcat(hcat(ωmat, zeros(3, 3)), hcat(vec_to_so3(V[4:6]), ωmat))
 end
 
 """
-    InverseDynamics(joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
+    inverse_dynamics(joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes inverse dynamics in the space frame for an open chain robot using
 forward-backward Newton-Euler iterations.
@@ -1053,14 +1054,14 @@ The ``n``-vector of required joint forces/torques.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> InverseDynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
+julia> inverse_dynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   74.6961615528745
  -33.067660158514585
   -3.2305731379014246
 ```
 """
-function InverseDynamics(
+function inverse_dynamics(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     joint_accelerations::AbstractVector,
@@ -1077,15 +1078,16 @@ function InverseDynamics(
     Vi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi[:, 1] = vcat(zeros(eltype(joint_positions), 3), -gravity)
-    AdTi[n+1] = Adjoint(TransInv(link_frames[n+1]))
+    AdTi[n+1] = adjoint_repr(trans_inv(link_frames[n+1]))
     Fi = copy(tip_wrench)
     joint_torques = zeros(eltype(joint_positions), n)
 
     for i = 1:n
         Mi *= link_frames[i]
-        Ai[:, i] = Adjoint(TransInv(Mi)) * screw_axes[:, i]
-        AdTi[i] = Adjoint(
-            MatrixExp6(VecTose3(Ai[:, i] * -joint_positions[i])) * TransInv(link_frames[i]),
+        Ai[:, i] = adjoint_repr(trans_inv(Mi)) * screw_axes[:, i]
+        AdTi[i] = adjoint_repr(
+            matrix_exp6(vec_to_se3(Ai[:, i] * -joint_positions[i])) *
+            trans_inv(link_frames[i]),
         )
         Vi[:, i+1] = AdTi[i] * Vi[:, i] + Ai[:, i] * joint_velocities[i]
         Vdi[:, i+1] =
@@ -1105,10 +1107,10 @@ function InverseDynamics(
 end
 
 """
-    MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes)
+    mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)
 
 Computes the mass matrix of an open chain robot based on the given configuration.
-Calls [`InverseDynamics`](@ref) ``n`` times, each time passing a ``\\ddot{\\theta}``
+Calls [`inverse_dynamics`](@ref) ``n`` times, each time passing a ``\\ddot{\\theta}``
 vector with a single element equal to one and all other inputs set to zero. Each call
 generates a single column of ``M(\\theta)``.
 
@@ -1123,14 +1125,14 @@ The ``n×n`` mass matrix ``M(\\theta)``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> MassMatrix([0.1, 0.1, 0.1], link_frames, spatial_inertias, screw_axes)
+julia> mass_matrix([0.1, 0.1, 0.1], link_frames, spatial_inertias, screw_axes)
 3×3 Matrix{Float64}:
  22.5433      -0.307147  -0.00718426
  -0.307147     1.96851    0.432157
  -0.00718426   0.432157   0.191631
 ```
 """
-function MassMatrix(
+function mass_matrix(
     joint_positions::AbstractVector,
     link_frames::AbstractVector,
     spatial_inertias::AbstractVector,
@@ -1142,7 +1144,7 @@ function MassMatrix(
     for i = 1:n
         joint_accelerations = zeros(n)
         joint_accelerations[i] = 1
-        M[:, i] = InverseDynamics(
+        M[:, i] = inverse_dynamics(
             joint_positions,
             zeros(n),
             joint_accelerations,
@@ -1158,10 +1160,10 @@ function MassMatrix(
 end
 
 """
-    VelQuadraticForces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes)
+    vel_quadratic_forces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes)
 
 Computes the Coriolis and centripetal terms ``c(\\theta, \\dot{\\theta})`` in the inverse
-dynamics of an open chain robot. Calls [`InverseDynamics`](@ref) with `gravity = 0`,
+dynamics of an open chain robot. Calls [`inverse_dynamics`](@ref) with `gravity = 0`,
 `tip_wrench = 0`, and `joint_accelerations = 0`.
 
 # Arguments
@@ -1176,21 +1178,21 @@ The ``n``-vector of Coriolis and centripetal terms.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> VelQuadraticForces([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], link_frames, spatial_inertias, screw_axes)
+julia> vel_quadratic_forces([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   0.26453118054501235
  -0.0550515682891655
  -0.006891320068248912
 ```
 """
-function VelQuadraticForces(
+function vel_quadratic_forces(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     link_frames::AbstractVector,
     spatial_inertias::AbstractVector,
     screw_axes::AbstractMatrix,
 )
-    InverseDynamics(
+    inverse_dynamics(
         joint_positions,
         joint_velocities,
         zeros(length(joint_positions)),
@@ -1203,10 +1205,10 @@ function VelQuadraticForces(
 end
 
 """
-    GravityForces(joint_positions, gravity, link_frames, spatial_inertias, screw_axes)
+    gravity_forces(joint_positions, gravity, link_frames, spatial_inertias, screw_axes)
 
 Computes the joint forces/torques an open chain robot requires to overcome gravity at
-its configuration. Calls [`InverseDynamics`](@ref) with `joint_velocities = 0`,
+its configuration. Calls [`inverse_dynamics`](@ref) with `joint_velocities = 0`,
 `joint_accelerations = 0`, and `tip_wrench = 0`.
 
 # Arguments
@@ -1221,14 +1223,14 @@ The ``n``-vector of joint gravity torques ``g(\\theta)``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> GravityForces([0.1, 0.1, 0.1], [0, 0, -9.8], link_frames, spatial_inertias, screw_axes)
+julia> gravity_forces([0.1, 0.1, 0.1], [0, 0, -9.8], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   28.40331261821983
  -37.64094817177068
   -5.4415891999683605
 ```
 """
-function GravityForces(
+function gravity_forces(
     joint_positions::AbstractVector,
     gravity::AbstractVector,
     link_frames::AbstractVector,
@@ -1236,7 +1238,7 @@ function GravityForces(
     screw_axes::AbstractMatrix,
 )
     n = length(joint_positions)
-    InverseDynamics(
+    inverse_dynamics(
         joint_positions,
         zeros(n),
         zeros(n),
@@ -1249,7 +1251,7 @@ function GravityForces(
 end
 
 """
-    EndEffectorForces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes)
+    end_effector_forces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes the joint forces/torques an open chain robot requires only to create the end-effector force `tip_wrench`.
 
@@ -1261,7 +1263,7 @@ Computes the joint forces/torques an open chain robot requires only to create th
 - `screw_axes`: the screw axes `Si` of the joints in a space frame, in the format of a matrix with axes as the columns.
 
 Returns the joint forces and torques required only to create the end-effector force `tip_wrench`.
-This function calls InverseDynamics with `gravity = 0`, `joint_velocities = 0`, and `joint_accelerations = 0`.
+This function calls inverse_dynamics with `gravity = 0`, `joint_velocities = 0`, and `joint_accelerations = 0`.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -1373,14 +1375,14 @@ julia> screw_axes = [ 1  0  1      0  1      0;
  1.0   0.0     0.0
  0.0   0.0     0.425
 
-julia> EndEffectorForces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes)
+julia> end_effector_forces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
  1.4095460782639782
  1.8577149723180628
  1.392409
 ```
 """
-function EndEffectorForces(
+function end_effector_forces(
     joint_positions::AbstractVector,
     tip_wrench::AbstractVector,
     link_frames::AbstractVector,
@@ -1388,7 +1390,7 @@ function EndEffectorForces(
     screw_axes::AbstractMatrix,
 )
     n = length(joint_positions)
-    InverseDynamics(
+    inverse_dynamics(
         joint_positions,
         zeros(n),
         zeros(n),
@@ -1401,7 +1403,7 @@ function EndEffectorForces(
 end
 
 """
-    ForwardDynamics(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
+    forward_dynamics(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes forward dynamics in the space frame for an open chain robot.
 Computes ``\\ddot{\\theta}`` by solving
@@ -1422,14 +1424,14 @@ The ``n``-vector of joint accelerations ``\\ddot{\\theta}``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> ForwardDynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.5, 0.6, 0.7], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
+julia> forward_dynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.5, 0.6, 0.7], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   -0.9739290670855625
   25.584667840340547
  -32.91499212478147
 ```
 """
-function ForwardDynamics(
+function forward_dynamics(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     joint_torques::AbstractVector,
@@ -1439,16 +1441,20 @@ function ForwardDynamics(
     spatial_inertias::AbstractVector,
     screw_axes::AbstractMatrix,
 )
-    LA.inv(MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes)) * (
-        joint_torques - VelQuadraticForces(
+    LA.inv(mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)) * (
+        joint_torques - vel_quadratic_forces(
             joint_positions,
             joint_velocities,
             link_frames,
             spatial_inertias,
             screw_axes,
-        ) -
-        GravityForces(joint_positions, gravity, link_frames, spatial_inertias, screw_axes) -
-        EndEffectorForces(
+        ) - gravity_forces(
+            joint_positions,
+            gravity,
+            link_frames,
+            spatial_inertias,
+            screw_axes,
+        ) - end_effector_forces(
             joint_positions,
             tip_wrench,
             link_frames,
@@ -1459,7 +1465,7 @@ function ForwardDynamics(
 end
 
 """
-    EulerStep(joint_positions, joint_velocities, joint_accelerations, timestep)
+    euler_step(joint_positions, joint_velocities, joint_accelerations, timestep)
 
 Compute the joint angles and velocities at the next timestep using first order Euler integration.
 
@@ -1475,11 +1481,11 @@ Compute the joint angles and velocities at the next timestep using first order E
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)
+julia> euler_step([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)
 ([0.11000000000000001, 0.12000000000000001, 0.13], [0.30000000000000004, 0.35000000000000003, 0.4])
 ```
 """
-function EulerStep(
+function euler_step(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     joint_accelerations::AbstractVector,
@@ -1490,10 +1496,10 @@ function EulerStep(
 end
 
 """
-    InverseDynamicsTrajectory(joint_position_traj, joint_velocity_traj, joint_acceleration_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes)
+    inverse_dynamics_trajectory(joint_position_traj, joint_velocity_traj, joint_acceleration_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes)
 
 Calculates the joint forces/torques required to move the serial chain along the given
-trajectory using [`InverseDynamics`](@ref) at each timestep.
+trajectory using [`inverse_dynamics`](@ref) at each timestep.
 
 # Arguments
 - `joint_position_traj`: an ``N×n`` matrix of joint variables, where row ``i`` is the joint vector at timestep ``i``.
@@ -1516,14 +1522,14 @@ julia> traj_vel = [0.0 0.0 0.0; 0.5 0.5 0.5; 1.0 1.0 1.0];
 
 julia> traj_acc = [0.5 0.5 0.5; 0.5 0.5 0.5; 0.5 0.5 0.5];
 
-julia> InverseDynamicsTrajectory(traj_pos, traj_vel, traj_acc, [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes)
+julia> inverse_dynamics_trajectory(traj_pos, traj_vel, traj_acc, [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes)
 3×3 adjoint(::Matrix{Float64}) with eltype Float64:
   23.7113  -35.2321  -3.87345
  105.336   -27.6441  -1.41169
  129.143   -17.3084   2.30991
 ```
 """
-function InverseDynamicsTrajectory(
+function inverse_dynamics_trajectory(
     joint_position_traj::AbstractMatrix,
     joint_velocity_traj::AbstractMatrix,
     joint_acceleration_traj::AbstractMatrix,
@@ -1540,7 +1546,7 @@ function InverseDynamicsTrajectory(
     joint_torque_traj = copy(joint_position_traj)
 
     for i = 1:size(joint_position_traj, 2)
-        joint_torque_traj[:, i] = InverseDynamics(
+        joint_torque_traj[:, i] = inverse_dynamics(
             joint_position_traj[:, i],
             joint_velocity_traj[:, i],
             joint_acceleration_traj[:, i],
@@ -1556,10 +1562,10 @@ function InverseDynamicsTrajectory(
 end
 
 """
-    ForwardDynamicsTrajectory(joint_positions, joint_velocities, joint_torque_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, timestep, integration_resolution)
+    forward_dynamics_trajectory(joint_positions, joint_velocities, joint_torque_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, timestep, integration_resolution)
 
 Simulates the motion of a serial chain given an open-loop history of joint
-forces/torques. Uses [`ForwardDynamics`](@ref) with [`EulerStep`](@ref) integration at
+forces/torques. Uses [`forward_dynamics`](@ref) with [`euler_step`](@ref) integration at
 each timestep.
 
 # Arguments
@@ -1582,7 +1588,7 @@ each timestep.
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> joint_torque_traj = [3.63 -6.58 -5.57; 3.74 -5.55 -5.5; 4.31 -0.68 -5.19];
 
-julia> thetamat, dthetamat = ForwardDynamicsTrajectory([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], joint_torque_traj, [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes, 0.1, 8);
+julia> thetamat, dthetamat = forward_dynamics_trajectory([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], joint_torque_traj, [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes, 0.1, 8);
 
 julia> thetamat
 3×3 adjoint(::Matrix{Float64}) with eltype Float64:
@@ -1591,7 +1597,7 @@ julia> thetamat
  0.10198   0.715813  -1.22522
 ```
 """
-function ForwardDynamicsTrajectory(
+function forward_dynamics_trajectory(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     joint_torque_traj::AbstractMatrix,
@@ -1612,7 +1618,7 @@ function ForwardDynamicsTrajectory(
 
     for i = 1:(size(joint_torque_traj, 2)-1)
         for j = 1:integration_resolution
-            joint_accelerations = ForwardDynamics(
+            joint_accelerations = forward_dynamics(
                 joint_positions,
                 joint_velocities,
                 joint_torque_traj[:, i],
@@ -1622,7 +1628,7 @@ function ForwardDynamicsTrajectory(
                 spatial_inertias,
                 screw_axes,
             )
-            joint_positions, joint_velocities = EulerStep(
+            joint_positions, joint_velocities = euler_step(
                 joint_positions,
                 joint_velocities,
                 joint_accelerations,
@@ -1644,7 +1650,7 @@ end
 # """
 
 """
-    CubicTimeScaling(total_time, t)
+    cubic_time_scaling(total_time, t)
 
 Computes ``s(t) = 3(t/T_f)^2 - 2(t/T_f)^3`` for a cubic time scaling, satisfying ``s(0)=0``, ``s(T_f)=1``, ``\\dot{s}(0)=0``, ``\\dot{s}(T_f)=0``.
 
@@ -1657,14 +1663,15 @@ A scalar ``s \\in [0, 1]`` representing the fraction of motion completed.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> CubicTimeScaling(2, 0.6)
+julia> cubic_time_scaling(2, 0.6)
 0.21600000000000003
 ```
 """
-CubicTimeScaling(total_time::Number, t::Number) = 3(t / total_time)^2 - 2(t / total_time)^3
+cubic_time_scaling(total_time::Number, t::Number) =
+    3(t / total_time)^2 - 2(t / total_time)^3
 
 """
-    QuinticTimeScaling(total_time, t)
+    quintic_time_scaling(total_time, t)
 
 Computes ``s(t) = 10(t/T_f)^3 - 15(t/T_f)^4 + 6(t/T_f)^5`` for a quintic time scaling, satisfying ``s(0)=0``, ``s(T_f)=1``, ``\\dot{s}(0)=0``, ``\\dot{s}(T_f)=0``, ``\\ddot{s}(0)=0``, ``\\ddot{s}(T_f)=0``.
 
@@ -1677,15 +1684,15 @@ A scalar ``s \\in [0, 1]`` representing the fraction of motion completed.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> QuinticTimeScaling(2, 0.6)
+julia> quintic_time_scaling(2, 0.6)
 0.16308
 ```
 """
-QuinticTimeScaling(total_time::Number, t::Number) =
+quintic_time_scaling(total_time::Number, t::Number) =
     10(t / total_time)^3 - 15(t / total_time)^4 + 6(t / total_time)^5
 
 """
-    JointTrajectory(joint_position_start, joint_position_end, total_time, N, method)
+    joint_trajectory(joint_position_start, joint_position_end, total_time, N, method)
 
 Computes a straight-line trajectory in joint space with the specified time scaling.
 
@@ -1694,14 +1701,14 @@ Computes a straight-line trajectory in joint space with the specified time scali
 - `joint_position_end`: the ``n``-vector of final joint variables.
 - `total_time`: total time of the motion in seconds from rest to rest.
 - `N`: the number of points ``N \\geq 2`` in the discrete representation of the trajectory.
-- `method`: the time-scaling method — use `3` for cubic ([`CubicTimeScaling`](@ref)) or `5` for quintic ([`QuinticTimeScaling`](@ref)).
+- `method`: the time-scaling method — use `3` for cubic ([`cubic_time_scaling`](@ref)) or `5` for quintic ([`quintic_time_scaling`](@ref)).
 
 # Returns
 An ``N×n`` matrix where each row is an ``n``-vector of joint variables. The first row is `joint_position_start` and the ``N``th row is `joint_position_end`. The elapsed time between each row is ``T_f / (N - 1)``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> JointTrajectory([0, 0], [1, 2], 2, 4, 3)
+julia> joint_trajectory([0, 0], [1, 2], 2, 4, 3)
 4×2 adjoint(::Matrix{Float64}) with eltype Float64:
  0.0       0.0
  0.259259  0.518519
@@ -1709,7 +1716,7 @@ julia> JointTrajectory([0, 0], [1, 2], 2, 4, 3)
  1.0       2.0
 ```
 """
-function JointTrajectory(
+function joint_trajectory(
     joint_position_start::AbstractVector,
     joint_position_end::AbstractVector,
     total_time::Number,
@@ -1721,9 +1728,9 @@ function JointTrajectory(
 
     for i = 1:N
         if method == 3
-            s = CubicTimeScaling(total_time, timegap * (i - 1))
+            s = cubic_time_scaling(total_time, timegap * (i - 1))
         else
-            s = QuinticTimeScaling(total_time, timegap * (i - 1))
+            s = quintic_time_scaling(total_time, timegap * (i - 1))
         end
 
         traj[:, i] = s * joint_position_end + (1 - s) * joint_position_start
@@ -1733,10 +1740,10 @@ function JointTrajectory(
 end
 
 """
-    ScrewTrajectory(transform_start, transform_end, total_time, N, method)
+    screw_trajectory(transform_start, transform_end, total_time, N, method)
 
 Computes a trajectory as a list of ``N`` SE(3) matrices corresponding to the screw
-motion about a space screw axis. Unlike [`CartesianTrajectory`](@ref), the origin
+motion about a space screw axis. Unlike [`cartesian_trajectory`](@ref), the origin
 follows a screw path rather than a straight line.
 
 # Arguments
@@ -1744,7 +1751,7 @@ follows a screw path rather than a straight line.
 - `transform_end`: the final end-effector configuration (4×4 SE(3) matrix).
 - `total_time`: total time of the motion in seconds from rest to rest.
 - `N`: the number of points ``N \\geq 2`` in the discrete representation of the trajectory.
-- `method`: the time-scaling method — use `3` for cubic ([`CubicTimeScaling`](@ref)) or `5` for quintic ([`QuinticTimeScaling`](@ref)).
+- `method`: the time-scaling method — use `3` for cubic ([`cubic_time_scaling`](@ref)) or `5` for quintic ([`quintic_time_scaling`](@ref)).
 
 # Returns
 A list of ``N`` SE(3) matrices separated in time by ``T_f / (N - 1)``. The first in the list is `transform_start` and the ``N``th is `transform_end`.
@@ -1755,7 +1762,7 @@ julia> Xstart = [1 0 0 1; 0 1 0 0; 0 0 1 1; 0 0 0 1];
 
 julia> Xend = [0 0 1 0.1; 1 0 0 0; 0 1 0 4.1; 0 0 0 1];
 
-julia> traj = ScrewTrajectory(Xstart, Xend, 5, 4, 3);
+julia> traj = screw_trajectory(Xstart, Xend, 5, 4, 3);
 
 julia> length(traj)
 4
@@ -1768,7 +1775,7 @@ julia> traj[1]
  0.0  0.0  0.0  1.0
 ```
 """
-function ScrewTrajectory(
+function screw_trajectory(
     transform_start::AbstractMatrix,
     transform_end::AbstractMatrix,
     total_time::Number,
@@ -1780,32 +1787,32 @@ function ScrewTrajectory(
 
     for i = 1:N
         if method == 3
-            s = CubicTimeScaling(total_time, timegap * (i - 1))
+            s = cubic_time_scaling(total_time, timegap * (i - 1))
         else
-            s = QuinticTimeScaling(total_time, timegap * (i - 1))
+            s = quintic_time_scaling(total_time, timegap * (i - 1))
         end
 
         traj[i] =
             transform_start *
-            MatrixExp6(MatrixLog6(TransInv(transform_start) * transform_end) * s)
+            matrix_exp6(matrix_log6(trans_inv(transform_start) * transform_end) * s)
     end
 
     return traj
 end
 
 """
-    CartesianTrajectory(transform_start, transform_end, total_time, N, method)
+    cartesian_trajectory(transform_start, transform_end, total_time, N, method)
 
 Computes a trajectory as a list of ``N`` SE(3) matrices where the origin of the
 end-effector frame follows a straight line and the rotation follows a geodesic on
-SO(3). Unlike [`ScrewTrajectory`](@ref), the position is decoupled from the rotation.
+SO(3). Unlike [`screw_trajectory`](@ref), the position is decoupled from the rotation.
 
 # Arguments
 - `transform_start`: the initial end-effector configuration (4×4 SE(3) matrix).
 - `transform_end`: the final end-effector configuration (4×4 SE(3) matrix).
 - `total_time`: total time of the motion in seconds from rest to rest.
 - `N`: the number of points ``N \\geq 2`` in the discrete representation of the trajectory.
-- `method`: the time-scaling method — use `3` for cubic ([`CubicTimeScaling`](@ref)) or `5` for quintic ([`QuinticTimeScaling`](@ref)).
+- `method`: the time-scaling method — use `3` for cubic ([`cubic_time_scaling`](@ref)) or `5` for quintic ([`quintic_time_scaling`](@ref)).
 
 # Returns
 A list of ``N`` SE(3) matrices separated in time by ``T_f / (N - 1)``. The first in the list is `transform_start` and the ``N``th is `transform_end`.
@@ -1816,7 +1823,7 @@ julia> Xstart = [1 0 0 1; 0 1 0 0; 0 0 1 1; 0 0 0 1];
 
 julia> Xend = [0 0 1 0.1; 1 0 0 0; 0 1 0 4.1; 0 0 0 1];
 
-julia> traj = CartesianTrajectory(Xstart, Xend, 5, 4, 5);
+julia> traj = cartesian_trajectory(Xstart, Xend, 5, 4, 5);
 
 julia> length(traj)
 4
@@ -1829,7 +1836,7 @@ julia> traj[1]
  0.0  0.0  0.0  1.0
 ```
 """
-function CartesianTrajectory(
+function cartesian_trajectory(
     transform_start::AbstractMatrix,
     transform_end::AbstractMatrix,
     total_time::Number,
@@ -1839,19 +1846,19 @@ function CartesianTrajectory(
     timegap = total_time / (N - 1)
     traj = Array{Array{Float64,2}}(undef, N)
 
-    Rstart, pstart = TransToRp(transform_start)
-    Rend, pend = TransToRp(transform_end)
+    Rstart, pstart = trans_to_rp(transform_start)
+    Rend, pend = trans_to_rp(transform_end)
 
     for i = 1:N
         if method == 3
-            s = CubicTimeScaling(total_time, timegap * (i - 1))
+            s = cubic_time_scaling(total_time, timegap * (i - 1))
         else
-            s = QuinticTimeScaling(total_time, timegap * (i - 1))
+            s = quintic_time_scaling(total_time, timegap * (i - 1))
         end
 
         traj[i] = vcat(
             hcat(
-                Rstart * MatrixExp3(MatrixLog3(Rstart' * Rend) * s),
+                Rstart * matrix_exp3(matrix_log3(Rstart' * Rend) * s),
                 s * pend + (1 - s) * pstart,
             ),
             [0 0 0 1],
@@ -1866,7 +1873,7 @@ end
 # """
 
 """
-    ComputedTorque(joint_positions, joint_velocities, error_integral, gravity, link_frames, spatial_inertias, screw_axes, desired_joint_positions, desired_joint_velocities, desired_joint_accelerations, Kp, Ki, Kd)
+    computed_torque(joint_positions, joint_velocities, error_integral, gravity, link_frames, spatial_inertias, screw_axes, desired_joint_positions, desired_joint_velocities, desired_joint_accelerations, Kp, Ki, Kd)
 
 Computes the joint control torques at a particular time instant using the computed
 torque control law:
@@ -1897,14 +1904,14 @@ The ``n``-vector of joint control torques.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> ComputedTorque([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.2, 0.2, 0.2], [0, 0, -9.8], link_frames, spatial_inertias, screw_axes, [1.0, 1.0, 1.0], [2.0, 1.2, 2.0], [0.1, 0.1, 0.1], 1.3, 1.2, 1.1)
+julia> computed_torque([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.2, 0.2, 0.2], [0, 0, -9.8], link_frames, spatial_inertias, screw_axes, [1.0, 1.0, 1.0], [2.0, 1.2, 2.0], [0.1, 0.1, 0.1], 1.3, 1.2, 1.1)
 3-element Vector{Float64}:
  133.0052524649953
  -29.942233243760633
   -3.03276856161724
 ```
 """
-function ComputedTorque(
+function computed_torque(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     error_integral::AbstractVector,
@@ -1920,11 +1927,11 @@ function ComputedTorque(
     Kd::Number,
 )
     e = desired_joint_positions - joint_positions
-    MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes) * (
+    mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes) * (
         Kp * e +
         Ki * (error_integral + e) +
         Kd * (desired_joint_velocities - joint_velocities)
-    ) + InverseDynamics(
+    ) + inverse_dynamics(
         joint_positions,
         joint_velocities,
         desired_joint_accelerations,
@@ -1937,10 +1944,10 @@ function ComputedTorque(
 end
 
 """
-    SimulateControl(joint_positions, joint_velocities, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, desired_joint_position_traj, desired_joint_velocity_traj, desired_joint_acceleration_traj, estimated_gravity, estimated_link_frames, estimated_spatial_inertias, Kp, Ki, Kd, timestep, integration_resolution)
+    simulate_control(joint_positions, joint_velocities, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, desired_joint_position_traj, desired_joint_velocity_traj, desired_joint_acceleration_traj, estimated_gravity, estimated_link_frames, estimated_spatial_inertias, Kp, Ki, Kd, timestep, integration_resolution)
 
-Simulates the [`ComputedTorque`](@ref) controller over a given desired trajectory using
-[`ForwardDynamics`](@ref) and numerical integration. The controller may use different
+Simulates the [`computed_torque`](@ref) controller over a given desired trajectory using
+[`forward_dynamics`](@ref) and numerical integration. The controller may use different
 (possibly inaccurate) dynamics parameters
 (`estimated_gravity`, `estimated_link_frames`, `estimated_spatial_inertias`) while the
 actual forward dynamics simulation uses the true parameters (`gravity`, `link_frames`,
@@ -1976,7 +1983,7 @@ julia> desired_pos = [0.1 0.1 0.1; 0.2 0.2 0.2; 0.3 0.3 0.3];
 
 julia> desired_vel = [0.1 0.1 0.1; 0.1 0.1 0.1; 0.1 0.1 0.1];
 
-julia> taumat, thetamat = SimulateControl([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes, desired_pos, desired_vel, zeros(3, 3), [0, 0, -9.8], link_frames, spatial_inertias, 20, 10, 18, 0.1, 4);
+julia> taumat, thetamat = simulate_control([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes, desired_pos, desired_vel, zeros(3, 3), [0, 0, -9.8], link_frames, spatial_inertias, 20, 10, 18, 0.1, 4);
 
 julia> taumat
 3×3 adjoint(::Matrix{Float64}) with eltype Float64:
@@ -1985,7 +1992,7 @@ julia> taumat
  45.3612  -39.6324  -5.62033
 ```
 """
-function SimulateControl(
+function simulate_control(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     gravity::AbstractVector,
@@ -2020,7 +2027,7 @@ function SimulateControl(
     joint_position_traj = zeros(size(desired_joint_position_traj))
 
     for i = 1:n
-        joint_torques = ComputedTorque(
+        joint_torques = computed_torque(
             current_positions,
             current_velocities,
             error_integral,
@@ -2037,7 +2044,7 @@ function SimulateControl(
         )
 
         for j = 1:integration_resolution
-            joint_accelerations = ForwardDynamics(
+            joint_accelerations = forward_dynamics(
                 current_positions,
                 current_velocities,
                 joint_torques,
@@ -2047,7 +2054,7 @@ function SimulateControl(
                 spatial_inertias,
                 screw_axes,
             )
-            current_positions, current_velocities = EulerStep(
+            current_positions, current_velocities = euler_step(
                 current_positions,
                 current_velocities,
                 joint_accelerations,

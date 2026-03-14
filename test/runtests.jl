@@ -8,21 +8,21 @@ Aqua.test_all(ModernRoboticsBook)
 
 @testset "ModernRoboticsBook.jl" begin
     @testset "basic helper functions" begin
-        @test NearZero(-1e-7)
-        @test Normalize([1, 2, 3]) ==
+        @test near_zero(-1e-7)
+        @test normalize_vec([1, 2, 3]) ==
               [0.2672612419124244, 0.5345224838248488, 0.8017837257372732]
     end
     @testset "chapter 3: rigid-body motions" begin
-        @test RotInv([0 0 1; 1 0 0; 0 1 0]) == [0 1 0; 0 0 1; 1 0 0]
-        @test VecToso3([1, 2, 3]) == [0 -3 2; 3 0 -1; -2 1 0]
-        @test so3ToVec([0 -3 2; 3 0 -1; -2 1 0]) == [1, 2, 3]
-        @test AxisAng3([1, 2, 3]) == (
+        @test rot_inv([0 0 1; 1 0 0; 0 1 0]) == [0 1 0; 0 0 1; 1 0 0]
+        @test vec_to_so3([1, 2, 3]) == [0 -3 2; 3 0 -1; -2 1 0]
+        @test so3_to_vec([0 -3 2; 3 0 -1; -2 1 0]) == [1, 2, 3]
+        @test axis_ang3([1, 2, 3]) == (
             [0.2672612419124244, 0.5345224838248488, 0.8017837257372732],
             3.7416573867739413,
         )
 
         @test isapprox(
-            MatrixExp3([
+            matrix_exp3([
                 0 -3 2
                 3 0 -1
                 -2 1 0
@@ -34,10 +34,10 @@ Aqua.test_all(ModernRoboticsBook)
             ];
             rtol = 1e-6,
         )
-        @test MatrixExp3(zeros(3, 3)) == [1 0 0; 0 1 0; 0 0 1]
+        @test matrix_exp3(zeros(3, 3)) == [1 0 0; 0 1 0; 0 0 1]
 
         @test isapprox(
-            MatrixLog3([
+            matrix_log3([
                 0 0 1
                 1 0 0
                 0 1 0
@@ -49,12 +49,12 @@ Aqua.test_all(ModernRoboticsBook)
             ];
             rtol = 1e-6,
         )
-        @test MatrixLog3(zeros(3, 3)) == zeros(3, 3)
-        @test MatrixLog3([-3 0 0; 0 1 0; 0 0 1]) == [0 -π 0; π 0 0; 0 0 0]
-        @test MatrixLog3([-2 0 0; 0 1 0; 0 0 -1]) == [0 0 π; 0 0 0; -π 0 0]
-        @test MatrixLog3([1 0 0; 0 -1 0; 0 0 -1]) == [0 0 0; 0 0 -π; 0 π 0]
+        @test matrix_log3(zeros(3, 3)) == zeros(3, 3)
+        @test matrix_log3([-3 0 0; 0 1 0; 0 0 1]) == [0 -π 0; π 0 0; 0 0 0]
+        @test matrix_log3([-2 0 0; 0 1 0; 0 0 -1]) == [0 0 π; 0 0 0; -π 0 0]
+        @test matrix_log3([1 0 0; 0 -1 0; 0 0 -1]) == [0 0 0; 0 0 -π; 0 π 0]
 
-        @test RpToTrans(
+        @test rp_to_trans(
             [
                 1 0 0
                 0 0 -1
@@ -67,7 +67,7 @@ Aqua.test_all(ModernRoboticsBook)
             0 1 0 5
             0 0 0 1
         ]
-        @test TransToRp([
+        @test trans_to_rp([
             1 0 0 0
             0 0 -1 0
             0 1 0 3
@@ -80,7 +80,7 @@ Aqua.test_all(ModernRoboticsBook)
             ],
             [0, 0, 3],
         )
-        @test TransInv([
+        @test trans_inv([
             1 0 0 0
             0 0 -1 0
             0 1 0 3
@@ -91,19 +91,19 @@ Aqua.test_all(ModernRoboticsBook)
             0 -1 0 0
             0 0 0 1
         ]
-        @test VecTose3([1, 2, 3, 4, 5, 6]) == [
+        @test vec_to_se3([1, 2, 3, 4, 5, 6]) == [
             0 -3 2 4
             3 0 -1 5
             -2 1 0 6
             0 0 0 0
         ]
-        @test se3ToVec([
+        @test se3_to_vec([
             0 -3 2 4
             3 0 -1 5
             -2 1 0 6
             0 0 0 0
         ]) == [1, 2, 3, 4, 5, 6]
-        @test Adjoint([
+        @test adjoint_repr([
             1 0 0 0
             0 0 -1 0
             0 1 0 3
@@ -116,12 +116,12 @@ Aqua.test_all(ModernRoboticsBook)
             3 0 0 0 0 -1
             0 0 0 0 1 0
         ]
-        @test ScrewToAxis([3; 0; 0], [0; 0; 1], 2) == [0, 0, 1, 0, -3, 2]
+        @test screw_to_axis([3; 0; 0], [0; 0; 1], 2) == [0, 0, 1, 0, -3, 2]
 
-        @test AxisAng6([1, 0, 0, 1, 2, 3]) == ([1, 0, 0, 1, 2, 3], 1)
-        @test AxisAng6([0, 0, 0, 0, 0, 4]) == ([0, 0, 0, 0, 0, 1], 4)
+        @test axis_ang6([1, 0, 0, 1, 2, 3]) == ([1, 0, 0, 1, 2, 3], 1)
+        @test axis_ang6([0, 0, 0, 0, 0, 4]) == ([0, 0, 0, 0, 0, 1], 4)
 
-        @test MatrixExp6([
+        @test matrix_exp6([
             0 0 0 0
             0 0 -π/2 3π/4
             0 π/2 0 3π/4
@@ -132,7 +132,7 @@ Aqua.test_all(ModernRoboticsBook)
             0 1 0 3
             0 0 0 1
         ]
-        @test MatrixLog6([
+        @test matrix_log6([
             1 0 0 0
             0 0 -1 0
             0 1 0 3
@@ -143,10 +143,10 @@ Aqua.test_all(ModernRoboticsBook)
             0 π/2 0 3π/4
             0 0 0 0
         ]
-        @test MatrixLog6(Array(LA.Diagonal(ones(4)))) == zeros(4, 4)
+        @test matrix_log6(Array(LA.Diagonal(ones(4)))) == zeros(4, 4)
 
         @test isapprox(
-            ProjectToSO3([
+            project_to_so3([
                 0.675 0.150 0.720
                 0.370 0.771 -0.511
                 -0.630 0.619 0.472
@@ -158,10 +158,10 @@ Aqua.test_all(ModernRoboticsBook)
             ];
             rtol = 1e-6,
         )
-        @test ProjectToSO3([-1 0 0; 0 -1 0; 0 0 -1]) == [-1 0 0; 0 -1 0; 0 0 1]
+        @test project_to_so3([-1 0 0; 0 -1 0; 0 0 -1]) == [-1 0 0; 0 -1 0; 0 0 1]
 
         @test isapprox(
-            ProjectToSE3(
+            project_to_se3(
                 [
                     0.675 0.150 0.720 1.2
                     0.370 0.771 -0.511 5.4
@@ -178,13 +178,13 @@ Aqua.test_all(ModernRoboticsBook)
             rtol = 1e-6,
         )
 
-        @test DistanceToSO3([
+        @test distance_to_so3([
             1.0 0.0 0.0
             0.0 0.1 -0.95
             0.0 1.0 0.1
         ]) == 0.08835298523536149
 
-        @test DistanceToSE3(
+        @test distance_to_se3(
             [
                 1.0 0.0 0.0 1.2
                 0.0 0.1 -0.95 1.5
@@ -192,14 +192,14 @@ Aqua.test_all(ModernRoboticsBook)
                 0.0 0.0 0.1 0.98
             ],
         ) == 0.13493053768513638
-        @test DistanceToSE3(Array(reshape(1:9, (3, 3)))) >= 1e+9
+        @test distance_to_se3(Array(reshape(1:9, (3, 3)))) >= 1e+9
 
-        @test !TestIfSO3([
+        @test !test_if_so3([
             1.0 0.0 0.0
             0.0 0.1 -0.95
             0.0 1.0 0.1
         ])
-        @test !TestIfSE3(
+        @test !test_if_se3(
             [
                 1.0 0.0 0.0 1.2
                 0.0 0.1 -0.95 1.5
@@ -231,7 +231,7 @@ Aqua.test_all(ModernRoboticsBook)
         joint_positions = [π / 2, 3, π]
 
         @test isapprox(
-            FKinBody(home_config, body_screw_axes, joint_positions),
+            fkin_body(home_config, body_screw_axes, joint_positions),
             [
                 -1.14424e-17 1.0 0.0 -5.0
                 1.0 1.14424e-17 0.0 4.0
@@ -241,7 +241,7 @@ Aqua.test_all(ModernRoboticsBook)
             rtol = 1e-6,
         )
         @test isapprox(
-            FKinSpace(home_config, screw_axes, joint_positions),
+            fkin_space(home_config, screw_axes, joint_positions),
             [
                 -1.14424e-17 1.0 0.0 -5.0
                 1.0 1.14424e-17 0.0 4.0
@@ -269,7 +269,7 @@ Aqua.test_all(ModernRoboticsBook)
         joint_positions = [0.2, 1.1, 0.1, 1.2]
 
         @test isapprox(
-            JacobianBody(body_screw_axes, joint_positions),
+            jacobian_body(body_screw_axes, joint_positions),
             [
                 -0.0452841 0.995004 0.0 1.0
                 0.743593 0.0930486 0.362358 0.0
@@ -281,7 +281,7 @@ Aqua.test_all(ModernRoboticsBook)
             rtol = 1e-5,
         )
         @test isapprox(
-            JacobianSpace(screw_axes, joint_positions),
+            jacobian_space(screw_axes, joint_positions),
             [
                 0.0 0.980067 -0.0901156 0.957494
                 0.0 0.198669 0.444554 0.284876
@@ -324,7 +324,7 @@ Aqua.test_all(ModernRoboticsBook)
 
         angular_tolerance, linear_tolerance = 0.01, 0.001
 
-        joint_positions, success = IKinBody(
+        joint_positions, success = ikin_body(
             body_screw_axes,
             home_config,
             target_config,
@@ -335,7 +335,7 @@ Aqua.test_all(ModernRoboticsBook)
         @test isapprox(joint_positions, [1.57074, 2.99967, 3.14154]; rtol = 1e-5)
         @test success
 
-        joint_positions, success = IKinSpace(
+        joint_positions, success = ikin_space(
             screw_axes,
             home_config,
             target_config,
@@ -396,7 +396,7 @@ Aqua.test_all(ModernRoboticsBook)
             0 1 0 -0.089 0 0.425
         ]'
 
-        joint_torques_actual = InverseDynamics(
+        joint_torques_actual = inverse_dynamics(
             joint_positions,
             joint_velocities,
             joint_accelerations,
@@ -411,7 +411,7 @@ Aqua.test_all(ModernRoboticsBook)
               [74.69616155287451, -33.06766015851458, -3.230573137901424]
 
         @test isapprox(
-            MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes),
+            mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes),
             [
                 22.5433 -0.307147 -0.00718426
                 -0.307147 1.96851 0.432157
@@ -420,7 +420,7 @@ Aqua.test_all(ModernRoboticsBook)
             rtol = 1e-5,
         )
 
-        @test VelQuadraticForces(
+        @test vel_quadratic_forces(
             joint_positions,
             joint_velocities,
             link_frames,
@@ -432,7 +432,7 @@ Aqua.test_all(ModernRoboticsBook)
             -0.006891320068248911
         ]
 
-        @test GravityForces(
+        @test gravity_forces(
             joint_positions,
             gravity,
             link_frames,
@@ -444,7 +444,7 @@ Aqua.test_all(ModernRoboticsBook)
             -5.4415891999683605
         ]
 
-        @test EndEffectorForces(
+        @test end_effector_forces(
             joint_positions,
             tip_wrench,
             link_frames,
@@ -457,7 +457,7 @@ Aqua.test_all(ModernRoboticsBook)
         ]
 
         joint_torques = [0.5, 0.6, 0.7]
-        @test ForwardDynamics(
+        @test forward_dynamics(
             joint_positions,
             joint_velocities,
             joint_torques,
@@ -472,7 +472,7 @@ Aqua.test_all(ModernRoboticsBook)
             -32.91499212478149
         ]
 
-        @test hcat(EulerStep([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)...) ≈
+        @test hcat(euler_step([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], 0.1)...) ≈
               hcat([0.11, 0.12, 0.13], [0.3, 0.35, 0.4])
 
         @testset "inverse dynamics trajectory" begin
@@ -482,7 +482,7 @@ Aqua.test_all(ModernRoboticsBook)
             N = 10
             method = 5
 
-            traj = JointTrajectory(
+            traj = joint_trajectory(
                 joint_position_start,
                 joint_position_end,
                 total_time,
@@ -505,7 +505,7 @@ Aqua.test_all(ModernRoboticsBook)
 
             tip_wrench_traj = ones(N, 6)
 
-            joint_torque_traj_actual = InverseDynamicsTrajectory(
+            joint_torque_traj_actual = inverse_dynamics_trajectory(
                 joint_position_traj,
                 joint_velocity_traj,
                 joint_acceleration_traj,
@@ -577,7 +577,7 @@ Aqua.test_all(ModernRoboticsBook)
             ]
 
             joint_position_traj_actual, joint_velocity_traj_actual =
-                ForwardDynamicsTrajectory(
+                forward_dynamics_trajectory(
                     joint_positions,
                     joint_velocities,
                     joint_torque_traj,
@@ -595,8 +595,8 @@ Aqua.test_all(ModernRoboticsBook)
         end
     end
     @testset "chapter 9: trajectory generation" begin
-        @test CubicTimeScaling(2, 0.6) ≈ 0.216
-        @test QuinticTimeScaling(2, 0.6) ≈ 0.16308
+        @test cubic_time_scaling(2, 0.6) ≈ 0.216
+        @test quintic_time_scaling(2, 0.6) ≈ 0.16308
         @testset "joint trajectory" begin
             joint_position_start = [1, 0, 0, 1, 1, 0.2, 0, 1]
             joint_position_end = [1.2, 0.5, 0.6, 1.1, 2, 2, 0.9, 1]
@@ -613,7 +613,7 @@ Aqua.test_all(ModernRoboticsBook)
                 1.2 0.5 0.6 1.1 2 2 0.9 1
             ]
 
-            @test JointTrajectory(
+            @test joint_trajectory(
                 joint_position_start,
                 joint_position_end,
                 total_time,
@@ -666,7 +666,7 @@ Aqua.test_all(ModernRoboticsBook)
                 ],
             ]
 
-            actual = ScrewTrajectory(transform_start, transform_end, total_time, N, method)
+            actual = screw_trajectory(transform_start, transform_end, total_time, N, method)
 
             @test isapprox(actual, expected; rtol = 1e-3)
         end
@@ -717,7 +717,7 @@ Aqua.test_all(ModernRoboticsBook)
             ]
 
             actual =
-                CartesianTrajectory(transform_start, transform_end, total_time, N, method)
+                cartesian_trajectory(transform_start, transform_end, total_time, N, method)
 
             @test isapprox(actual, expected; rtol = 1e-3)
         end
@@ -775,7 +775,7 @@ Aqua.test_all(ModernRoboticsBook)
         N = Int(total_time / timestep)
         method = 5
 
-        traj = JointTrajectory(joint_positions, joint_position_end, total_time, N, method)
+        traj = joint_trajectory(joint_positions, joint_position_end, total_time, N, method)
 
         desired_joint_position_traj = copy(traj)
         desired_joint_velocity_traj = zeros(N, 3)
@@ -880,7 +880,7 @@ Aqua.test_all(ModernRoboticsBook)
             1.57746305 3.12631855 4.54394792
         ]
 
-        joint_torque_traj_actual, joint_position_traj_actual = SimulateControl(
+        joint_torque_traj_actual, joint_position_traj_actual = simulate_control(
             joint_positions,
             joint_velocities,
             gravity,

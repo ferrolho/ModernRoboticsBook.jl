@@ -5,5 +5,5 @@
 ```@autodocs
 Modules = [ModernRoboticsBook]
 Pages = ["ModernRoboticsBook.jl"]
-Filter = t -> nameof(t) in [:IKinBody, :IKinSpace]
+Filter = t -> nameof(t) in [:ikin_body, :ikin_space]
 ```

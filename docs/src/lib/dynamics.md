@@ -6,8 +6,8 @@
 Modules = [ModernRoboticsBook]
 Pages = ["ModernRoboticsBook.jl"]
 Filter = t -> nameof(t) in [
-    :ad, :InverseDynamics, :MassMatrix, :VelQuadraticForces,
-    :GravityForces, :EndEffectorForces, :ForwardDynamics,
-    :EulerStep, :InverseDynamicsTrajectory, :ForwardDynamicsTrajectory,
+    :ad, :inverse_dynamics, :mass_matrix, :vel_quadratic_forces,
+    :gravity_forces, :end_effector_forces, :forward_dynamics,
+    :euler_step, :inverse_dynamics_trajectory, :forward_dynamics_trajectory,
 ]
 ```
