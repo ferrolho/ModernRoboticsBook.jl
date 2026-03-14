@@ -8,9 +8,9 @@ export near_zero,
     axis_ang3,
     matrix_exp3,
     matrix_log3,
-    rp_to_trans,
-    trans_to_rp,
-    trans_inv,
+    rotation_position_to_transform,
+    transform_to_rotation_position,
+    transform_inv,
     vec_to_se3,
     se3_to_vec,
     adjoint_repr,
@@ -24,12 +24,12 @@ export near_zero,
     distance_to_se3,
     test_if_so3,
     test_if_se3,
-    fkin_body,
-    fkin_space,
+    forward_kinematics_body,
+    forward_kinematics_space,
     jacobian_body,
     jacobian_space,
-    ikin_body,
-    ikin_space,
+    inverse_kinematics_body,
+    inverse_kinematics_space,
     ad,
     inverse_dynamics,
     mass_matrix,
@@ -219,7 +219,7 @@ function matrix_log3(R::AbstractMatrix)
 end
 
 """
-    rp_to_trans(R, p)
+    rotation_position_to_transform(R, p)
 
 Converts a rotation matrix and a position vector into homogeneous transformation matrix.
 
@@ -232,7 +232,7 @@ The corresponding ``4 \\times 4`` homogeneous transformation matrix ``T``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> rp_to_trans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
+julia> rotation_position_to_transform([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
 4×4 Matrix{Int64}:
  1  0   0  1
  0  0  -1  2
@@ -240,10 +240,11 @@ julia> rp_to_trans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
  0  0   0  1
 ```
 """
-rp_to_trans(R::AbstractMatrix, p::AbstractVector) = vcat(hcat(R, p), [0 0 0 1])
+rotation_position_to_transform(R::AbstractMatrix, p::AbstractVector) =
+    vcat(hcat(R, p), [0 0 0 1])
 
 """
-    trans_to_rp(T)
+    transform_to_rotation_position(T)
 
 Converts a homogeneous transformation matrix into a rotation matrix and position vector.
 
@@ -255,14 +256,14 @@ A tuple `(R, p)` of the rotation matrix and position vector.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> trans_to_rp([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
+julia> transform_to_rotation_position([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ([1 0 0; 0 0 -1; 0 1 0], [0, 0, 3])
 ```
 """
-trans_to_rp(T::AbstractMatrix) = T[1:3, 1:3], T[1:3, 4]
+transform_to_rotation_position(T::AbstractMatrix) = T[1:3, 1:3], T[1:3, 4]
 
 """
-    trans_inv(T)
+    transform_inv(T)
 
 Inverts a homogeneous transformation matrix.
 
@@ -274,7 +275,7 @@ The inverse ``T^{-1}``, computed using ``R^T``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> trans_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
+julia> transform_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 4×4 Matrix{Int64}:
  1   0  0   0
  0   0  1  -3
@@ -282,8 +283,8 @@ julia> trans_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
  0   0  0   1
 ```
 """
-function trans_inv(T::AbstractMatrix)
-    R, p = trans_to_rp(T)
+function transform_inv(T::AbstractMatrix)
+    R, p = transform_to_rotation_position(T)
     vcat(hcat(R', -R' * p), [0 0 0 1])
 end
 
@@ -360,7 +361,7 @@ julia> adjoint_repr([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function adjoint_repr(T::AbstractMatrix)
-    R, p = trans_to_rp(T)
+    R, p = transform_to_rotation_position(T)
     vcat(hcat(R, zeros(3, 3)), hcat(vec_to_so3(p) * R, R))
 end
 
@@ -481,7 +482,7 @@ julia> matrix_log6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function matrix_log6(T::AbstractMatrix)
-    R, p = trans_to_rp(T)
+    R, p = transform_to_rotation_position(T)
     ωmat = matrix_log3(R)
     if iszero(ωmat)
         return vcat(hcat(zeros(3, 3), T[1:3, 4]), [0 0 0 0])
@@ -549,7 +550,7 @@ julia> project_to_se3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.6
 ```
 """
 project_to_se3(mat::AbstractMatrix) =
-    rp_to_trans(project_to_so3(mat[1:3, 1:3]), mat[1:3, 4])
+    rotation_position_to_transform(project_to_so3(mat[1:3, 1:3]), mat[1:3, 4])
 
 """
     distance_to_so3(mat)
@@ -639,7 +640,7 @@ test_if_se3(mat::AbstractMatrix) = abs(distance_to_se3(mat)) < 1e-3
 # """
 
 """
-    fkin_body(home_config, body_screw_axes, joint_positions)
+    forward_kinematics_body(home_config, body_screw_axes, joint_positions)
 
 Computes forward kinematics in the body frame for an open chain robot.
 
@@ -664,7 +665,7 @@ julia> body_screw_axes = [  0  0 -1  2  0  0   ;
 
 julia> joint_positions = [ π/2, 3, π ];
 
-julia> fkin_body(home_config, body_screw_axes, joint_positions)
+julia> forward_kinematics_body(home_config, body_screw_axes, joint_positions)
 4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
@@ -672,7 +673,7 @@ julia> fkin_body(home_config, body_screw_axes, joint_positions)
   0.0          0.0           0.0   1.0
 ```
 """
-function fkin_body(
+function forward_kinematics_body(
     home_config::AbstractMatrix,
     body_screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
@@ -684,7 +685,7 @@ function fkin_body(
 end
 
 """
-    fkin_space(home_config, screw_axes, joint_positions)
+    forward_kinematics_space(home_config, screw_axes, joint_positions)
 
 Computes forward kinematics in the space frame for an open chain robot.
 
@@ -709,7 +710,7 @@ julia> screw_axes = [  0  0  1  4  0  0   ;
 
 julia> joint_positions = [ π/2, 3, π ];
 
-julia> fkin_space(home_config, screw_axes, joint_positions)
+julia> forward_kinematics_space(home_config, screw_axes, joint_positions)
 4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
@@ -717,7 +718,7 @@ julia> fkin_space(home_config, screw_axes, joint_positions)
   0.0          0.0           0.0   1.0
 ```
 """
-function fkin_space(
+function forward_kinematics_space(
     home_config::AbstractMatrix,
     screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
@@ -820,7 +821,7 @@ end
 # """
 
 """
-    ikin_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+    inverse_kinematics_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the body frame for an open chain robot using Newton-Raphson iteration.
 
@@ -855,11 +856,11 @@ julia> initial_guess = [1.5, 2.5, 3];
 
 julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
-julia> ikin_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+julia> inverse_kinematics_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 ([1.5707381937148923, 2.999666997382943, 3.141539129217613], true)
 ```
 """
-function ikin_body(
+function inverse_kinematics_body(
     body_screw_axes::AbstractMatrix,
     home_config::AbstractMatrix,
     target_config::AbstractMatrix,
@@ -872,8 +873,9 @@ function ikin_body(
     maxiterations = 20
     Vb = se3_to_vec(
         matrix_log6(
-            trans_inv(fkin_body(home_config, body_screw_axes, joint_positions)) *
-            target_config,
+            transform_inv(
+                forward_kinematics_body(home_config, body_screw_axes, joint_positions),
+            ) * target_config,
         ),
     )
     err = LA.norm(Vb[1:3]) > angular_tolerance || LA.norm(Vb[4:6]) > linear_tolerance
@@ -882,8 +884,9 @@ function ikin_body(
         i += 1
         Vb = se3_to_vec(
             matrix_log6(
-                trans_inv(fkin_body(home_config, body_screw_axes, joint_positions)) *
-                target_config,
+                transform_inv(
+                    forward_kinematics_body(home_config, body_screw_axes, joint_positions),
+                ) * target_config,
             ),
         )
         err = LA.norm(Vb[1:3]) > angular_tolerance || LA.norm(Vb[4:6]) > linear_tolerance
@@ -892,7 +895,7 @@ function ikin_body(
 end
 
 """
-    ikin_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+    inverse_kinematics_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the space frame for an open chain robot using Newton-Raphson iteration.
 
@@ -927,11 +930,11 @@ julia> initial_guess = [1.5, 2.5, 3];
 
 julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
-julia> ikin_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+julia> inverse_kinematics_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 ([1.57073782965672, 2.999663844672525, 3.141534199856583], true)
 ```
 """
-function ikin_space(
+function inverse_kinematics_space(
     screw_axes::AbstractMatrix,
     home_config::AbstractMatrix,
     target_config::AbstractMatrix,
@@ -942,14 +945,14 @@ function ikin_space(
     joint_positions = copy(initial_guess)
     i = 0
     maxiterations = 20
-    Tsb = fkin_space(home_config, screw_axes, joint_positions)
-    Vs = adjoint_repr(Tsb) * se3_to_vec(matrix_log6(trans_inv(Tsb) * target_config))
+    Tsb = forward_kinematics_space(home_config, screw_axes, joint_positions)
+    Vs = adjoint_repr(Tsb) * se3_to_vec(matrix_log6(transform_inv(Tsb) * target_config))
     err = LA.norm(Vs[1:3]) > angular_tolerance || LA.norm(Vs[4:6]) > linear_tolerance
     while err && i < maxiterations
         joint_positions += LA.pinv(jacobian_space(screw_axes, joint_positions)) * Vs
         i += 1
-        Tsb = fkin_space(home_config, screw_axes, joint_positions)
-        Vs = adjoint_repr(Tsb) * se3_to_vec(matrix_log6(trans_inv(Tsb) * target_config))
+        Tsb = forward_kinematics_space(home_config, screw_axes, joint_positions)
+        Vs = adjoint_repr(Tsb) * se3_to_vec(matrix_log6(transform_inv(Tsb) * target_config))
         err = LA.norm(Vs[1:3]) > angular_tolerance || LA.norm(Vs[4:6]) > linear_tolerance
     end
     joint_positions, !err
@@ -1032,16 +1035,16 @@ function inverse_dynamics(
     Vi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi[:, 1] = vcat(zeros(eltype(joint_positions), 3), -gravity)
-    AdTi[n+1] = adjoint_repr(trans_inv(link_frames[n+1]))
+    AdTi[n+1] = adjoint_repr(transform_inv(link_frames[n+1]))
     Fi = copy(tip_wrench)
     joint_torques = zeros(eltype(joint_positions), n)
 
     for i = 1:n
         Mi *= link_frames[i]
-        Ai[:, i] = adjoint_repr(trans_inv(Mi)) * screw_axes[:, i]
+        Ai[:, i] = adjoint_repr(transform_inv(Mi)) * screw_axes[:, i]
         AdTi[i] = adjoint_repr(
             matrix_exp6(vec_to_se3(Ai[:, i] * -joint_positions[i])) *
-            trans_inv(link_frames[i]),
+            transform_inv(link_frames[i]),
         )
         Vi[:, i+1] = AdTi[i] * Vi[:, i] + Ai[:, i] * joint_velocities[i]
         Vdi[:, i+1] =
@@ -1748,7 +1751,7 @@ function screw_trajectory(
 
         traj[i] =
             transform_start *
-            matrix_exp6(matrix_log6(trans_inv(transform_start) * transform_end) * s)
+            matrix_exp6(matrix_log6(transform_inv(transform_start) * transform_end) * s)
     end
 
     return traj
@@ -1800,8 +1803,8 @@ function cartesian_trajectory(
     timegap = total_time / (N - 1)
     traj = Array{Array{Float64,2}}(undef, N)
 
-    Rstart, pstart = trans_to_rp(transform_start)
-    Rend, pend = trans_to_rp(transform_end)
+    Rstart, pstart = transform_to_rotation_position(transform_start)
+    Rend, pend = transform_to_rotation_position(transform_end)
 
     for i = 1:N
         if method == 3

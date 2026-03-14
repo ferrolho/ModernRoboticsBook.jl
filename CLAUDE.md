@@ -33,6 +33,6 @@ JuliaFormatter is installed globally (not a project dependency). To install it: 
 
 ## Conventions
 
-- **Function naming**: snake_case (e.g., `matrix_exp3`, `fkin_body`, `trans_inv`) following Julia conventions.
+- **Function naming**: snake_case (e.g., `matrix_exp3`, `forward_kinematics_body`, `transform_inv`) following Julia conventions.
 - **Type signatures**: Functions accept `AbstractVector`/`AbstractMatrix` — no custom types are defined.
 - **Docstrings**: Include `jldoctest` examples with `setup = :(using ModernRoboticsBook)`. These are tested via Documenter.

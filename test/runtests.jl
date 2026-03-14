@@ -51,7 +51,7 @@ Aqua.test_all(ModernRoboticsBook)
         @test matrix_log3([-2 0 0; 0 1 0; 0 0 -1]) == [0 0 π; 0 0 0; -π 0 0]
         @test matrix_log3([1 0 0; 0 -1 0; 0 0 -1]) == [0 0 0; 0 0 -π; 0 π 0]
 
-        @test rp_to_trans(
+        @test rotation_position_to_transform(
             [
                 1 0 0
                 0 0 -1
@@ -64,7 +64,7 @@ Aqua.test_all(ModernRoboticsBook)
             0 1 0 5
             0 0 0 1
         ]
-        @test trans_to_rp([
+        @test transform_to_rotation_position([
             1 0 0 0
             0 0 -1 0
             0 1 0 3
@@ -77,7 +77,7 @@ Aqua.test_all(ModernRoboticsBook)
             ],
             [0, 0, 3],
         )
-        @test trans_inv([
+        @test transform_inv([
             1 0 0 0
             0 0 -1 0
             0 1 0 3
@@ -228,7 +228,7 @@ Aqua.test_all(ModernRoboticsBook)
         joint_positions = [π / 2, 3, π]
 
         @test isapprox(
-            fkin_body(home_config, body_screw_axes, joint_positions),
+            forward_kinematics_body(home_config, body_screw_axes, joint_positions),
             [
                 -1.14424e-17 1.0 0.0 -5.0
                 1.0 1.14424e-17 0.0 4.0
@@ -238,7 +238,7 @@ Aqua.test_all(ModernRoboticsBook)
             rtol = 1e-6,
         )
         @test isapprox(
-            fkin_space(home_config, screw_axes, joint_positions),
+            forward_kinematics_space(home_config, screw_axes, joint_positions),
             [
                 -1.14424e-17 1.0 0.0 -5.0
                 1.0 1.14424e-17 0.0 4.0
@@ -321,7 +321,7 @@ Aqua.test_all(ModernRoboticsBook)
 
         angular_tolerance, linear_tolerance = 0.01, 0.001
 
-        joint_positions, success = ikin_body(
+        joint_positions, success = inverse_kinematics_body(
             body_screw_axes,
             home_config,
             target_config,
@@ -332,7 +332,7 @@ Aqua.test_all(ModernRoboticsBook)
         @test isapprox(joint_positions, [1.57074, 2.99967, 3.14154]; rtol = 1e-5)
         @test success
 
-        joint_positions, success = ikin_space(
+        joint_positions, success = inverse_kinematics_space(
             screw_axes,
             home_config,
             target_config,
