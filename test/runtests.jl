@@ -496,7 +496,7 @@ Aqua.test_all(ModernRoboticsBook)
 
             timestep = total_time / (N - 1)
 
-            for i = 1:size(traj, 1)-1
+            for i = 1:(size(traj, 1)-1)
                 joint_velocity_traj[i+1, :] =
                     (joint_position_traj[i+1, :] - joint_position_traj[i, :]) / timestep
                 joint_acceleration_traj[i+1, :] =
@@ -782,7 +782,7 @@ Aqua.test_all(ModernRoboticsBook)
         desired_joint_acceleration_traj = zeros(N, 3)
         timestep = total_time / (N - 1)
 
-        for i = 1:size(traj, 1)-1
+        for i = 1:(size(traj, 1)-1)
             desired_joint_velocity_traj[i+1, :] =
                 (desired_joint_position_traj[i+1, :] - desired_joint_position_traj[i, :]) /
                 timestep

@@ -24,10 +24,7 @@ DocMeta.setdocmeta!(
 
 makedocs(
     modules = [ModernRoboticsBook],
-    format = Documenter.HTML(
-        analytics = "UA-72743607-4",
-        assets = [],
-    ),
+    format = Documenter.HTML(analytics = "UA-72743607-4", assets = []),
     pages = [
         "Home" => "index.md",
         "Examples" => "man/examples.md",
@@ -46,6 +43,4 @@ makedocs(
     authors = "Henrique Ferrolho",
 )
 
-deploydocs(
-    repo = "github.com/ferrolho/ModernRoboticsBook.jl",
-)
+deploydocs(repo = "github.com/ferrolho/ModernRoboticsBook.jl")

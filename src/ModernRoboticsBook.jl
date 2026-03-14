@@ -640,7 +640,7 @@ julia> JacobianBody(body_screw_axes, joint_positions)
 function JacobianBody(body_screw_axes::AbstractMatrix, joint_positions::AbstractVector)
     T = LA.I
     Jb = copy(body_screw_axes)
-    for i = length(joint_positions)-1:-1:1
+    for i = (length(joint_positions)-1):-1:1
         T *= MatrixExp6(VecTose3(body_screw_axes[:, i+1] * -joint_positions[i+1]))
         Jb[:, i] = Adjoint(T) * body_screw_axes[:, i]
     end
@@ -1403,7 +1403,7 @@ function ForwardDynamicsTrajectory(
     joint_velocity_traj = copy(joint_torque_traj)
     joint_velocity_traj[:, 1] = joint_velocities
 
-    for i = 1:size(joint_torque_traj, 2)-1
+    for i = 1:(size(joint_torque_traj, 2)-1)
         for j = 1:integration_resolution
             joint_accelerations = ForwardDynamics(
                 joint_positions,
