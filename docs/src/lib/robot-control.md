@@ -1,4 +1,6 @@
-# Chapter 11: Robot Control
+# Robot Control
+
+*Textbook Chapter 11*
 
 ```@autodocs
 Modules = [ModernRoboticsBook]

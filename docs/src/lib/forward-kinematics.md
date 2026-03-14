@@ -1,4 +1,6 @@
-# Chapter 4: Forward Kinematics
+# Forward Kinematics
+
+*Textbook Chapter 4*
 
 ```@autodocs
 Modules = [ModernRoboticsBook]

@@ -1,4 +1,6 @@
-# Chapter 3: Rigid-Body Motions
+# Rigid-Body Motions
+
+*Textbook Chapter 3*
 
 ```@autodocs
 Modules = [ModernRoboticsBook]

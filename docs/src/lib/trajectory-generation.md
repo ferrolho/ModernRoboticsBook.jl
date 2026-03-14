@@ -1,4 +1,6 @@
-# Chapter 9: Trajectory Generation
+# Trajectory Generation
+
+*Textbook Chapter 9*
 
 ```@autodocs
 Modules = [ModernRoboticsBook]

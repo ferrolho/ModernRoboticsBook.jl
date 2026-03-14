@@ -1,4 +1,6 @@
-# Chapter 8: Dynamics of Open Chains
+# Dynamics of Open Chains
+
+*Textbook Chapter 8*
 
 ```@autodocs
 Modules = [ModernRoboticsBook]

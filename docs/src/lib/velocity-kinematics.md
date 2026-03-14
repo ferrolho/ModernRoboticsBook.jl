@@ -1,4 +1,6 @@
-# Chapter 5: Velocity Kinematics and Statics
+# Velocity Kinematics and Statics
+
+*Textbook Chapter 5*
 
 ```@autodocs
 Modules = [ModernRoboticsBook]

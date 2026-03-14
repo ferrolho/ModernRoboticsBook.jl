@@ -12,13 +12,13 @@ julia> import Pkg; Pkg.add("ModernRoboticsBook")
 
 ```@contents
 Pages = [
-    "lib/ch3.md",
-    "lib/ch4.md",
-    "lib/ch5.md",
-    "lib/ch6.md",
-    "lib/ch8.md",
-    "lib/ch9.md",
-    "lib/ch11.md",
+    "lib/rigid-body-motions.md",
+    "lib/forward-kinematics.md",
+    "lib/velocity-kinematics.md",
+    "lib/inverse-kinematics.md",
+    "lib/dynamics.md",
+    "lib/trajectory-generation.md",
+    "lib/robot-control.md",
 ]
 Depth = 1
 ```
@@ -27,12 +27,12 @@ Depth = 1
 
 ```@index
 Pages = [
-    "lib/ch3.md",
-    "lib/ch4.md",
-    "lib/ch5.md",
-    "lib/ch6.md",
-    "lib/ch8.md",
-    "lib/ch9.md",
-    "lib/ch11.md",
+    "lib/rigid-body-motions.md",
+    "lib/forward-kinematics.md",
+    "lib/velocity-kinematics.md",
+    "lib/inverse-kinematics.md",
+    "lib/dynamics.md",
+    "lib/trajectory-generation.md",
+    "lib/robot-control.md",
 ]
 ```

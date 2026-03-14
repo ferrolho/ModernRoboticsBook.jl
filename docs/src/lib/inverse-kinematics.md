@@ -1,4 +1,6 @@
-# Chapter 6: Inverse Kinematics
+# Inverse Kinematics
+
+*Textbook Chapter 6*
 
 ```@autodocs
 Modules = [ModernRoboticsBook]
