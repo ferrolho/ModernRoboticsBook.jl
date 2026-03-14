@@ -1,0 +1,2 @@
+# Default style — see https://domluna.github.io/JuliaFormatter.jl/stable/
+# Run with: julia -e 'using JuliaFormatter; format(".")'
