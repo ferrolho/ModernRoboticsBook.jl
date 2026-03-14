@@ -24,7 +24,10 @@ DocMeta.setdocmeta!(
 
 makedocs(
     modules = [ModernRoboticsBook],
-    format = Documenter.HTML(analytics = "UA-72743607-4", assets = []),
+    format = Documenter.HTML(
+        canonical = "https://ferrolho.github.io/ModernRoboticsBook.jl/stable",
+        description = "Julia implementation of the Modern Robotics textbook algorithms for kinematics, dynamics, trajectory generation, and robot control",
+    ),
     pages = [
         "Home" => "index.md",
         "Examples" => "man/examples.md",
