@@ -12,7 +12,7 @@ N = 1000
 
 method = 5
 
-traj = JointTrajectory(thetastart, thetaend, Tf, N, method)
+traj = joint_trajectory(thetastart, thetaend, Tf, N, method)
 
 thetamat = copy(traj)
 dthetamat = zeros(1000, 3)
@@ -59,7 +59,7 @@ Slist = [ 1 0 1      0 1     0 ;
           0 1 0 -0.089 0     0 ;
           0 1 0 -0.089 0 0.425 ]&#39;
 
-taumat = InverseDynamicsTrajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)</code></pre><p>Plot the joint forces/torques:</p><pre><code class="language-julia hljs">using Plots
+taumat = inverse_dynamics_trajectory(thetamat, dthetamat, ddthetamat, g, Ftipmat, Mlist, Glist, Slist)</code></pre><p>Plot the joint forces/torques:</p><pre><code class="language-julia hljs">using Plots
 gr()
 
 timestamp = range(1, Tf, length=N)
@@ -86,7 +86,7 @@ taumat = [[3.63, -6.58, -5.57], [3.74, -5.55,  -5.5],
 
 taumat = cat(taumat..., dims=2)&#39;
 
-thetamat, dthetamat = ForwardDynamicsTrajectory(thetalist, dthetalist, taumat, g,
+thetamat, dthetamat = forward_dynamics_trajectory(thetalist, dthetalist, taumat, g,
                                                 Ftipmat, Mlist, Glist, Slist, dt, intRes)</code></pre><p>Plot the joint angle/velocities:</p><pre><code class="language-julia hljs">theta1 = thetamat[:, 1]
 theta2 = thetamat[:, 2]
 theta3 = thetamat[:, 3]
@@ -117,7 +117,7 @@ dt = 0.01
 N = round(Int, Tf / dt)
 method = 5
 
-traj = JointTrajectory(thetalist, thetaend, Tf, N, method)
+traj = joint_trajectory(thetalist, thetaend, Tf, N, method)
 
 thetamatd = copy(traj)
 dthetamatd = zeros(N, 3)
@@ -166,7 +166,7 @@ Kd = 18
 
 intRes = 8
 
-taumat, thetamat = SimulateControl(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
+taumat, thetamat = simulate_control(thetalist, dthetalist, g, Ftipmat, Mlist, Glist,
                                    Slist, thetamatd, dthetamatd, ddthetamatd, gtilde,
                                    Mtildelist, Gtildelist, Kp, Ki, Kd, dt, intRes)</code></pre><p>Finally, plot the results:</p><pre><code class="language-julia hljs">N, links = size(thetamat)
 
@@ -183,4 +183,4 @@ end
 
 xlabel!(&quot;Time&quot;)
 ylabel!(&quot;Joint Angles&quot;)
-title!(&quot;Plot of Actual and Desired Joint Angles&quot;)</code></pre><p><img src="../../assets/examples/simulated_control.svg" alt="simulated_control"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../lib/rigid-body-motions/">Rigid-Body Motions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 14 March 2026 09:54">Saturday 14 March 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+title!(&quot;Plot of Actual and Desired Joint Angles&quot;)</code></pre><p><img src="../../assets/examples/simulated_control.svg" alt="simulated_control"/></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../../">« Home</a><a class="docs-footer-nextpage" href="../../lib/rigid-body-motions/">Rigid-Body Motions »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.17.0 on <span class="colophon-date" title="Saturday 14 March 2026 10:33">Saturday 14 March 2026</span>. Using Julia version 1.12.5.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
