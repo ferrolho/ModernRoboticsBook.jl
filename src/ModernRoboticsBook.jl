@@ -845,7 +845,7 @@ forward-backward Newton-Euler iterations.
 The ``n``-vector of required joint forces/torques.
 
 # Examples
-```jldoctest; setup = :(using ModernRoboticsBook), filter = r"(\\d\\.\\d{10})\\d+" => s"\\1"
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> InverseDynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   74.6961615528745
@@ -968,7 +968,7 @@ dynamics of an open chain robot. Calls [`InverseDynamics`](@ref) with `gravity =
 The ``n``-vector of Coriolis and centripetal terms.
 
 # Examples
-```jldoctest; setup = :(using ModernRoboticsBook), filter = r"(\\d\\.\\d{10})\\d+" => s"\\1"
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> VelQuadraticForces([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   0.26453118054501235
@@ -1214,7 +1214,7 @@ Computes ``\\ddot{\\theta}`` by solving
 The ``n``-vector of joint accelerations ``\\ddot{\\theta}``.
 
 # Examples
-```jldoctest; setup = :(using ModernRoboticsBook), filter = r"(\\d\\.\\d{10})\\d+" => s"\\1"
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ForwardDynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.5, 0.6, 0.7], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   -0.9739290670855625
@@ -1675,7 +1675,7 @@ model of centripetal, Coriolis, and gravitational forces.
 The ``n``-vector of joint control torques.
 
 # Examples
-```jldoctest; setup = :(using ModernRoboticsBook), filter = r"(\\d\\.\\d{10})\\d+" => s"\\1"
+```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ComputedTorque([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.2, 0.2, 0.2], [0, 0, -9.8], link_frames, spatial_inertias, screw_axes, [1.0, 1.0, 1.0], [2.0, 1.2, 2.0], [0.1, 0.1, 0.1], 1.3, 1.2, 1.1)
 3-element Vector{Float64}:
  133.0052524649953

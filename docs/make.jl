@@ -22,8 +22,10 @@ DocMeta.setdocmeta!(
     recursive = true,
 )
 
+# Truncate floats after 10 decimal digits to handle cross-platform precision differences
 makedocs(
     modules = [ModernRoboticsBook],
+    doctestfilters = [r"(\d\.\d{10})\d+" => s"\1"],
     format = Documenter.HTML(
         canonical = "https://ferrolho.github.io/ModernRoboticsBook.jl/stable",
         description = "Julia implementation of the Modern Robotics textbook algorithms for kinematics, dynamics, trajectory generation, and robot control",
