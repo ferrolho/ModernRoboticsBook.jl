@@ -5,7 +5,7 @@ import LinearAlgebra as LA
 export near_zero,
     vec_to_so3,
     so3_to_vec,
-    axis_ang3,
+    axis_angle3,
     matrix_exp3,
     matrix_log3,
     rotation_position_to_transform,
@@ -13,17 +13,17 @@ export near_zero,
     transform_inv,
     vec_to_se3,
     se3_to_vec,
-    adjoint_repr,
+    adjoint_representation,
     screw_to_axis,
-    axis_ang6,
+    axis_angle6,
     matrix_exp6,
     matrix_log6,
     project_to_so3,
     project_to_se3,
     distance_to_so3,
     distance_to_se3,
-    test_if_so3,
-    test_if_se3,
+    is_so3,
+    is_se3,
     forward_kinematics_body,
     forward_kinematics_space,
     jacobian_body,
@@ -33,7 +33,7 @@ export near_zero,
     ad,
     inverse_dynamics,
     mass_matrix,
-    vel_quadratic_forces,
+    velocity_quadratic_forces,
     gravity_forces,
     end_effector_forces,
     forward_dynamics,
@@ -128,7 +128,7 @@ function so3_to_vec(so3mat::AbstractMatrix)
 end
 
 """
-    axis_ang3(expc3)
+    axis_angle3(expc3)
 
 Converts a 3-vector of exponential coordinates for rotation into axis-angle form.
 
@@ -140,11 +140,11 @@ A tuple `(ω̂, θ)` of the unit rotation axis and the rotation angle.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> axis_ang3([1, 2, 3])
+julia> axis_angle3([1, 2, 3])
 ([0.2672612419124244, 0.5345224838248488, 0.8017837257372732], 3.7416573867739413)
 ```
 """
-axis_ang3(expc3::AbstractVector) = LA.normalize(expc3), LA.norm(expc3)
+axis_angle3(expc3::AbstractVector) = LA.normalize(expc3), LA.norm(expc3)
 
 """
     matrix_exp3(so3mat)
@@ -173,7 +173,7 @@ function matrix_exp3(so3mat::AbstractMatrix)
     if near_zero(LA.norm(ωθ))
         return Matrix{Float64}(LA.I, 3, 3)
     else
-        θ = axis_ang3(ωθ)[2]
+        θ = axis_angle3(ωθ)[2]
         ωmat = so3mat / θ
         return LA.I + sin(θ) * ωmat + (1 - cos(θ)) * ωmat * ωmat
     end
@@ -338,7 +338,7 @@ se3_to_vec(se3mat::AbstractMatrix) =
     vcat([se3mat[3, 2], se3mat[1, 3], se3mat[2, 1]], se3mat[1:3, 4])
 
 """
-    adjoint_repr(T)
+    adjoint_representation(T)
 
 Computes the adjoint representation of a homogeneous transformation matrix.
 
@@ -350,7 +350,7 @@ The ``6 \\times 6`` adjoint representation ``[\\text{Ad}_T]``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> adjoint_repr([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
+julia> adjoint_representation([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 6×6 Matrix{Float64}:
  1.0  0.0   0.0  0.0  0.0   0.0
  0.0  0.0  -1.0  0.0  0.0   0.0
@@ -360,7 +360,7 @@ julia> adjoint_repr([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
  0.0  0.0   0.0  0.0  1.0   0.0
 ```
 """
-function adjoint_repr(T::AbstractMatrix)
+function adjoint_representation(T::AbstractMatrix)
     R, p = transform_to_rotation_position(T)
     vcat(hcat(R, zeros(3, 3)), hcat(vec_to_so3(p) * R, R))
 end
@@ -394,7 +394,7 @@ screw_to_axis(q::AbstractVector, s::AbstractVector, h::Number) =
     vcat(s, LA.cross(q, s) + h * s)
 
 """
-    axis_ang6(expc6)
+    axis_angle6(expc6)
 
 Converts a 6-vector of exponential coordinates into screw axis-angle form.
 
@@ -406,11 +406,11 @@ A tuple `(S, θ)` of the screw axis and the distance travelled along the axis.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> axis_ang6([1, 0, 0, 1, 2, 3])
+julia> axis_angle6([1, 0, 0, 1, 2, 3])
 ([1.0, 0.0, 0.0, 1.0, 2.0, 3.0], 1.0)
 ```
 """
-function axis_ang6(expc6::AbstractVector)
+function axis_angle6(expc6::AbstractVector)
     θ = LA.norm(expc6[1:3])
     if near_zero(θ)
         θ = LA.norm(expc6[4:6])
@@ -444,7 +444,7 @@ function matrix_exp6(se3mat::AbstractMatrix)
     if near_zero(LA.norm(ωθ))
         return vcat(hcat(Matrix{Float64}(LA.I, 3, 3), se3mat[1:3, 4]), [0 0 0 1])
     else
-        θ = axis_ang3(ωθ)[2]
+        θ = axis_angle3(ωθ)[2]
         ωmat = se3mat[1:3, 1:3] / θ
         return vcat(
             hcat(
@@ -598,7 +598,7 @@ function distance_to_se3(mat::AbstractMatrix)
 end
 
 """
-    test_if_so3(mat)
+    is_so3(mat)
 
 Returns true if mat is close to or on the manifold SO(3).
 
@@ -610,14 +610,14 @@ Returns true if mat is close to or on the manifold SO(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> test_if_so3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
+julia> is_so3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
 false
 ```
 """
-test_if_so3(mat::AbstractMatrix) = abs(distance_to_so3(mat)) < 1e-3
+is_so3(mat::AbstractMatrix) = abs(distance_to_so3(mat)) < 1e-3
 
 """
-    test_if_se3(mat)
+    is_se3(mat)
 
 Returns true if mat is close to or on the manifold SE(3).
 
@@ -629,11 +629,11 @@ Returns true if mat is close to or on the manifold SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> test_if_se3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 0.1 0.98])
+julia> is_se3([1.0 0.0 0.0 1.2; 0.0 0.1 -0.95 1.5; 0.0 1.0 0.1 -0.9; 0.0 0.0 0.1 0.98])
 false
 ```
 """
-test_if_se3(mat::AbstractMatrix) = abs(distance_to_se3(mat)) < 1e-3
+is_se3(mat::AbstractMatrix) = abs(distance_to_se3(mat)) < 1e-3
 
 # """
 # *** CHAPTER 4: FORWARD KINEMATICS ***
@@ -770,7 +770,7 @@ function jacobian_body(body_screw_axes::AbstractMatrix, joint_positions::Abstrac
     Jb = copy(body_screw_axes)
     for i in Iterators.reverse(firstindex(joint_positions):(lastindex(joint_positions)-1))
         T *= matrix_exp6(vec_to_se3(body_screw_axes[:, i+1] * -joint_positions[i+1]))
-        Jb[:, i] = adjoint_repr(T) * body_screw_axes[:, i]
+        Jb[:, i] = adjoint_representation(T) * body_screw_axes[:, i]
     end
     Jb
 end
@@ -811,7 +811,7 @@ function jacobian_space(screw_axes::AbstractMatrix, joint_positions::AbstractVec
     Js = copy(screw_axes)
     for i = (firstindex(joint_positions)+1):lastindex(joint_positions)
         T *= matrix_exp6(vec_to_se3(screw_axes[:, i-1] * joint_positions[i-1]))
-        Js[:, i] = adjoint_repr(T) * screw_axes[:, i]
+        Js[:, i] = adjoint_representation(T) * screw_axes[:, i]
     end
     Js
 end
@@ -946,13 +946,17 @@ function inverse_kinematics_space(
     i = 0
     maxiterations = 20
     Tsb = forward_kinematics_space(home_config, screw_axes, joint_positions)
-    Vs = adjoint_repr(Tsb) * se3_to_vec(matrix_log6(transform_inv(Tsb) * target_config))
+    Vs =
+        adjoint_representation(Tsb) *
+        se3_to_vec(matrix_log6(transform_inv(Tsb) * target_config))
     err = LA.norm(Vs[1:3]) > angular_tolerance || LA.norm(Vs[4:6]) > linear_tolerance
     while err && i < maxiterations
         joint_positions += LA.pinv(jacobian_space(screw_axes, joint_positions)) * Vs
         i += 1
         Tsb = forward_kinematics_space(home_config, screw_axes, joint_positions)
-        Vs = adjoint_repr(Tsb) * se3_to_vec(matrix_log6(transform_inv(Tsb) * target_config))
+        Vs =
+            adjoint_representation(Tsb) *
+            se3_to_vec(matrix_log6(transform_inv(Tsb) * target_config))
         err = LA.norm(Vs[1:3]) > angular_tolerance || LA.norm(Vs[4:6]) > linear_tolerance
     end
     joint_positions, !err
@@ -1035,14 +1039,14 @@ function inverse_dynamics(
     Vi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi[:, 1] = vcat(zeros(eltype(joint_positions), 3), -gravity)
-    AdTi[n+1] = adjoint_repr(transform_inv(link_frames[n+1]))
+    AdTi[n+1] = adjoint_representation(transform_inv(link_frames[n+1]))
     Fi = copy(tip_wrench)
     joint_torques = zeros(eltype(joint_positions), n)
 
     for i = 1:n
         Mi *= link_frames[i]
-        Ai[:, i] = adjoint_repr(transform_inv(Mi)) * screw_axes[:, i]
-        AdTi[i] = adjoint_repr(
+        Ai[:, i] = adjoint_representation(transform_inv(Mi)) * screw_axes[:, i]
+        AdTi[i] = adjoint_representation(
             matrix_exp6(vec_to_se3(Ai[:, i] * -joint_positions[i])) *
             transform_inv(link_frames[i]),
         )
@@ -1117,7 +1121,7 @@ function mass_matrix(
 end
 
 """
-    vel_quadratic_forces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes)
+    velocity_quadratic_forces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes)
 
 Computes the Coriolis and centripetal terms ``c(\\theta, \\dot{\\theta})`` in the inverse
 dynamics of an open chain robot. Calls [`inverse_dynamics`](@ref) with `gravity = 0`,
@@ -1135,14 +1139,14 @@ The ``n``-vector of Coriolis and centripetal terms.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> vel_quadratic_forces([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], link_frames, spatial_inertias, screw_axes)
+julia> velocity_quadratic_forces([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   0.26453118054501235
  -0.0550515682891655
  -0.006891320068248912
 ```
 """
-function vel_quadratic_forces(
+function velocity_quadratic_forces(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     link_frames::AbstractVector,
@@ -1399,7 +1403,7 @@ function forward_dynamics(
     screw_axes::AbstractMatrix,
 )
     LA.inv(mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)) * (
-        joint_torques - vel_quadratic_forces(
+        joint_torques - velocity_quadratic_forces(
             joint_positions,
             joint_velocities,
             link_frames,

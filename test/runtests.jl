@@ -13,7 +13,7 @@ Aqua.test_all(ModernRoboticsBook)
     @testset "chapter 3: rigid-body motions" begin
         @test vec_to_so3([1, 2, 3]) == [0 -3 2; 3 0 -1; -2 1 0]
         @test so3_to_vec([0 -3 2; 3 0 -1; -2 1 0]) == [1, 2, 3]
-        @test axis_ang3([1, 2, 3]) == (
+        @test axis_angle3([1, 2, 3]) == (
             [0.2672612419124244, 0.5345224838248488, 0.8017837257372732],
             3.7416573867739413,
         )
@@ -100,7 +100,7 @@ Aqua.test_all(ModernRoboticsBook)
             -2 1 0 6
             0 0 0 0
         ]) == [1, 2, 3, 4, 5, 6]
-        @test adjoint_repr([
+        @test adjoint_representation([
             1 0 0 0
             0 0 -1 0
             0 1 0 3
@@ -115,8 +115,8 @@ Aqua.test_all(ModernRoboticsBook)
         ]
         @test screw_to_axis([3; 0; 0], [0; 0; 1], 2) == [0, 0, 1, 0, -3, 2]
 
-        @test axis_ang6([1, 0, 0, 1, 2, 3]) == ([1, 0, 0, 1, 2, 3], 1)
-        @test axis_ang6([0, 0, 0, 0, 0, 4]) == ([0, 0, 0, 0, 0, 1], 4)
+        @test axis_angle6([1, 0, 0, 1, 2, 3]) == ([1, 0, 0, 1, 2, 3], 1)
+        @test axis_angle6([0, 0, 0, 0, 0, 4]) == ([0, 0, 0, 0, 0, 1], 4)
 
         @test matrix_exp6([
             0 0 0 0
@@ -191,19 +191,17 @@ Aqua.test_all(ModernRoboticsBook)
         ) == 0.13493053768513638
         @test distance_to_se3(Array(reshape(1:9, (3, 3)))) >= 1e+9
 
-        @test !test_if_so3([
+        @test !is_so3([
             1.0 0.0 0.0
             0.0 0.1 -0.95
             0.0 1.0 0.1
         ])
-        @test !test_if_se3(
-            [
-                1.0 0.0 0.0 1.2
-                0.0 0.1 -0.95 1.5
-                0.0 1.0 0.1 -0.9
-                0.0 0.0 0.1 0.98
-            ],
-        )
+        @test !is_se3([
+            1.0 0.0 0.0 1.2
+            0.0 0.1 -0.95 1.5
+            0.0 1.0 0.1 -0.9
+            0.0 0.0 0.1 0.98
+        ])
     end
     @testset "chapter 4: forward kinematics" begin
         home_config = [
@@ -417,7 +415,7 @@ Aqua.test_all(ModernRoboticsBook)
             rtol = 1e-5,
         )
 
-        @test vel_quadratic_forces(
+        @test velocity_quadratic_forces(
             joint_positions,
             joint_velocities,
             link_frames,
