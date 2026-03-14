@@ -59,6 +59,12 @@ export NearZero,
 
 Determines whether a scalar is small enough to be treated as zero.
 
+# Arguments
+- `z`: a scalar value.
+
+# Returns
+`true` if `z` is close to zero (absolute value less than ``10^{-6}``); `false` otherwise.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> NearZero(-1e-7)
@@ -71,6 +77,12 @@ NearZero(z::Number) = abs(z) < 1e-6
     Normalize(V)
 
 Normalizes a vector.
+
+# Arguments
+- `V`: a vector.
+
+# Returns
+The unit vector in the direction of `V`.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -92,6 +104,12 @@ Normalize(V::AbstractVector) = V / LA.norm(V)
 
 Inverts a rotation matrix.
 
+# Arguments
+- `R`: a rotation matrix in SO(3).
+
+# Returns
+The inverse of `R`, computed as ``R^T``.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> RotInv([0 0 1; 1 0 0; 0 1 0])
@@ -107,6 +125,12 @@ RotInv(R::AbstractMatrix) = R'
     VecToso3(ω)
 
 Converts a 3-vector to an so(3) representation.
+
+# Arguments
+- `ω`: a 3-vector of angular velocities.
+
+# Returns
+The corresponding ``3 \times 3`` skew-symmetric matrix in so(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -130,6 +154,12 @@ end
 
 Converts an so(3) representation to a 3-vector.
 
+# Arguments
+- `so3mat`: a ``3 \times 3`` skew-symmetric matrix in so(3).
+
+# Returns
+The corresponding 3-vector of angular velocities.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> so3ToVec([0 -3 2; 3 0 -1; -2 1 0])
@@ -148,6 +178,12 @@ end
 
 Converts a 3-vector of exponential coordinates for rotation into axis-angle form.
 
+# Arguments
+- `expc3`: a 3-vector of exponential coordinates for rotation ``\\hat{\\omega}\\theta``.
+
+# Returns
+A tuple `(ω̂, θ)` of the unit rotation axis and the rotation angle.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> AxisAng3([1, 2, 3])
@@ -160,6 +196,14 @@ AxisAng3(expc3::AbstractVector) = Normalize(expc3), LA.norm(expc3)
     MatrixExp3(so3mat)
 
 Computes the matrix exponential of a matrix in so(3).
+
+Uses Rodrigues' formula to compute the rotation matrix.
+
+# Arguments
+- `so3mat`: a ``3 \\times 3`` skew-symmetric matrix in so(3).
+
+# Returns
+The corresponding rotation matrix ``R`` in SO(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -185,6 +229,12 @@ end
     MatrixLog3(R)
 
 Computes the matrix logarithm of a rotation matrix.
+
+# Arguments
+- `R`: a rotation matrix in SO(3).
+
+# Returns
+The matrix logarithm of `R` in so(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -219,6 +269,13 @@ end
 
 Converts a rotation matrix and a position vector into homogeneous transformation matrix.
 
+# Arguments
+- `R`: a ``3 \\times 3`` rotation matrix.
+- `p`: a 3-vector position.
+
+# Returns
+The corresponding ``4 \\times 4`` homogeneous transformation matrix ``T``.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> RpToTrans([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
@@ -236,6 +293,12 @@ RpToTrans(R::AbstractMatrix, p::AbstractVector) = vcat(hcat(R, p), [0 0 0 1])
 
 Converts a homogeneous transformation matrix into a rotation matrix and position vector.
 
+# Arguments
+- `T`: a ``4 \\times 4`` homogeneous transformation matrix.
+
+# Returns
+A tuple `(R, p)` of the rotation matrix and position vector.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> TransToRp([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
@@ -248,6 +311,12 @@ TransToRp(T::AbstractMatrix) = T[1:3, 1:3], T[1:3, 4]
     TransInv(T)
 
 Inverts a homogeneous transformation matrix.
+
+# Arguments
+- `T`: a ``4 \\times 4`` homogeneous transformation matrix.
+
+# Returns
+The inverse ``T^{-1}``, computed using ``R^T``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -269,6 +338,12 @@ end
 
 Converts a spatial velocity vector into a 4x4 matrix in se3.
 
+# Arguments
+- `V`: a 6-vector spatial velocity (angular velocity, linear velocity).
+
+# Returns
+The corresponding ``4 \\times 4`` matrix in se(3).
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> VecTose3([1, 2, 3, 4, 5, 6])
@@ -285,6 +360,12 @@ VecTose3(V::AbstractVector) = vcat(hcat(VecToso3(V[1:3]), V[4:6]), zeros(1, 4))
     se3ToVec(se3mat)
 
 Converts an se3 matrix into a spatial velocity vector.
+
+# Arguments
+- `se3mat`: a ``4 \\times 4`` matrix in se(3).
+
+# Returns
+The corresponding 6-vector twist (angular velocity, linear velocity).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -305,6 +386,12 @@ se3ToVec(se3mat::AbstractMatrix) =
     Adjoint(T)
 
 Computes the adjoint representation of a homogeneous transformation matrix.
+
+# Arguments
+- `T`: a ``4 \\times 4`` homogeneous transformation matrix.
+
+# Returns
+The ``6 \\times 6`` adjoint representation ``[\\text{Ad}_T]``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -328,6 +415,14 @@ end
 
 Takes a parametric description of a screw axis and converts it to a normalized screw axis.
 
+# Arguments
+- `q`: a point on the screw axis.
+- `s`: the unit direction vector of the screw axis.
+- `h`: the pitch of the screw axis.
+
+# Returns
+The normalized 6-vector screw axis ``\\mathcal{S}``.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ScrewToAxis([3; 0; 0], [0; 0; 1], 2)
@@ -348,6 +443,12 @@ ScrewToAxis(q::AbstractVector, s::AbstractVector, h::Number) =
 
 Converts a 6-vector of exponential coordinates into screw axis-angle form.
 
+# Arguments
+- `expc6`: a 6-vector of exponential coordinates ``\\mathcal{S}\\theta``.
+
+# Returns
+A tuple `(S, θ)` of the screw axis and the distance travelled along the axis.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> AxisAng6([1, 0, 0, 1, 2, 3])
@@ -366,6 +467,12 @@ end
     MatrixExp6(se3mat)
 
 Computes the matrix exponential of an se3 representation of exponential coordinates.
+
+# Arguments
+- `se3mat`: a ``4 \\times 4`` matrix in se(3).
+
+# Returns
+The corresponding homogeneous transformation matrix ``T`` in SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -403,6 +510,12 @@ end
 
 Computes the matrix logarithm of a homogeneous transformation matrix.
 
+# Arguments
+- `T`: a ``4 \\times 4`` homogeneous transformation matrix in SE(3).
+
+# Returns
+The ``4 \\times 4`` matrix logarithm ``[\\mathcal{S}\\theta]`` in se(3).
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> MatrixLog6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
@@ -436,6 +549,12 @@ end
 
 Returns a projection of mat into SO(3).
 
+# Arguments
+- `mat`: a ``3 \\times 3`` matrix near SO(3).
+
+# Returns
+The closest rotation matrix in SO(3), computed using SVD projection.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ProjectToSO3([0.675 0.150  0.720; 0.370 0.771 -0.511; -0.630 0.619  0.472])
@@ -459,6 +578,12 @@ end
 
 Returns a projection of mat into SE(3).
 
+# Arguments
+- `mat`: a ``4 \\times 4`` matrix near SE(3).
+
+# Returns
+The closest homogeneous transformation matrix in SE(3).
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ProjectToSE3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.619 0.472 3.6; 0.003 0.002 0.010 0.9])
@@ -476,6 +601,12 @@ ProjectToSE3(mat::AbstractMatrix) = RpToTrans(ProjectToSO3(mat[1:3, 1:3]), mat[1
 
 Returns the Frobenius norm to describe the distance of mat from the SO(3) manifold.
 
+# Arguments
+- `mat`: a ``3 \\times 3`` matrix.
+
+# Returns
+The Frobenius norm of ``R^T R - I``, or ``10^9`` if ``\\det(R) < 0``.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> DistanceToSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
@@ -488,6 +619,12 @@ DistanceToSO3(mat::AbstractMatrix) = LA.det(mat) > 0 ? LA.norm(mat'mat - LA.I) :
     DistanceToSE3(mat)
 
 Returns the Frobenius norm to describe the distance of mat from the SE(3) manifold.
+
+# Arguments
+- `mat`: a ``4 \\times 4`` matrix.
+
+# Returns
+The Frobenius distance from SE(3), or ``10^9`` if ``\\det(R) < 0``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -509,6 +646,12 @@ end
 
 Returns true if mat is close to or on the manifold SO(3).
 
+# Arguments
+- `mat`: a ``3 \\times 3`` matrix.
+
+# Returns
+`true` if `mat` is close to SO(3); `false` otherwise.
+
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> TestIfSO3([1.0 0.0 0.0; 0.0 0.1 -0.95; 0.0 1.0 0.1])
@@ -521,6 +664,12 @@ TestIfSO3(mat::AbstractMatrix) = abs(DistanceToSO3(mat)) < 1e-3
     TestIfSE3(mat)
 
 Returns true if mat is close to or on the manifold SE(3).
+
+# Arguments
+- `mat`: a ``4 \\times 4`` matrix.
+
+# Returns
+`true` if `mat` is close to SE(3); `false` otherwise.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -538,6 +687,14 @@ TestIfSE3(mat::AbstractMatrix) = abs(DistanceToSE3(mat)) < 1e-3
     FKinBody(home_config, body_screw_axes, joint_positions)
 
 Computes forward kinematics in the body frame for an open chain robot.
+
+# Arguments
+- `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
+- `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame, as a ``6 \\times n`` matrix.
+- `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
+
+# Returns
+The ``4 \\times 4`` end-effector transformation matrix ``T \\in`` SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -575,6 +732,14 @@ end
     FKinSpace(home_config, screw_axes, joint_positions)
 
 Computes forward kinematics in the space frame for an open chain robot.
+
+# Arguments
+- `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
+- `screw_axes`: the joint screw axes ``S_i`` in the space frame, as a ``6 \\times n`` matrix.
+- `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
+
+# Returns
+The ``4 \\times 4`` end-effector transformation matrix ``T \\in`` SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -616,7 +781,14 @@ end
 """
     JacobianBody(body_screw_axes, joint_positions)
 
-Computes the body Jacobian for an open chain robot.
+Computes the body Jacobian ``J_b(\\theta)`` for an open chain robot.
+
+# Arguments
+- `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame at the home position, as a ``6 \\times n`` matrix.
+- `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
+
+# Returns
+The ``6 \\times n`` body Jacobian ``J_b(\\theta)``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -650,7 +822,14 @@ end
 """
     JacobianSpace(screw_axes, joint_positions)
 
-Computes the space Jacobian for an open chain robot.
+Computes the space Jacobian ``J_s(\\theta)`` for an open chain robot.
+
+# Arguments
+- `screw_axes`: the joint screw axes ``S_i`` in the space frame at the home position, as a ``6 \\times n`` matrix.
+- `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
+
+# Returns
+The ``6 \\times n`` space Jacobian ``J_s(\\theta)``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -688,7 +867,18 @@ end
 """
     IKinBody(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
-Computes inverse kinematics in the body frame for an open chain robot.
+Computes inverse kinematics in the body frame for an open chain robot using Newton-Raphson iteration.
+
+# Arguments
+- `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame, as a ``6 \\times n`` matrix.
+- `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
+- `target_config`: the desired ``4 \\times 4`` end-effector configuration ``T`` (SE(3)).
+- `initial_guess`: an ``n``-vector initial guess of joint positions ``\\theta_0``.
+- `angular_tolerance`: small positive tolerance on the end-effector orientation error.
+- `linear_tolerance`: small positive tolerance on the end-effector position error.
+
+# Returns
+A tuple `(joint_positions, success)` where `joint_positions` is the ``n``-vector solution and `success` is a `Bool`.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -749,7 +939,18 @@ end
 """
     IKinSpace(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
-Computes inverse kinematics in the space frame for an open chain robot.
+Computes inverse kinematics in the space frame for an open chain robot using Newton-Raphson iteration.
+
+# Arguments
+- `screw_axes`: the joint screw axes ``S_i`` in the space frame, as a ``6 \\times n`` matrix.
+- `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
+- `target_config`: the desired ``4 \\times 4`` end-effector configuration ``T`` (SE(3)).
+- `initial_guess`: an ``n``-vector initial guess of joint positions ``\\theta_0``.
+- `angular_tolerance`: small positive tolerance on the end-effector orientation error.
+- `linear_tolerance`: small positive tolerance on the end-effector position error.
+
+# Returns
+A tuple `(joint_positions, success)` where `joint_positions` is the ``n``-vector solution and `success` is a `Bool`.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -806,7 +1007,13 @@ end
 """
     ad(V)
 
-Calculate the 6x6 matrix [adV] of the given 6-vector.
+Computes the ``6 \\times 6`` matrix ``[\\text{ad}_V]`` used to calculate the Lie bracket ``[V_1, V_2] = [\\text{ad}_{V_1}] V_2``.
+
+# Arguments
+- `V`: a 6-vector spatial velocity (twist).
+
+# Returns
+The ``6 \\times 6`` matrix ``[\\text{ad}_V]``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -1439,7 +1646,14 @@ end
 """
     CubicTimeScaling(total_time, t)
 
-Computes s(t) for a cubic time scaling.
+Computes ``s(t) = 3(t/T_f)^2 - 2(t/T_f)^3`` for a cubic time scaling, satisfying ``s(0)=0``, ``s(T_f)=1``, ``\\dot{s}(0)=0``, ``\\dot{s}(T_f)=0``.
+
+# Arguments
+- `total_time`: the total time ``T_f`` of the motion in seconds.
+- `t`: the current time ``t`` satisfying ``0 \\le t \\le T_f``.
+
+# Returns
+A scalar ``s \\in [0, 1]`` representing the fraction of motion completed.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -1452,7 +1666,14 @@ CubicTimeScaling(total_time::Number, t::Number) = 3(t / total_time)^2 - 2(t / to
 """
     QuinticTimeScaling(total_time, t)
 
-Computes s(t) for a quintic time scaling.
+Computes ``s(t) = 10(t/T_f)^3 - 15(t/T_f)^4 + 6(t/T_f)^5`` for a quintic time scaling, satisfying ``s(0)=0``, ``s(T_f)=1``, ``\\dot{s}(0)=0``, ``\\dot{s}(T_f)=0``, ``\\ddot{s}(0)=0``, ``\\ddot{s}(T_f)=0``.
+
+# Arguments
+- `total_time`: the total time ``T_f`` of the motion in seconds.
+- `t`: the current time ``t`` satisfying ``0 \\le t \\le T_f``.
+
+# Returns
+A scalar ``s \\in [0, 1]`` representing the fraction of motion completed.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
