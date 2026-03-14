@@ -17,7 +17,12 @@ julia --project docs/make.jl
 
 # Start Julia REPL with the package loaded
 julia --project -e 'using ModernRoboticsBook'
+
+# Format code (default style)
+julia -e 'using JuliaFormatter; format(".")'
 ```
+
+JuliaFormatter is installed globally (not a project dependency). To install it: `julia -e 'using Pkg; Pkg.add("JuliaFormatter")'`. See https://domluna.github.io/JuliaFormatter.jl/stable/ for configuration options.
 
 ## Architecture
 
@@ -29,5 +34,5 @@ julia --project -e 'using ModernRoboticsBook'
 ## Conventions
 
 - **Function naming**: PascalCase (e.g., `MatrixExp3`, `FKinBody`, `TransInv`) to match the textbook's notation. The only lowercase export is `ad`.
-- **Type signatures**: Functions accept `Array` or `AbstractMatrix` — no custom types are defined.
+- **Type signatures**: Functions accept `AbstractVector`/`AbstractMatrix` — no custom types are defined.
 - **Docstrings**: Include `jldoctest` examples with `setup = :(using ModernRoboticsBook)`. These are tested via Documenter.
