@@ -1,34 +1,38 @@
 # ModernRoboticsBook.jl
 
-Some examples can be found on the [Examples](@ref) page.
-
-See the [Index](@ref main-index) for the complete list of documented functions and types.
+Julia port of the [official Modern Robotics library](https://github.com/NxRLab/ModernRobotics), which provides Python, MATLAB, and Mathematica implementations of the algorithms from [*Modern Robotics: Mechanics, Planning, and Control*](http://hades.mech.northwestern.edu/index.php/Modern_Robotics) by Kevin Lynch and Frank Park.
 
 ## Installation
 
-The latest release of **ModernRoboticsBook** can be installed from the Julia REPL prompt with
-
 ```julia
-julia> Pkg.add("ModernRoboticsBook")
+julia> import Pkg; Pkg.add("ModernRoboticsBook")
 ```
 
-## Manual Outline
+## API Reference
 
 ```@contents
 Pages = [
-    "man/examples.md",
+    "lib/ch3.md",
+    "lib/ch4.md",
+    "lib/ch5.md",
+    "lib/ch6.md",
+    "lib/ch8.md",
+    "lib/ch9.md",
+    "lib/ch11.md",
 ]
 Depth = 1
 ```
 
-## Library Outline
-
-```@contents
-Pages = ["lib/public.md"]
-```
-
-### [Index](@id main-index)
+## [Index](@id main-index)
 
 ```@index
-Pages = ["lib/public.md"]
+Pages = [
+    "lib/ch3.md",
+    "lib/ch4.md",
+    "lib/ch5.md",
+    "lib/ch6.md",
+    "lib/ch8.md",
+    "lib/ch9.md",
+    "lib/ch11.md",
+]
 ```

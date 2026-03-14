@@ -30,11 +30,15 @@ makedocs(
     ),
     pages = [
         "Home" => "index.md",
-        "Manual" => Any[
-            "man/examples.md",
-        ],
-        "Library" => Any[
-            "Public" => "lib/public.md",
+        "Examples" => "man/examples.md",
+        "API Reference" => [
+            "lib/ch3.md",
+            "lib/ch4.md",
+            "lib/ch5.md",
+            "lib/ch6.md",
+            "lib/ch8.md",
+            "lib/ch9.md",
+            "lib/ch11.md",
         ],
     ],
     repo = "https://github.com/ferrolho/ModernRoboticsBook.jl/blob/{commit}{path}#L{line}",
