@@ -556,6 +556,12 @@ end
 
 Returns a projection of mat into SO(3).
 
+!!! info "Why project to SO(3)?"
+    Numerical computations (e.g. repeated matrix multiplications) can cause rotation
+    matrices to drift away from SO(3) — they may no longer be exactly orthogonal with
+    determinant 1. This function finds the closest valid rotation matrix using SVD,
+    which is essential for maintaining physical consistency in long-running simulations.
+
 # Arguments
 - `mat`: a ``3 \\times 3`` matrix near SO(3).
 
@@ -584,6 +590,12 @@ end
     project_to_se3(mat)
 
 Returns a projection of mat into SE(3).
+
+!!! info "Why project to SE(3)?"
+    Similar to [`project_to_so3`](@ref), this corrects numerical drift in homogeneous
+    transformation matrices. After many multiplications, the rotation part may no longer
+    be orthogonal. This projects the matrix back onto SE(3) to maintain valid rigid-body
+    transformations.
 
 # Arguments
 - `mat`: a ``4 \\times 4`` matrix near SE(3).
@@ -696,6 +708,12 @@ is_se3(mat::AbstractMatrix) = abs(distance_to_se3(mat)) < 1e-3
 
 Computes forward kinematics in the body frame for an open chain robot.
 
+!!! info "What is the body frame?"
+    In robotics, we often need to know where the end-effector is given the joint angles.
+    The "body frame" formulation expresses the joint screw axes as seen from the
+    end-effector's perspective. This is equivalent to `forward_kinematics_space` but can
+    be more convenient when the task is defined relative to the tool.
+
 # Arguments
 - `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
 - `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame, as a ``6 \\times n`` matrix.
@@ -740,6 +758,11 @@ end
     forward_kinematics_space(home_config, screw_axes, joint_positions)
 
 Computes forward kinematics in the space frame for an open chain robot.
+
+!!! info "What is the space frame?"
+    The "space frame" formulation expresses joint screw axes relative to a fixed base
+    frame. Both body and space formulations compute the same end-effector pose — the
+    choice depends on which frame your screw axes are defined in.
 
 # Arguments
 - `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
@@ -791,6 +814,12 @@ end
 
 Computes the body Jacobian ``J_b(\\theta)`` for an open chain robot.
 
+!!! info "What is the Jacobian?"
+    The Jacobian relates joint velocities to end-effector velocity:
+    ``V_b = J_b(\\theta) \\dot{\\theta}``. It tells you how fast and in which direction
+    the end-effector moves for a given set of joint velocities. It is also used to map
+    wrenches (forces/torques) from the end-effector back to the joints.
+
 # Arguments
 - `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame at the home position, as a ``6 \\times n`` matrix.
 - `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
@@ -831,6 +860,12 @@ end
     jacobian_space(screw_axes, joint_positions)
 
 Computes the space Jacobian ``J_s(\\theta)`` for an open chain robot.
+
+!!! info "Body vs space Jacobian"
+    The space Jacobian ``J_s`` gives the end-effector velocity in the fixed space frame,
+    while the body Jacobian ``J_b`` gives it in the end-effector's own frame. They are
+    related by ``J_s = [\\text{Ad}_{T_{sb}}] J_b``. Use whichever matches the frame your
+    task is defined in.
 
 # Arguments
 - `screw_axes`: the joint screw axes ``S_i`` in the space frame at the home position, as a ``6 \\times n`` matrix.
@@ -876,6 +911,12 @@ end
     inverse_kinematics_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the body frame for an open chain robot using Newton-Raphson iteration.
+
+!!! info "Why is inverse kinematics iterative?"
+    Unlike forward kinematics (which has a closed-form solution), inverse kinematics —
+    finding joint angles for a desired end-effector pose — generally has no closed-form
+    solution for arbitrary robots. This function uses Newton-Raphson iteration, repeatedly
+    computing the error and updating the joint angles via the Jacobian until convergence.
 
 # Arguments
 - `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame, as a ``6 \\times n`` matrix.
@@ -950,6 +991,12 @@ end
     inverse_kinematics_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the space frame for an open chain robot using Newton-Raphson iteration.
+
+!!! info "Body vs space IK"
+    This is the space-frame version of [`inverse_kinematics_body`](@ref). Both converge
+    to the same solution; the difference is whether the error twist is computed in the
+    body or space frame. The initial guess matters — the algorithm may converge to
+    different solutions or fail to converge depending on the starting point.
 
 # Arguments
 - `screw_axes`: the joint screw axes ``S_i`` in the space frame, as a ``6 \\times n`` matrix.
@@ -1059,6 +1106,13 @@ end
 Computes inverse dynamics in the space frame for an open chain robot using
 forward-backward Newton-Euler iterations.
 
+!!! info "What is inverse dynamics?"
+    Inverse dynamics answers: "what joint torques do I need to produce a desired motion?"
+    Given the joint positions, velocities, and accelerations, it computes the required
+    forces using the recursive Newton-Euler algorithm. This is the workhorse behind most
+    dynamics computations — the mass matrix, Coriolis terms, and gravity vector are all
+    computed by calling this function with special inputs.
+
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
 - `joint_velocities`: the ``n``-vector of joint rates.
@@ -1133,6 +1187,13 @@ Computes the mass matrix of an open chain robot based on the given configuration
 Calls [`inverse_dynamics`](@ref) ``n`` times, each time passing a ``\\ddot{\\theta}``
 vector with a single element equal to one and all other inputs set to zero. Each call
 generates a single column of ``M(\\theta)``.
+
+!!! info "What is the mass matrix?"
+    The mass matrix ``M(\\theta)`` relates joint accelerations to joint torques in the
+    absence of velocity-dependent and gravitational forces:
+    ``\\tau = M(\\theta) \\ddot{\\theta}``. It captures how the robot's inertia is
+    distributed across its joints at a given configuration. This function computes it by
+    calling [`inverse_dynamics`](@ref) ``n`` times, once per joint.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1766,6 +1827,11 @@ Computes a trajectory as a list of ``N`` SE(3) matrices corresponding to the scr
 motion about a space screw axis. Unlike [`cartesian_trajectory`](@ref), the origin
 follows a screw path rather than a straight line.
 
+!!! info "What is a screw trajectory?"
+    A screw trajectory moves the end-effector along a constant screw axis — like turning
+    a corkscrew. The rotation and translation are coupled: the end-effector follows a
+    helical path. Compare with [`cartesian_trajectory`](@ref), which decouples them.
+
 # Arguments
 - `transform_start`: the initial end-effector configuration (4×4 SE(3) matrix).
 - `transform_end`: the final end-effector configuration (4×4 SE(3) matrix).
@@ -1826,6 +1892,12 @@ end
 Computes a trajectory as a list of ``N`` SE(3) matrices where the origin of the
 end-effector frame follows a straight line and the rotation follows a geodesic on
 SO(3). Unlike [`screw_trajectory`](@ref), the position is decoupled from the rotation.
+
+!!! info "Screw vs Cartesian trajectory"
+    Unlike [`screw_trajectory`](@ref), a Cartesian trajectory decouples rotation and
+    translation: the origin follows a straight line in space while the orientation
+    interpolates independently along the shortest path (geodesic) on SO(3). This is
+    usually more intuitive for pick-and-place tasks.
 
 # Arguments
 - `transform_start`: the initial end-effector configuration (4×4 SE(3) matrix).
@@ -1904,6 +1976,13 @@ where ``e = \\theta_d - \\theta``, ``\\dot{e} = \\dot{\\theta}_d - \\dot{\\theta
 ``\\widehat{M}`` is the model of the robot's mass matrix, and ``\\widehat{h}`` is the
 model of centripetal, Coriolis, and gravitational forces.
 
+!!! info "What is computed torque control?"
+    Computed torque control (also called inverse dynamics control) uses a full dynamic
+    model of the robot to cancel out nonlinear effects (Coriolis, centripetal, gravity),
+    then applies a PID-like feedback law on the linearised system. This achieves precise
+    trajectory tracking even at high speeds, unlike simpler PD controllers that ignore
+    the robot's dynamics.
+
 # Arguments
 - `joint_positions`: the ``n``-vector of current joint variables ``\\theta``.
 - `joint_velocities`: the ``n``-vector of current joint rates ``\\dot{\\theta}``.
@@ -1972,6 +2051,14 @@ Simulates the [`computed_torque`](@ref) controller over a given desired trajecto
 (`estimated_gravity`, `estimated_link_frames`, `estimated_spatial_inertias`) while the
 actual forward dynamics simulation uses the true parameters (`gravity`, `link_frames`,
 `spatial_inertias`).
+
+!!! info "Why two sets of dynamics parameters?"
+    In real robotics, the controller's model of the robot is never perfectly accurate.
+    This function simulates that reality: the "actual" dynamics use the true parameters
+    (`gravity`, `link_frames`, `spatial_inertias`), while the controller uses its own
+    estimates (`gravity_estimate`, `link_frames_estimate`,
+    `spatial_inertias_estimate`). The difference shows how robust the controller is to
+    modelling errors.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of initial joint variables.
