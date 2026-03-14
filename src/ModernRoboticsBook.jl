@@ -80,6 +80,13 @@ near_zero(z::Number) = isapprox(z, zero(z); atol = 1e-6)
 
 Converts a 3-vector to an so(3) representation.
 
+!!! info "What is so(3)?"
+    so(3) is the space of all ``3 \\times 3`` skew-symmetric matrices. Each element
+    represents an angular velocity. If ``\\omega`` is the angular velocity vector,
+    then ``[\\omega]`` (its skew-symmetric form) can be used to compute cross products
+    as matrix multiplications: ``\\omega \\times v = [\\omega] v``. This is the Lie
+    algebra of the rotation group SO(3).
+
 # Arguments
 - `ω`: a 3-vector of angular velocities.
 
@@ -149,9 +156,15 @@ axis_angle3(expc3::AbstractVector) = LA.normalize(expc3), LA.norm(expc3)
 """
     matrix_exp3(so3mat)
 
-Computes the matrix exponential of a matrix in so(3).
+Computes the matrix exponential of a matrix in so(3) using Rodrigues' formula.
 
-Uses Rodrigues' formula to compute the rotation matrix.
+!!! info "What is the matrix exponential?"
+    The matrix exponential maps elements of a Lie algebra (infinitesimal motions)
+    to the corresponding Lie group (finite motions). For rotations, it converts an
+    angular velocity ``[\\omega]\\theta`` in so(3) into the actual rotation matrix
+    ``R`` in SO(3) that results from rotating by angle ``\\theta`` about axis
+    ``\\hat{\\omega}``. This is the mathematical foundation of the
+    product-of-exponentials formula for robot kinematics.
 
 # Arguments
 - `so3mat`: a ``3 \\times 3`` skew-symmetric matrix in so(3).
@@ -183,6 +196,12 @@ end
     matrix_log3(R)
 
 Computes the matrix logarithm of a rotation matrix.
+
+!!! info "What is the matrix logarithm?"
+    The matrix logarithm is the inverse of the matrix exponential. It extracts
+    the angular velocity ``[\\omega]\\theta`` from a rotation matrix ``R``,
+    telling you the axis and angle of rotation that produced ``R``. This is
+    essential for error computation in iterative algorithms like inverse kinematics.
 
 # Arguments
 - `R`: a rotation matrix in SO(3).
@@ -291,7 +310,14 @@ end
 """
     vec_to_se3(V)
 
-Converts a spatial velocity vector into a 4x4 matrix in se3.
+Converts a spatial velocity vector into a 4x4 matrix in se(3).
+
+!!! info "What is se(3)?"
+    se(3) is the space of ``4 \\times 4`` matrices that represent twists — combined
+    angular and linear velocities of a rigid body. It is the Lie algebra of the
+    transformation group SE(3). A twist ``V = (\\omega, v)`` encodes both rotation
+    (angular velocity ``\\omega``) and translation (linear velocity ``v``) in a
+    single object, which is key to the product-of-exponentials formula for kinematics.
 
 # Arguments
 - `V`: a 6-vector spatial velocity (angular velocity, linear velocity).
@@ -342,6 +368,12 @@ se3_to_vec(se3mat::AbstractMatrix) =
 
 Computes the adjoint representation of a homogeneous transformation matrix.
 
+!!! info "What is the adjoint representation?"
+    The adjoint map transforms twists (spatial velocities) between reference frames.
+    Given a twist ``V`` expressed in one frame, ``[\\text{Ad}_T] V`` gives the same
+    physical motion expressed in the frame related by ``T``. This is used throughout
+    robotics to transform Jacobians and wrenches between body and space frames.
+
 # Arguments
 - `T`: a ``4 \\times 4`` homogeneous transformation matrix.
 
@@ -369,6 +401,13 @@ end
     screw_to_axis(q, s, h)
 
 Takes a parametric description of a screw axis and converts it to a normalized screw axis.
+
+!!! info "What is a screw axis?"
+    A screw axis describes any rigid-body motion as a rotation about an axis combined
+    with a translation along that axis (like a corkscrew). It is defined by a point
+    ``q`` on the axis, a direction ``s``, and a pitch ``h`` (ratio of linear to angular
+    motion). When ``h = 0`` the motion is pure rotation; when ``h = \\infty`` it is pure
+    translation. Every joint in a robot can be described by a screw axis.
 
 # Arguments
 - `q`: a point on the screw axis.
@@ -421,7 +460,14 @@ end
 """
     matrix_exp6(se3mat)
 
-Computes the matrix exponential of an se3 representation of exponential coordinates.
+Computes the matrix exponential of an se(3) representation of exponential coordinates.
+
+!!! info "What does this do in SE(3)?"
+    This is the SE(3) version of [`matrix_exp3`](@ref). It converts a twist
+    ``[\\mathcal{S}]\\theta`` in se(3) into the rigid-body transformation ``T``
+    in SE(3) that results from following that screw motion. This is how each
+    joint's contribution is computed in the product-of-exponentials formula
+    for forward kinematics.
 
 # Arguments
 - `se3mat`: a ``4 \\times 4`` matrix in se(3).
@@ -464,6 +510,12 @@ end
     matrix_log6(T)
 
 Computes the matrix logarithm of a homogeneous transformation matrix.
+
+!!! info "What does this do in SE(3)?"
+    This is the SE(3) version of [`matrix_log3`](@ref). It extracts the twist
+    ``[\\mathcal{S}]\\theta`` from a transformation ``T``, recovering the screw
+    motion that produced it. This is used in inverse kinematics to compute the
+    body twist error between the current and desired end-effector configurations.
 
 # Arguments
 - `T`: a ``4 \\times 4`` homogeneous transformation matrix in SE(3).
@@ -970,6 +1022,13 @@ end
     ad(V)
 
 Computes the ``6 \\times 6`` matrix ``[\\text{ad}_V]`` used to calculate the Lie bracket ``[V_1, V_2] = [\\text{ad}_{V_1}] V_2``.
+
+!!! info "What is the Lie bracket?"
+    The Lie bracket measures how two twists interact — it captures the velocity
+    produced by the non-commutativity of two motions. In dynamics, the ``[\\text{ad}]``
+    matrix appears in the recursive Newton-Euler algorithm, where it accounts for
+    how the velocity of one link affects the forces on adjacent links through
+    Coriolis and centripetal effects.
 
 # Arguments
 - `V`: a 6-vector spatial velocity (twist).
