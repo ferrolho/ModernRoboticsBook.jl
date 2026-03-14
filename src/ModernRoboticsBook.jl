@@ -711,7 +711,7 @@ julia> initial_guess = [1.5, 2.5, 3];
 julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
 julia> IKinBody(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
-([1.5707381937148923, 2.999666997382942, 3.141539129217613], true)
+([1.5707381937148923, 2.999666997382943, 3.141539129217613], true)
 ```
 """
 function IKinBody(
@@ -772,7 +772,7 @@ julia> initial_guess = [1.5, 2.5, 3];
 julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
 julia> IKinSpace(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
-([1.5707378296567203, 2.999663844672524, 3.141534199856583], true)
+([1.57073782965672, 2.999663844672525, 3.141534199856583], true)
 ```
 """
 function IKinSpace(
@@ -828,7 +828,30 @@ end
 """
     InverseDynamics(joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
-Computes inverse dynamics in the space frame for an open chain robot.
+Computes inverse dynamics in the space frame for an open chain robot using
+forward-backward Newton-Euler iterations.
+
+# Arguments
+- `joint_positions`: the ``n``-vector of joint variables.
+- `joint_velocities`: the ``n``-vector of joint rates.
+- `joint_accelerations`: the ``n``-vector of joint accelerations.
+- `gravity`: the gravity vector ``g`` (e.g., `[0, 0, -9.8]`).
+- `tip_wrench`: the wrench ``\\mathcal{F}_{\\text{tip}}`` applied by the end-effector expressed in frame ``\\{n+1\\}``.
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}`` (the end-effector frame relative to the last link).
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+
+# Returns
+The ``n``-vector of required joint forces/torques.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> InverseDynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
+3-element Vector{Float64}:
+  74.6961615528745
+ -33.067660158514585
+  -3.2305731379014246
+```
 """
 function InverseDynamics(
     joint_positions::AbstractVector,
@@ -878,6 +901,27 @@ end
     MassMatrix(joint_positions, link_frames, spatial_inertias, screw_axes)
 
 Computes the mass matrix of an open chain robot based on the given configuration.
+Calls [`InverseDynamics`](@ref) ``n`` times, each time passing a ``\\ddot{\\theta}``
+vector with a single element equal to one and all other inputs set to zero. Each call
+generates a single column of ``M(\\theta)``.
+
+# Arguments
+- `joint_positions`: the ``n``-vector of joint variables.
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}``.
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+
+# Returns
+The ``n×n`` mass matrix ``M(\\theta)``.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> MassMatrix([0.1, 0.1, 0.1], link_frames, spatial_inertias, screw_axes)
+3×3 Matrix{Float64}:
+ 22.5433      -0.307147  -0.00718426
+ -0.307147     1.96851    0.432157
+ -0.00718426   0.432157   0.191631
+```
 """
 function MassMatrix(
     joint_positions::AbstractVector,
@@ -909,7 +953,28 @@ end
 """
     VelQuadraticForces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes)
 
-Computes the Coriolis and centripetal terms in the inverse dynamics of an open chain robot.
+Computes the Coriolis and centripetal terms ``c(\\theta, \\dot{\\theta})`` in the inverse
+dynamics of an open chain robot. Calls [`InverseDynamics`](@ref) with `gravity = 0`,
+`tip_wrench = 0`, and `joint_accelerations = 0`.
+
+# Arguments
+- `joint_positions`: the ``n``-vector of joint variables.
+- `joint_velocities`: the ``n``-vector of joint rates.
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}``.
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+
+# Returns
+The ``n``-vector of Coriolis and centripetal terms.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> VelQuadraticForces([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], link_frames, spatial_inertias, screw_axes)
+3-element Vector{Float64}:
+  0.26453118054501235
+ -0.0550515682891655
+ -0.006891320068248912
+```
 """
 function VelQuadraticForces(
     joint_positions::AbstractVector,
@@ -933,7 +998,28 @@ end
 """
     GravityForces(joint_positions, gravity, link_frames, spatial_inertias, screw_axes)
 
-Computes the joint forces/torques an open chain robot requires to overcome gravity at its configuration.
+Computes the joint forces/torques an open chain robot requires to overcome gravity at
+its configuration. Calls [`InverseDynamics`](@ref) with `joint_velocities = 0`,
+`joint_accelerations = 0`, and `tip_wrench = 0`.
+
+# Arguments
+- `joint_positions`: the ``n``-vector of joint variables.
+- `gravity`: the gravity vector ``g`` (e.g., `[0, 0, -9.8]`).
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}``.
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+
+# Returns
+The ``n``-vector of joint gravity torques ``g(\\theta)``.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> GravityForces([0.1, 0.1, 0.1], [0, 0, -9.8], link_frames, spatial_inertias, screw_axes)
+3-element Vector{Float64}:
+  28.40331261821983
+ -37.64094817177068
+  -5.4415891999683605
+```
 """
 function GravityForces(
     joint_positions::AbstractVector,
@@ -1065,9 +1151,9 @@ julia> G3 = LA.Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
 
 julia> spatial_inertias = [G1, G2, G3]
 3-element Vector{LinearAlgebra.Diagonal{Float64, Vector{Float64}}}:
- [0.010267 0.0 … 0.0 0.0; 0.0 0.010267 … 0.0 0.0; … ; 0.0 0.0 … 3.7 0.0; 0.0 0.0 … 0.0 3.7]
- [0.22689 0.0 … 0.0 0.0; 0.0 0.22689 … 0.0 0.0; … ; 0.0 0.0 … 8.393 0.0; 0.0 0.0 … 0.0 8.393]
- [0.0494433 0.0 … 0.0 0.0; 0.0 0.0494433 … 0.0 0.0; … ; 0.0 0.0 … 2.275 0.0; 0.0 0.0 … 0.0 2.275]
+ Diagonal([0.010267, 0.010267, 0.00666, 3.7, 3.7, 3.7])
+ Diagonal([0.22689, 0.22689, 0.0151074, 8.393, 8.393, 8.393])
+ Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
 
 julia> screw_axes = [ 1  0  1      0  1      0;
                  0  1  0 -0.089  0      0;
@@ -1083,7 +1169,7 @@ julia> screw_axes = [ 1  0  1      0  1      0;
 julia> EndEffectorForces(joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
  1.4095460782639782
- 1.857714972318063
+ 1.8577149723180628
  1.392409
 ```
 """
@@ -1111,6 +1197,30 @@ end
     ForwardDynamics(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes forward dynamics in the space frame for an open chain robot.
+Computes ``\\ddot{\\theta}`` by solving
+``M(\\theta)\\ddot{\\theta} = \\tau - c(\\theta,\\dot{\\theta}) - g(\\theta) - J^T(\\theta) \\mathcal{F}_{\\text{tip}}``.
+
+# Arguments
+- `joint_positions`: the ``n``-vector of joint variables.
+- `joint_velocities`: the ``n``-vector of joint rates.
+- `joint_torques`: the ``n``-vector of joint forces/torques.
+- `gravity`: the gravity vector ``g`` (e.g., `[0, 0, -9.8]`).
+- `tip_wrench`: the wrench ``\\mathcal{F}_{\\text{tip}}`` applied by the end-effector expressed in frame ``\\{n+1\\}``.
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}``.
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+
+# Returns
+The ``n``-vector of joint accelerations ``\\ddot{\\theta}``.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> ForwardDynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.5, 0.6, 0.7], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
+3-element Vector{Float64}:
+  -0.9739290670855625
+  25.584667840340547
+ -32.91499212478147
+```
 """
 function ForwardDynamics(
     joint_positions::AbstractVector,
@@ -1175,7 +1285,36 @@ end
 """
     InverseDynamicsTrajectory(joint_position_traj, joint_velocity_traj, joint_acceleration_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes)
 
-Calculates the joint forces/torques required to move the serial chain along the given trajectory using inverse dynamics.
+Calculates the joint forces/torques required to move the serial chain along the given
+trajectory using [`InverseDynamics`](@ref) at each timestep.
+
+# Arguments
+- `joint_position_traj`: an ``N×n`` matrix of joint variables, where row ``i`` is the joint vector at timestep ``i``.
+- `joint_velocity_traj`: an ``N×n`` matrix of joint velocities.
+- `joint_acceleration_traj`: an ``N×n`` matrix of joint accelerations.
+- `gravity`: the gravity vector ``g`` (e.g., `[0, 0, -9.8]`).
+- `tip_wrench_traj`: an ``N×6`` matrix where row ``i`` is the spatial wrench applied by the end-effector at timestep ``i``.
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}``.
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+
+# Returns
+An ``N×n`` matrix of joint forces/torques, where row ``i`` is the joint force-torque at timestep ``i``.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> traj_pos = [0.0 0.0 0.0; 0.5 0.5 0.5; 1.0 1.0 1.0];
+
+julia> traj_vel = [0.0 0.0 0.0; 0.5 0.5 0.5; 1.0 1.0 1.0];
+
+julia> traj_acc = [0.5 0.5 0.5; 0.5 0.5 0.5; 0.5 0.5 0.5];
+
+julia> InverseDynamicsTrajectory(traj_pos, traj_vel, traj_acc, [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes)
+3×3 adjoint(::Matrix{Float64}) with eltype Float64:
+  23.7113  -35.2321  -3.87345
+ 105.336   -27.6441  -1.41169
+ 129.143   -17.3084   2.30991
+```
 """
 function InverseDynamicsTrajectory(
     joint_position_traj::AbstractMatrix,
@@ -1212,7 +1351,38 @@ end
 """
     ForwardDynamicsTrajectory(joint_positions, joint_velocities, joint_torque_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, timestep, integration_resolution)
 
-Simulates the motion of a serial chain given an open-loop history of joint forces/torques.
+Simulates the motion of a serial chain given an open-loop history of joint
+forces/torques. Uses [`ForwardDynamics`](@ref) with [`EulerStep`](@ref) integration at
+each timestep.
+
+# Arguments
+- `joint_positions`: the ``n``-vector of initial joint variables.
+- `joint_velocities`: the ``n``-vector of initial joint velocities.
+- `joint_torque_traj`: an ``N×n`` matrix where row ``i`` is the joint force/torque vector at timestep ``i``.
+- `gravity`: the gravity vector ``g`` (e.g., `[0, 0, -9.8]`).
+- `tip_wrench_traj`: an ``N×6`` matrix where row ``i`` is the spatial wrench applied by the end-effector at timestep ``i``.
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}``.
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+- `timestep`: the timestep ``\\Delta t`` between consecutive trajectory points.
+- `integration_resolution`: the number of Euler integration steps during each timestep ``\\Delta t``. Must be a positive integer ``\\geq 1``. Larger values result in slower simulations but less accumulation of integration error.
+
+# Returns
+- `joint_position_traj`: the ``N×n`` matrix of joint variables resulting from the specified joint forces/torques.
+- `joint_velocity_traj`: the ``N×n`` matrix of joint velocities resulting from the specified joint forces/torques.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> joint_torque_traj = [3.63 -6.58 -5.57; 3.74 -5.55 -5.5; 4.31 -0.68 -5.19];
+
+julia> thetamat, dthetamat = ForwardDynamicsTrajectory([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], joint_torque_traj, [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes, 0.1, 8);
+
+julia> thetamat
+3×3 adjoint(::Matrix{Float64}) with eltype Float64:
+ 0.1       0.1        0.1
+ 0.106431  0.2626    -0.226649
+ 0.10198   0.715813  -1.22522
+```
 """
 function ForwardDynamicsTrajectory(
     joint_positions::AbstractVector,
@@ -1296,7 +1466,27 @@ QuinticTimeScaling(total_time::Number, t::Number) =
 """
     JointTrajectory(joint_position_start, joint_position_end, total_time, N, method)
 
-Computes a straight-line trajectory in joint space.
+Computes a straight-line trajectory in joint space with the specified time scaling.
+
+# Arguments
+- `joint_position_start`: the ``n``-vector of initial joint variables.
+- `joint_position_end`: the ``n``-vector of final joint variables.
+- `total_time`: total time of the motion in seconds from rest to rest.
+- `N`: the number of points ``N \\geq 2`` in the discrete representation of the trajectory.
+- `method`: the time-scaling method — use `3` for cubic ([`CubicTimeScaling`](@ref)) or `5` for quintic ([`QuinticTimeScaling`](@ref)).
+
+# Returns
+An ``N×n`` matrix where each row is an ``n``-vector of joint variables. The first row is `joint_position_start` and the ``N``th row is `joint_position_end`. The elapsed time between each row is ``T_f / (N - 1)``.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> JointTrajectory([0, 0], [1, 2], 2, 4, 3)
+4×2 adjoint(::Matrix{Float64}) with eltype Float64:
+ 0.0       0.0
+ 0.259259  0.518519
+ 0.740741  1.48148
+ 1.0       2.0
+```
 """
 function JointTrajectory(
     joint_position_start::AbstractVector,
@@ -1324,7 +1514,38 @@ end
 """
     ScrewTrajectory(transform_start, transform_end, total_time, N, method)
 
-Computes a trajectory as a list of N SE(3) matrices corresponding to the screw motion about a space screw axis.
+Computes a trajectory as a list of ``N`` SE(3) matrices corresponding to the screw
+motion about a space screw axis. Unlike [`CartesianTrajectory`](@ref), the origin
+follows a screw path rather than a straight line.
+
+# Arguments
+- `transform_start`: the initial end-effector configuration (4×4 SE(3) matrix).
+- `transform_end`: the final end-effector configuration (4×4 SE(3) matrix).
+- `total_time`: total time of the motion in seconds from rest to rest.
+- `N`: the number of points ``N \\geq 2`` in the discrete representation of the trajectory.
+- `method`: the time-scaling method — use `3` for cubic ([`CubicTimeScaling`](@ref)) or `5` for quintic ([`QuinticTimeScaling`](@ref)).
+
+# Returns
+A list of ``N`` SE(3) matrices separated in time by ``T_f / (N - 1)``. The first in the list is `transform_start` and the ``N``th is `transform_end`.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> Xstart = [1 0 0 1; 0 1 0 0; 0 0 1 1; 0 0 0 1];
+
+julia> Xend = [0 0 1 0.1; 1 0 0 0; 0 1 0 4.1; 0 0 0 1];
+
+julia> traj = ScrewTrajectory(Xstart, Xend, 5, 4, 3);
+
+julia> length(traj)
+4
+
+julia> traj[1]
+4×4 Matrix{Float64}:
+ 1.0  0.0  0.0  1.0
+ 0.0  1.0  0.0  0.0
+ 0.0  0.0  1.0  1.0
+ 0.0  0.0  0.0  1.0
+```
 """
 function ScrewTrajectory(
     transform_start::AbstractMatrix,
@@ -1354,7 +1575,38 @@ end
 """
     CartesianTrajectory(transform_start, transform_end, total_time, N, method)
 
-Computes a trajectory as a list of N SE(3) matrices corresponding to the origin of the end-effector frame following a straight line.
+Computes a trajectory as a list of ``N`` SE(3) matrices where the origin of the
+end-effector frame follows a straight line and the rotation follows a geodesic on
+SO(3). Unlike [`ScrewTrajectory`](@ref), the position is decoupled from the rotation.
+
+# Arguments
+- `transform_start`: the initial end-effector configuration (4×4 SE(3) matrix).
+- `transform_end`: the final end-effector configuration (4×4 SE(3) matrix).
+- `total_time`: total time of the motion in seconds from rest to rest.
+- `N`: the number of points ``N \\geq 2`` in the discrete representation of the trajectory.
+- `method`: the time-scaling method — use `3` for cubic ([`CubicTimeScaling`](@ref)) or `5` for quintic ([`QuinticTimeScaling`](@ref)).
+
+# Returns
+A list of ``N`` SE(3) matrices separated in time by ``T_f / (N - 1)``. The first in the list is `transform_start` and the ``N``th is `transform_end`.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> Xstart = [1 0 0 1; 0 1 0 0; 0 0 1 1; 0 0 0 1];
+
+julia> Xend = [0 0 1 0.1; 1 0 0 0; 0 1 0 4.1; 0 0 0 1];
+
+julia> traj = CartesianTrajectory(Xstart, Xend, 5, 4, 5);
+
+julia> length(traj)
+4
+
+julia> traj[1]
+4×4 Matrix{Float64}:
+ 1.0  0.0  0.0  1.0
+ 0.0  1.0  0.0  0.0
+ 0.0  0.0  1.0  1.0
+ 0.0  0.0  0.0  1.0
+```
 """
 function CartesianTrajectory(
     transform_start::AbstractMatrix,
@@ -1395,7 +1647,41 @@ end
 """
     ComputedTorque(joint_positions, joint_velocities, error_integral, gravity, link_frames, spatial_inertias, screw_axes, desired_joint_positions, desired_joint_velocities, desired_joint_accelerations, Kp, Ki, Kd)
 
-Computes the joint control torques at a particular time instant.
+Computes the joint control torques at a particular time instant using the computed
+torque control law:
+
+``\\tau = \\widehat{M}(\\theta)(\\ddot{\\theta}_d + K_p e + K_i \\int e + K_d \\dot{e}) + \\widehat{h}(\\theta, \\dot{\\theta})``
+
+where ``e = \\theta_d - \\theta``, ``\\dot{e} = \\dot{\\theta}_d - \\dot{\\theta}``,
+``\\widehat{M}`` is the model of the robot's mass matrix, and ``\\widehat{h}`` is the
+model of centripetal, Coriolis, and gravitational forces.
+
+# Arguments
+- `joint_positions`: the ``n``-vector of current joint variables ``\\theta``.
+- `joint_velocities`: the ``n``-vector of current joint rates ``\\dot{\\theta}``.
+- `error_integral`: the ``n``-vector of the time-integral of joint errors ``\\int e \\, dt``.
+- `gravity`: the gravity vector ``g`` (e.g., `[0, 0, -9.8]`).
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}``.
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+- `desired_joint_positions`: the ``n``-vector of desired joint variables ``\\theta_d``.
+- `desired_joint_velocities`: the ``n``-vector of desired joint rates ``\\dot{\\theta}_d``.
+- `desired_joint_accelerations`: the ``n``-vector of desired joint accelerations ``\\ddot{\\theta}_d``.
+- `Kp`: the proportional gain (scalar, applied as ``K_p I``).
+- `Ki`: the integral gain (scalar).
+- `Kd`: the derivative gain (scalar).
+
+# Returns
+The ``n``-vector of joint control torques.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> ComputedTorque([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.2, 0.2, 0.2], [0, 0, -9.8], link_frames, spatial_inertias, screw_axes, [1.0, 1.0, 1.0], [2.0, 1.2, 2.0], [0.1, 0.1, 0.1], 1.3, 1.2, 1.1)
+3-element Vector{Float64}:
+ 133.0052524649953
+ -29.942233243760633
+  -3.03276856161724
+```
 """
 function ComputedTorque(
     joint_positions::AbstractVector,
@@ -1430,11 +1716,53 @@ function ComputedTorque(
 end
 
 """
-    SimulateControl(joint_positions, joint_velocities, gravity, tip_wrench_traj, link_frames, spatial_inertias,
-                    screw_axes, desired_joint_position_traj, desired_joint_velocity_traj, desired_joint_acceleration_traj, estimated_gravity,
-                    estimated_link_frames, estimated_spatial_inertias, Kp, Ki, Kd, timestep, integration_resolution)
+    SimulateControl(joint_positions, joint_velocities, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, desired_joint_position_traj, desired_joint_velocity_traj, desired_joint_acceleration_traj, estimated_gravity, estimated_link_frames, estimated_spatial_inertias, Kp, Ki, Kd, timestep, integration_resolution)
 
-Simulates the computed torque controller over a given desired trajectory.
+Simulates the [`ComputedTorque`](@ref) controller over a given desired trajectory using
+[`ForwardDynamics`](@ref) and numerical integration. The controller may use different
+(possibly inaccurate) dynamics parameters
+(`estimated_gravity`, `estimated_link_frames`, `estimated_spatial_inertias`) while the
+actual forward dynamics simulation uses the true parameters (`gravity`, `link_frames`,
+`spatial_inertias`).
+
+# Arguments
+- `joint_positions`: the ``n``-vector of initial joint variables.
+- `joint_velocities`: the ``n``-vector of initial joint velocities.
+- `gravity`: the actual gravity vector used in the forward dynamics simulation.
+- `tip_wrench_traj`: an ``N×6`` matrix where row ``i`` is the spatial wrench applied by the end-effector at timestep ``i``.
+- `link_frames`: the actual link frames (vector of ``n+1`` SE(3) matrices) used in the forward dynamics simulation.
+- `spatial_inertias`: the actual spatial inertia matrices (vector of ``n`` 6×6 matrices) used in the forward dynamics simulation.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+- `desired_joint_position_traj`: an ``N×n`` matrix of desired joint positions at each timestep.
+- `desired_joint_velocity_traj`: an ``N×n`` matrix of desired joint velocities at each timestep.
+- `desired_joint_acceleration_traj`: an ``N×n`` matrix of desired joint accelerations at each timestep.
+- `estimated_gravity`: the gravity vector used by the controller (may differ from `gravity`).
+- `estimated_link_frames`: the link frames used by the controller (may differ from `link_frames`).
+- `estimated_spatial_inertias`: the spatial inertia matrices used by the controller (may differ from `spatial_inertias`).
+- `Kp`: the proportional gain (scalar).
+- `Ki`: the integral gain (scalar).
+- `Kd`: the derivative gain (scalar).
+- `timestep`: the timestep ``\\Delta t`` between trajectory reference points.
+- `integration_resolution`: the number of Euler integration steps per timestep.
+
+# Returns
+- `joint_torque_traj`: an ``N×n`` matrix of applied joint torques at each timestep.
+- `joint_position_traj`: an ``N×n`` matrix of actual joint positions at each timestep.
+
+# Examples
+```jldoctest; setup = :(using ModernRoboticsBook)
+julia> desired_pos = [0.1 0.1 0.1; 0.2 0.2 0.2; 0.3 0.3 0.3];
+
+julia> desired_vel = [0.1 0.1 0.1; 0.1 0.1 0.1; 0.1 0.1 0.1];
+
+julia> taumat, thetamat = SimulateControl([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0, 0, -9.8], ones(3, 6), link_frames, spatial_inertias, screw_axes, desired_pos, desired_vel, zeros(3, 3), [0, 0, -9.8], link_frames, spatial_inertias, 20, 10, 18, 0.1, 4);
+
+julia> taumat
+3×3 adjoint(::Matrix{Float64}) with eltype Float64:
+ 29.2466  -42.7951  -6.91623
+ 93.5113  -24.4938  -0.00376585
+ 45.3612  -39.6324  -5.62033
+```
 """
 function SimulateControl(
     joint_positions::AbstractVector,
