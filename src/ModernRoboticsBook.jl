@@ -723,7 +723,7 @@ function fkin_body(
     body_screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
-    for i = 1:length(joint_positions)
+    for i in eachindex(joint_positions)
         home_config *= matrix_exp6(vec_to_se3(body_screw_axes[:, i] * joint_positions[i]))
     end
     home_config
@@ -768,7 +768,7 @@ function fkin_space(
     screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
-    for i = length(joint_positions):-1:1
+    for i in reverse(eachindex(joint_positions))
         home_config =
             matrix_exp6(vec_to_se3(screw_axes[:, i] * joint_positions[i])) * home_config
     end
@@ -813,7 +813,7 @@ julia> jacobian_body(body_screw_axes, joint_positions)
 function jacobian_body(body_screw_axes::AbstractMatrix, joint_positions::AbstractVector)
     T = LA.I
     Jb = copy(body_screw_axes)
-    for i = (length(joint_positions)-1):-1:1
+    for i in Iterators.reverse(firstindex(joint_positions):(lastindex(joint_positions)-1))
         T *= matrix_exp6(vec_to_se3(body_screw_axes[:, i+1] * -joint_positions[i+1]))
         Jb[:, i] = adjoint_repr(T) * body_screw_axes[:, i]
     end
@@ -854,7 +854,7 @@ julia> jacobian_space(screw_axes, joint_positions)
 function jacobian_space(screw_axes::AbstractMatrix, joint_positions::AbstractVector)
     T = LA.I
     Js = copy(screw_axes)
-    for i = 2:length(joint_positions)
+    for i in (firstindex(joint_positions)+1):lastindex(joint_positions)
         T *= matrix_exp6(vec_to_se3(screw_axes[:, i-1] * joint_positions[i-1]))
         Js[:, i] = adjoint_repr(T) * screw_axes[:, i]
     end
