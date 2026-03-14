@@ -16,7 +16,7 @@ julia --project -e 'using Pkg; Pkg.test()'
 
 ## Building docs locally
 
-The docs project needs a development reference to the local package:
+The docs project intentionally does not list `ModernRoboticsBook` in its `Project.toml` — this ensures you always build against the local checkout rather than the registered version. You need to add it manually with `Pkg.develop`:
 
 ```bash
 julia --project=docs -e '
