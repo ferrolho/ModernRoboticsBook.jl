@@ -1565,7 +1565,7 @@ function inverse_dynamics_trajectory(
     tip_wrench_traj = tip_wrench_traj'
     joint_torque_traj = copy(joint_position_traj)
 
-    for i = 1:size(joint_position_traj, 2)
+    for i in axes(joint_position_traj, 2)
         joint_torque_traj[:, i] = inverse_dynamics(
             joint_position_traj[:, i],
             joint_velocity_traj[:, i],
@@ -1636,7 +1636,7 @@ function forward_dynamics_trajectory(
     joint_velocity_traj = copy(joint_torque_traj)
     joint_velocity_traj[:, 1] = joint_velocities
 
-    for i = 1:(size(joint_torque_traj, 2)-1)
+    for i = first(axes(joint_torque_traj, 2)):(last(axes(joint_torque_traj, 2))-1)
         for j = 1:integration_resolution
             joint_accelerations = forward_dynamics(
                 joint_positions,
