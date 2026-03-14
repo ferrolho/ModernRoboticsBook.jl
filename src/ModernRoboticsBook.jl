@@ -61,7 +61,7 @@ Determines whether a scalar is small enough to be treated as zero.
 - `z`: a scalar value.
 
 # Returns
-`true` if `z` is close to zero (absolute value less than ``10^{-6}``); `false` otherwise.
+`true` if `z` is approximately zero (within absolute tolerance ``10^{-6}``); `false` otherwise.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -69,7 +69,7 @@ julia> near_zero(-1e-7)
 true
 ```
 """
-near_zero(z::Number) = abs(z) < 1e-6
+near_zero(z::Number) = isapprox(z, zero(z); atol = 1e-6)
 
 # """
 # *** CHAPTER 3: RIGID-BODY MOTIONS ***
@@ -808,7 +808,7 @@ julia> jacobian_space(screw_axes, joint_positions)
 function jacobian_space(screw_axes::AbstractMatrix, joint_positions::AbstractVector)
     T = LA.I
     Js = copy(screw_axes)
-    for i in (firstindex(joint_positions)+1):lastindex(joint_positions)
+    for i = (firstindex(joint_positions)+1):lastindex(joint_positions)
         T *= matrix_exp6(vec_to_se3(screw_axes[:, i-1] * joint_positions[i-1]))
         Js[:, i] = adjoint_repr(T) * screw_axes[:, i]
     end
