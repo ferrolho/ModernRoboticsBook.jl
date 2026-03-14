@@ -84,7 +84,7 @@ Converts a 3-vector to an so(3) representation.
 - `ω`: a 3-vector of angular velocities.
 
 # Returns
-The corresponding ``3 \times 3`` skew-symmetric matrix in so(3).
+The corresponding ``3 \\times 3`` skew-symmetric matrix in so(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -109,7 +109,7 @@ end
 Converts an so(3) representation to a 3-vector.
 
 # Arguments
-- `so3mat`: a ``3 \times 3`` skew-symmetric matrix in so(3).
+- `so3mat`: a ``3 \\times 3`` skew-symmetric matrix in so(3).
 
 # Returns
 The corresponding 3-vector of angular velocities.
