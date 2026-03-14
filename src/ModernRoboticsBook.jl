@@ -3,8 +3,6 @@ module ModernRoboticsBook
 import LinearAlgebra as LA
 
 export near_zero,
-    normalize_vec,
-    rot_inv,
     vec_to_so3,
     so3_to_vec,
     axis_ang3,
@@ -73,53 +71,9 @@ true
 """
 near_zero(z::Number) = abs(z) < 1e-6
 
-"""
-    normalize_vec(V)
-
-normalize_vecs a vector.
-
-# Arguments
-- `V`: a vector.
-
-# Returns
-The unit vector in the direction of `V`.
-
-# Examples
-```jldoctest; setup = :(using ModernRoboticsBook)
-julia> normalize_vec([1, 2, 3])
-3-element Vector{Float64}:
- 0.2672612419124244
- 0.5345224838248488
- 0.8017837257372732
-```
-"""
-normalize_vec(V::AbstractVector) = V / LA.norm(V)
-
 # """
 # *** CHAPTER 3: RIGID-BODY MOTIONS ***
 # """
-
-"""
-    rot_inv(R)
-
-Inverts a rotation matrix.
-
-# Arguments
-- `R`: a rotation matrix in SO(3).
-
-# Returns
-The inverse of `R`, computed as ``R^T``.
-
-# Examples
-```jldoctest; setup = :(using ModernRoboticsBook)
-julia> rot_inv([0 0 1; 1 0 0; 0 1 0])
-3×3 adjoint(::Matrix{Int64}) with eltype Int64:
- 0  1  0
- 0  0  1
- 1  0  0
-```
-"""
-rot_inv(R::AbstractMatrix) = R'
 
 """
     vec_to_so3(ω)
@@ -190,7 +144,7 @@ julia> axis_ang3([1, 2, 3])
 ([0.2672612419124244, 0.5345224838248488, 0.8017837257372732], 3.7416573867739413)
 ```
 """
-axis_ang3(expc3::AbstractVector) = normalize_vec(expc3), LA.norm(expc3)
+axis_ang3(expc3::AbstractVector) = LA.normalize(expc3), LA.norm(expc3)
 
 """
     matrix_exp3(so3mat)

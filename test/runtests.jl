@@ -9,11 +9,8 @@ Aqua.test_all(ModernRoboticsBook)
 @testset "ModernRoboticsBook.jl" begin
     @testset "basic helper functions" begin
         @test near_zero(-1e-7)
-        @test normalize_vec([1, 2, 3]) ==
-              [0.2672612419124244, 0.5345224838248488, 0.8017837257372732]
     end
     @testset "chapter 3: rigid-body motions" begin
-        @test rot_inv([0 0 1; 1 0 0; 0 1 0]) == [0 1 0; 0 0 1; 1 0 0]
         @test vec_to_so3([1, 2, 3]) == [0 -3 2; 3 0 -1; -2 1 0]
         @test so3_to_vec([0 -3 2; 3 0 -1; -2 1 0]) == [1, 2, 3]
         @test axis_ang3([1, 2, 3]) == (
