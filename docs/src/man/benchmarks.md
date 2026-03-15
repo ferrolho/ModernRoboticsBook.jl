@@ -13,8 +13,8 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 | Mass matrix (RNEA) | 6.79 μs | — | — | — |
 | Gravity / dynamics bias | 1.19 μs | — | 0.48 μs | 0.55 μs |
 | Forward dynamics (ABA) | 1.65 μs | **1.41 μs** | 2.82 μs | — |
-| Forward dynamics (CRBA) | 2.80 μs | — | — | — |
-| Forward dynamics (RNEA) | 5.44 μs | — | — | — |
+| Forward dynamics (CRBA) | 2.80 μs | 2.39 μs | — | — |
+| Forward dynamics (RNEA) | 5.44 μs | 4.91 μs | — | — |
 
 *Measured on Apple M2 (16 GB), Julia 1.12, Python 3.13. Julia timings are median values from BenchmarkTools.jl. RBD.jl: the ee\_link frame is grabbed before removing fixed joints; timings are for in-place variants where available.*
 
@@ -45,8 +45,8 @@ The textbook algorithm variants (`mass_matrix_rnea`, `forward_dynamics_rnea`) ar
 | Mass matrix (RNEA) | 76 | 20.7 KiB | — |
 | Gravity forces | 17 | 3.6 KiB | — |
 | Forward dynamics (ABA) | 23 | 6.1 KiB | **0 (0 B)** |
-| Forward dynamics (CRBA) | 32 | 8.8 KiB | — |
-| Forward dynamics (RNEA) | 78 | 19.6 KiB | — |
+| Forward dynamics (CRBA) | 32 | 8.8 KiB | 8 (720 B) |
+| Forward dynamics (RNEA) | 78 | 19.6 KiB | 10 (3.7 KiB) |
 
 ### When does this matter?
 

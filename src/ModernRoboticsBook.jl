@@ -47,7 +47,9 @@ export near_zero,
     forward_dynamics_aba,
     forward_dynamics_aba!,
     forward_dynamics_crba,
+    forward_dynamics_crba!,
     forward_dynamics_rnea,
+    forward_dynamics_rnea!,
     euler_step,
     inverse_dynamics_trajectory,
     forward_dynamics_trajectory,
@@ -1852,20 +1854,88 @@ function forward_dynamics_crba(
     spatial_inertias::AbstractVector,
     screw_axes::AbstractMatrix,
 )
-    # Use the explicit M⁻¹(τ - c - g - J^T F_tip) approach with CRBA for the mass matrix
-    mass = mass_matrix_crba(joint_positions, link_frames, spatial_inertias, screw_axes)
-    tau_rhs =
-        joint_torques - inverse_dynamics_rnea(
-            joint_positions,
-            joint_velocities,
-            zeros(length(joint_positions)),
-            gravity,
-            tip_wrench,
-            link_frames,
-            spatial_inertias,
-            screw_axes,
-        )
-    return mass \ tau_rhs
+    n = length(joint_positions)
+    ddq = zeros(n)
+    M = zeros(n, n)
+    tau_bias = zeros(n)
+    Ai = Vector{SVector{6,Float64}}(undef, n)
+    AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
+    Gc = Vector{SMatrix{6,6,Float64,36}}(undef, n)
+    Vi = Vector{SVector{6,Float64}}(undef, n + 1)
+    Vdi = Vector{SVector{6,Float64}}(undef, n + 1)
+    forward_dynamics_crba!(
+        ddq,
+        joint_positions,
+        joint_velocities,
+        joint_torques,
+        gravity,
+        tip_wrench,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        M,
+        tau_bias,
+        Ai,
+        AdTi,
+        Gc,
+        Vi,
+        Vdi,
+    )
+end
+
+"""
+    forward_dynamics_crba!(ddq, joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes, M, tau_bias, Ai, AdTi, Gc, Vi, Vdi)
+
+In-place version of [`forward_dynamics_crba`](@ref). Writes the result into `ddq`.
+Workspace: `M` (n×n), `tau_bias` (n), `Ai` (n), `AdTi` (n+1), `Gc` (n), `Vi` (n+1), `Vdi` (n+1).
+"""
+function forward_dynamics_crba!(
+    ddq::AbstractVector,
+    joint_positions::AbstractVector,
+    joint_velocities::AbstractVector,
+    joint_torques::AbstractVector,
+    gravity::AbstractVector,
+    tip_wrench::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+    M::AbstractMatrix,
+    tau_bias::AbstractVector,
+    Ai::AbstractVector{SVector{6,Float64}},
+    AdTi::AbstractVector{SMatrix{6,6,Float64,36}},
+    Gc::AbstractVector{SMatrix{6,6,Float64,36}},
+    Vi::AbstractVector{SVector{6,Float64}},
+    Vdi::AbstractVector{SVector{6,Float64}},
+)
+    mass_matrix_crba!(
+        M,
+        joint_positions,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Gc,
+    )
+    # Reuse ddq as temporary zero-acceleration vector, then overwrite with result
+    ddq .= 0
+    inverse_dynamics_rnea!(
+        tau_bias,
+        joint_positions,
+        joint_velocities,
+        ddq,
+        gravity,
+        tip_wrench,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
+    )
+    ddq .= M \ (joint_torques - tau_bias)
+    return ddq
 end
 
 """
@@ -2048,27 +2118,140 @@ function forward_dynamics_rnea(
     spatial_inertias::AbstractVector,
     screw_axes::AbstractMatrix,
 )
-    LA.inv(mass_matrix_crba(joint_positions, link_frames, spatial_inertias, screw_axes)) * (
-        joint_torques - velocity_quadratic_forces(
-            joint_positions,
-            joint_velocities,
-            link_frames,
-            spatial_inertias,
-            screw_axes,
-        ) - gravity_forces(
-            joint_positions,
-            gravity,
-            link_frames,
-            spatial_inertias,
-            screw_axes,
-        ) - end_effector_forces(
-            joint_positions,
-            tip_wrench,
-            link_frames,
-            spatial_inertias,
-            screw_axes,
-        )
+    n = length(joint_positions)
+    ddq = zeros(n)
+    M = zeros(n, n)
+    tau_c = zeros(n)
+    tau_g = zeros(n)
+    tau_f = zeros(n)
+    Ai = Vector{SVector{6,Float64}}(undef, n)
+    AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
+    Gc = Vector{SMatrix{6,6,Float64,36}}(undef, n)
+    Vi = Vector{SVector{6,Float64}}(undef, n + 1)
+    Vdi = Vector{SVector{6,Float64}}(undef, n + 1)
+    forward_dynamics_rnea!(
+        ddq,
+        joint_positions,
+        joint_velocities,
+        joint_torques,
+        gravity,
+        tip_wrench,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        M,
+        tau_c,
+        tau_g,
+        tau_f,
+        Ai,
+        AdTi,
+        Gc,
+        Vi,
+        Vdi,
     )
+end
+
+"""
+    forward_dynamics_rnea!(ddq, joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes, M, tau_c, tau_g, tau_f, Ai, AdTi, Gc, Vi, Vdi)
+
+In-place version of [`forward_dynamics_rnea`](@ref). Writes the result into `ddq`.
+Workspace: `M` (n×n), `tau_c` (n), `tau_g` (n), `tau_f` (n), `Ai` (n), `AdTi` (n+1),
+`Gc` (n), `Vi` (n+1), `Vdi` (n+1).
+"""
+function forward_dynamics_rnea!(
+    ddq::AbstractVector,
+    joint_positions::AbstractVector,
+    joint_velocities::AbstractVector,
+    joint_torques::AbstractVector,
+    gravity::AbstractVector,
+    tip_wrench::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+    M::AbstractMatrix,
+    tau_c::AbstractVector,
+    tau_g::AbstractVector,
+    tau_f::AbstractVector,
+    Ai::AbstractVector{SVector{6,Float64}},
+    AdTi::AbstractVector{SMatrix{6,6,Float64,36}},
+    Gc::AbstractVector{SMatrix{6,6,Float64,36}},
+    Vi::AbstractVector{SVector{6,Float64}},
+    Vdi::AbstractVector{SVector{6,Float64}},
+)
+    zero_n = ddq
+    zero_3 = SA[0.0, 0.0, 0.0]
+    zero_6 = SA[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+    # Mass matrix via CRBA
+    mass_matrix_crba!(
+        M,
+        joint_positions,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Gc,
+    )
+
+    # Coriolis/centrifugal: RNEA with gravity=0, tip_wrench=0, ddq=0
+    zero_n .= 0
+    inverse_dynamics_rnea!(
+        tau_c,
+        joint_positions,
+        joint_velocities,
+        zero_n,
+        zero_3,
+        zero_6,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
+    )
+
+    # Gravity: RNEA with dq=0, ddq=0, tip_wrench=0
+    zero_n .= 0
+    inverse_dynamics_rnea!(
+        tau_g,
+        joint_positions,
+        zero_n,
+        zero_n,
+        gravity,
+        zero_6,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
+    )
+
+    # End-effector forces: RNEA with dq=0, ddq=0, gravity=0
+    zero_n .= 0
+    inverse_dynamics_rnea!(
+        tau_f,
+        joint_positions,
+        zero_n,
+        zero_n,
+        zero_3,
+        tip_wrench,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
+    )
+
+    # ddq = M⁻¹ * (τ - c - g - f)
+    ddq .= joint_torques .- tau_c .- tau_g .- tau_f
+    ddq .= LA.inv(M) * ddq
+    return ddq
 end
 
 """
