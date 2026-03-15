@@ -1253,20 +1253,24 @@ function mass_matrix(
 )
     n = length(joint_positions)
     M = zeros(n, n)
+    joint_accelerations = zeros(n)
+    zero_velocities = zeros(n)
+    zero_gravity = zeros(3)
+    zero_wrench = zeros(6)
 
     for i = 1:n
-        joint_accelerations = zeros(n)
         joint_accelerations[i] = 1
         M[:, i] = inverse_dynamics(
             joint_positions,
-            zeros(n),
+            zero_velocities,
             joint_accelerations,
-            zeros(3),
-            zeros(6),
+            zero_gravity,
+            zero_wrench,
             link_frames,
             spatial_inertias,
             screw_axes,
         )
+        joint_accelerations[i] = 0
     end
 
     return M
