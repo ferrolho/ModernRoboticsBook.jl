@@ -44,6 +44,7 @@ export near_zero,
     velocity_quadratic_forces,
     gravity_forces,
     end_effector_forces,
+    forward_dynamics_aba,
     forward_dynamics_crba,
     forward_dynamics_rnea,
     euler_step,
@@ -1804,9 +1805,17 @@ Computes forward dynamics in the space frame for an open chain robot.
 !!! details "Educational note"
     The textbook computes forward dynamics by explicitly forming ``M^{-1}`` and calling
     [`inverse_dynamics_rnea`](@ref) separately for Coriolis, gravity, and tip wrench terms.
-    This implementation combines these into a single RNEA call and uses `M \\ b` (LU
-    factorization) instead of explicit inversion, which is both faster and more
-    numerically stable. See [`forward_dynamics_rnea`](@ref) for the textbook algorithm.
+    This implementation makes two improvements:
+
+    1. **Single RNEA call**: instead of computing ``c``, ``g``, and ``J^T F`` separately,
+       a single call to RNEA with zero accelerations returns ``\\tau_{\\text{bias}} = c + g + J^T F``.
+    2. **Backslash solve** (`M \\ b`): instead of explicitly forming ``M^{-1}`` and
+       multiplying, Julia's `\\` operator solves the linear system ``M x = b`` via LU
+       factorization. This is both faster (avoids forming the inverse) and more
+       numerically stable (fewer floating-point operations, better conditioning).
+
+    For the fastest forward dynamics, use [`forward_dynamics_aba`](@ref) which avoids
+    forming ``M`` entirely. See [`forward_dynamics_rnea`](@ref) for the textbook algorithm.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1854,6 +1863,119 @@ function forward_dynamics_crba(
             screw_axes,
         )
     return mass \ tau_rhs
+end
+
+"""
+    forward_dynamics_aba(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
+
+Computes forward dynamics using the **Articulated Body Algorithm (ABA)**.
+
+!!! info "Articulated Body Algorithm"
+    ABA solves for joint accelerations in O(n) with three passes over the kinematic
+    chain, without forming or inverting the mass matrix:
+
+    1. **Outward pass**: compute link velocities and velocity-dependent bias forces.
+    2. **Inward pass**: accumulate *articulated body inertias* — the effective inertia
+       of each subtree accounting for joint freedom — from leaf to root.
+    3. **Outward pass**: solve for joint accelerations from root to leaf.
+
+    This is the same algorithm Pinocchio uses for forward dynamics.
+
+!!! details "Educational note"
+    The textbook (Chapter 8.3) computes forward dynamics by explicitly forming
+    ``M(\\theta)`` and solving ``M \\ddot{\\theta} = \\tau - c - g``. See
+    [`forward_dynamics_crba`](@ref) for that approach. ABA avoids forming ``M``
+    entirely, which is asymptotically faster for large ``n``.
+
+# Arguments
+- `joint_positions`: the ``n``-vector of joint variables.
+- `joint_velocities`: the ``n``-vector of joint rates.
+- `joint_torques`: the ``n``-vector of joint forces/torques.
+- `gravity`: the gravity vector ``g`` (e.g., `[0, 0, -9.8]`).
+- `tip_wrench`: the wrench ``\\mathcal{F}_{\\text{tip}}`` applied by the end-effector expressed in frame ``\\{n+1\\}``.
+- `link_frames`: a vector of ``n+1`` SE(3) matrices, where `link_frames[i]` is ``M_{i-1,i}`` and `link_frames[n+1]` is ``M_{n,n+1}``.
+- `spatial_inertias`: a vector of ``n`` symmetric 6×6 spatial inertia matrices ``G_i`` of the links.
+- `screw_axes`: the screw axes ``S_i`` of the joints in a space frame, as a 6×``n`` matrix with axes as columns.
+
+# Returns
+The ``n``-vector of joint accelerations ``\\ddot{\\theta}``.
+"""
+function forward_dynamics_aba(
+    joint_positions::AbstractVector,
+    joint_velocities::AbstractVector,
+    joint_torques::AbstractVector,
+    gravity::AbstractVector,
+    tip_wrench::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+)
+    n = length(joint_positions)
+
+    # Pass 1 (outward): velocities, bias accelerations, bias forces
+    Mi = SMatrix{4,4,Float64}(LA.I)
+    Ai = Vector{SVector{6,Float64}}(undef, n)
+    AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
+    Vi = Vector{SVector{6,Float64}}(undef, n + 1)
+    ci = Vector{SVector{6,Float64}}(undef, n)
+    IA = Vector{SMatrix{6,6,Float64,36}}(undef, n)
+    pA = Vector{SVector{6,Float64}}(undef, n)
+
+    Vi[1] = @SVector zeros(6)
+    AdTi[n+1] = adjoint_representation(transform_inv(link_frames[n+1]))
+
+    for i = 1:n
+        Mi = Mi * SMatrix{4,4}(link_frames[i])
+        Ai[i] =
+            adjoint_representation(transform_inv(Mi)) * SVector{6}(@view screw_axes[:, i])
+        AdTi[i] = adjoint_representation(
+            matrix_exp6(vec_to_se3(Ai[i] * -joint_positions[i])) *
+            transform_inv(SMatrix{4,4}(link_frames[i])),
+        )
+        Vi[i+1] = AdTi[i] * Vi[i] + Ai[i] * joint_velocities[i]
+        ci[i] = ad(Vi[i+1]) * Ai[i] * joint_velocities[i]
+        Gi = SMatrix{6,6}(spatial_inertias[i])
+        IA[i] = Gi
+        # Featherstone's velocity-product force is p_A = v ×* (I v), where ×* is the
+        # spatial force cross product. Twists and wrenches live in dual spaces, so the
+        # force cross product is the negative transpose of the motion cross product:
+        # v ×* = -ad(V)'. Hence pA = v ×* (G V) = -ad(V)' * G * V.
+        pA[i] = -ad(Vi[i+1])' * Gi * Vi[i+1]
+    end
+
+    pA[n] = pA[n] + AdTi[n+1]' * SVector{6}(tip_wrench)
+
+    # Pass 2 (inward): articulated body inertias and bias forces
+    U = Vector{SVector{6,Float64}}(undef, n)
+    D = Vector{Float64}(undef, n)
+    u = Vector{Float64}(undef, n)
+
+    for i = n:-1:1
+        U[i] = IA[i] * Ai[i]
+        D[i] = Ai[i]' * U[i]
+        u[i] = joint_torques[i] - Ai[i]' * pA[i]
+        if i > 1
+            Ia = IA[i] - U[i] * U[i]' / D[i]
+            pa = pA[i] + Ia * ci[i] + U[i] * u[i] / D[i]
+            IA[i-1] = IA[i-1] + AdTi[i]' * Ia * AdTi[i]
+            pA[i-1] = pA[i-1] + AdTi[i]' * pa
+        end
+    end
+
+    # Pass 3 (outward): joint accelerations
+    ddq = zeros(n)
+    a0 = SA[0.0, 0.0, 0.0, -gravity[1], -gravity[2], -gravity[3]]
+    a = AdTi[1] * a0
+
+    for i = 1:n
+        a_plus_c = a + ci[i]
+        ddq[i] = (u[i] - U[i]' * a_plus_c) / D[i]
+        if i < n
+            a = AdTi[i+1] * (a_plus_c + Ai[i] * ddq[i])
+        end
+    end
+
+    return ddq
 end
 
 """

@@ -12,7 +12,8 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 | Mass matrix (CRBA) | 1.14 μs | **0.91 μs** | 0.65 μs | 0.14 μs |
 | Mass matrix (RNEA) | 6.79 μs | — | — | — |
 | Gravity / dynamics bias | 1.19 μs | — | 0.48 μs | 0.55 μs |
-| Forward dynamics (CRBA + RNEA) | 2.71 μs | — | 2.82 μs | — |
+| Forward dynamics (ABA) | 1.60 μs | — | 2.82 μs | — |
+| Forward dynamics (CRBA + RNEA) | 2.80 μs | — | — | — |
 | Forward dynamics (RNEA) | 5.44 μs | — | — | — |
 
 *Measured on Apple M2 (16 GB), Julia 1.12, Python 3.13. Julia timings are median values from BenchmarkTools.jl. RBD.jl: the ee\_link frame is grabbed before removing fixed joints; timings are for in-place variants where available.*
@@ -31,7 +32,7 @@ The textbook algorithm variants (`mass_matrix_rnea`, `forward_dynamics_rnea`) ar
 
 - **Inverse dynamics**: Uses the **Recursive Newton-Euler Algorithm (RNEA)**, the same O(n) algorithm as Pinocchio and RBD.jl. The in-place variant achieves zero allocations.
 - **Mass matrix**: Uses the **Composite Rigid Body Algorithm (CRBA)**, which computes the full matrix in a single backward pass over composite spatial inertias — the same algorithm as Pinocchio and RBD.jl. The in-place variant achieves zero allocations. The textbook variant `mass_matrix_rnea` calls `inverse_dynamics_rnea` n times with unit accelerations.
-- **Forward dynamics**: Computes `M \ (τ - RNEA(q, dq, 0, g, F))` using CRBA for the mass matrix and a single RNEA call for the bias forces. Pinocchio uses the **Articulated Body Algorithm (ABA)**, which solves for joint accelerations in O(n) without forming the mass matrix. The textbook variant `forward_dynamics_rnea` explicitly forms M⁻¹ and calls RNEA separately for each term.
+- **Forward dynamics**: Three implementations are available: `forward_dynamics_aba` uses the **Articulated Body Algorithm** — the same O(n) algorithm as Pinocchio — which solves for joint accelerations without forming the mass matrix. `forward_dynamics_crba` uses CRBA + a single RNEA call + backslash solve. `forward_dynamics_rnea` is the textbook variant that explicitly forms M⁻¹ and calls RNEA separately for each term.
 
 ### Allocations
 
@@ -41,6 +42,7 @@ The textbook algorithm variants (`mass_matrix_rnea`, `forward_dynamics_rnea`) ar
 | Jacobian | 2 | 384 B | **0 (0 B)** |
 | Inverse dynamics (RNEA) | 13 | 3.4 KiB | **0 (0 B)** |
 | Mass matrix (CRBA) | 9 | 4.6 KiB | **0 (0 B)** |
+| Forward dynamics (ABA) | 23 | 6.1 KiB | — |
 | Forward dynamics | 32 | 8.8 KiB | — |
 
 ### When does this matter?

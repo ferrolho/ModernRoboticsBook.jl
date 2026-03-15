@@ -1156,6 +1156,13 @@ Aqua.test_all(ModernRoboticsBook)
                         tau_ref;
                         tip_wrench = zeros(6),
                     ) ≈ ddq_ref atol = 1e-6
+                    @test forward_dynamics_aba(
+                        robot,
+                        q,
+                        v,
+                        tau_ref;
+                        tip_wrench = zeros(6),
+                    ) ≈ ddq_ref atol = 1e-6
 
                     # Jacobians: Pinocchio uses [v; ω] convention, we use [ω; v],
                     # so swap the top/bottom 3-row blocks before comparing.

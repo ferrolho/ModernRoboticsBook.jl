@@ -268,6 +268,26 @@ function forward_dynamics_crba(
     )
 end
 
+function forward_dynamics_aba(
+    robot::Robot,
+    joint_positions::AbstractVector,
+    joint_velocities::AbstractVector,
+    joint_torques::AbstractVector;
+    gravity::AbstractVector = robot.gravity,
+    tip_wrench::AbstractVector = zeros(6),
+)
+    forward_dynamics_aba(
+        joint_positions,
+        joint_velocities,
+        joint_torques,
+        gravity,
+        tip_wrench,
+        robot.link_frames,
+        robot.spatial_inertias,
+        robot.screw_axes_space,
+    )
+end
+
 # Convenience wrappers: trajectory dynamics
 
 function inverse_dynamics_trajectory(
