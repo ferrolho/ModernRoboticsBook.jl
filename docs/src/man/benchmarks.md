@@ -4,22 +4,16 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 
 ## Results
 
-| Function | ModernRoboticsBook.jl | In-place (`!`) | Pinocchio 3.9 (C++) | vs Pinocchio |
+| Function | MRB.jl | In-place (`!`) | Pinocchio 3.9 (C++) | vs Pinocchio |
 |----------|----------------------:|---------------:|--------------------:|-------------:|
 | Forward kinematics | 0.31 μs | **0.30 μs** | 0.86 μs | **~3x faster** |
 | Jacobian | 0.39 μs | **0.36 μs** | 1.0 μs | **~3x faster** |
 | Inverse dynamics (RNEA) | 1.15 μs | **1.0 μs** | 0.64 μs | ~1.6x slower |
 | Mass matrix (CRBA) | 1.14 μs | **0.91 μs** | 0.65 μs | ~1.4x slower |
+| Mass matrix (`mass_matrix_rnea`) | 6.79 μs | — | — | — |
 | Gravity forces | 1.19 μs | — | 0.48 μs | ~2.5x slower |
 | Forward dynamics (CRBA + RNEA) | 2.71 μs | — | 2.82 μs | **~1x (on par)** |
-
-For reference, here are the timings of the textbook algorithms that were replaced by the optimized versions above:
-
-| Function (textbook algorithm) | ModernRoboticsBook.jl | Pinocchio 3.9 (C++) | vs Pinocchio |
-|-------------------------------|----------------------:|--------------------:|-------------:|
-| Inverse dynamics (RNEA, unoptimized) | 3.81 μs | 0.64 μs | ~6x slower |
-| Mass matrix (n × RNEA) | 22.2 μs | 0.65 μs | ~34x slower |
-| Forward dynamics (M⁻¹ × ...) | 34.2 μs | 2.82 μs | ~12x slower |
+| Forward dynamics (`forward_dynamics_rnea`) | 5.44 μs | — | — | — |
 
 *Measured on Apple M2 (16 GB), Julia 1.12, Python 3.13. Julia timings are median values from BenchmarkTools.jl.*
 
@@ -29,11 +23,13 @@ Forward kinematics and Jacobian computation are **~3x faster than Pinocchio** th
 
 Dynamics functions are now **within 1.4–2.5x of Pinocchio**, with forward dynamics on par. Both libraries use the same algorithms (RNEA, CRBA); the remaining gap is due to Pinocchio's hand-tuned C++/Eigen spatial algebra vs our general Julia `SMatrix` operations.
 
+The textbook algorithm variants (`mass_matrix_rnea`, `forward_dynamics_rnea`) are provided for educational purposes — they directly mirror the textbook equations but are slower than the optimized defaults.
+
 ### Algorithms
 
 - **Inverse dynamics**: Uses the **Recursive Newton-Euler Algorithm (RNEA)**, the same O(n) algorithm as Pinocchio. The in-place variant achieves zero allocations.
-- **Mass matrix**: Uses the **Composite Rigid Body Algorithm (CRBA)**, which computes the full matrix in a single backward pass over composite spatial inertias — the same algorithm as Pinocchio. The in-place variant achieves zero allocations.
-- **Forward dynamics**: Computes `M \ (τ - RNEA(q, dq, 0, g, F))` using CRBA for the mass matrix and a single RNEA call for the bias forces. Pinocchio uses the **Articulated Body Algorithm (ABA)**, which solves for joint accelerations in O(n) without forming the mass matrix.
+- **Mass matrix**: Uses the **Composite Rigid Body Algorithm (CRBA)**, which computes the full matrix in a single backward pass over composite spatial inertias — the same algorithm as Pinocchio. The in-place variant achieves zero allocations. The textbook variant `mass_matrix_rnea` calls `inverse_dynamics` n times with unit accelerations.
+- **Forward dynamics**: Computes `M \ (τ - RNEA(q, dq, 0, g, F))` using CRBA for the mass matrix and a single RNEA call for the bias forces. Pinocchio uses the **Articulated Body Algorithm (ABA)**, which solves for joint accelerations in O(n) without forming the mass matrix. The textbook variant `forward_dynamics_rnea` explicitly forms M⁻¹ and calls RNEA separately for each term.
 
 ### Allocations
 

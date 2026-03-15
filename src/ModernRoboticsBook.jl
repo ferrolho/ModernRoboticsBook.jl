@@ -40,10 +40,12 @@ export near_zero,
     inverse_dynamics!,
     mass_matrix,
     mass_matrix!,
+    mass_matrix_rnea,
     velocity_quadratic_forces,
     gravity_forces,
     end_effector_forces,
     forward_dynamics,
+    forward_dynamics_rnea,
     euler_step,
     inverse_dynamics_trajectory,
     forward_dynamics_trajectory,
@@ -1403,7 +1405,8 @@ Computes the mass matrix ``M(\\theta)`` of an open chain robot using the
     are needed for unit acceleration of joint ``i``?" Each call produces one column
     of ``M(\\theta)``. This builds intuition but requires ``n`` full Newton-Euler
     passes. CRBA computes the same result with one forward pass and one backward
-    pass, exploiting the symmetry of ``M``.
+    pass, exploiting the symmetry of ``M``. The textbook algorithm is preserved
+    See [`mass_matrix_rnea`](@ref) for this textbook algorithm.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1497,6 +1500,44 @@ function mass_matrix!(
         end
     end
 
+    return M
+end
+
+"""
+    mass_matrix_rnea(joint_positions, link_frames, spatial_inertias, screw_axes)
+
+Computes the mass matrix using the textbook algorithm (Chapter 8.2): calls
+[`inverse_dynamics`](@ref) ``n`` times, each with a unit acceleration vector.
+This is slower than [`mass_matrix`](@ref) (which uses CRBA) but directly
+illustrates that column ``i`` of ``M(\\theta)`` is the torque needed for unit
+acceleration of joint ``i``.
+"""
+function mass_matrix_rnea(
+    joint_positions::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+)
+    n = length(joint_positions)
+    M = zeros(n, n)
+    ddq = zeros(n)
+    zero_dq = zeros(n)
+    zero_g = zeros(3)
+    zero_F = zeros(6)
+    for i = 1:n
+        ddq[i] = 1
+        M[:, i] = inverse_dynamics(
+            joint_positions,
+            zero_dq,
+            ddq,
+            zero_g,
+            zero_F,
+            link_frames,
+            spatial_inertias,
+            screw_axes,
+        )
+        ddq[i] = 0
+    end
     return M
 end
 
@@ -1765,7 +1806,7 @@ Computes forward dynamics in the space frame for an open chain robot.
     [`inverse_dynamics`](@ref) separately for Coriolis, gravity, and tip wrench terms.
     This implementation combines these into a single RNEA call and uses `M \\ b` (LU
     factorization) instead of explicit inversion, which is both faster and more
-    numerically stable.
+    numerically stable. See [`forward_dynamics_rnea`](@ref) for the textbook algorithm.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1813,6 +1854,48 @@ function forward_dynamics(
             screw_axes,
         )
     return mass \ tau_rhs
+end
+
+"""
+    forward_dynamics_rnea(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
+
+Computes forward dynamics using the textbook algorithm (Chapter 8.3): explicitly
+forms ``M^{-1}`` and calls [`inverse_dynamics`](@ref) separately for Coriolis,
+gravity, and tip wrench terms. This is slower than [`forward_dynamics`](@ref)
+(which uses CRBA + single RNEA + backslash) but directly mirrors the textbook
+equation ``\\ddot{\\theta} = M^{-1}[\\tau - c - g - J^T F_{\\text{tip}}]``.
+"""
+function forward_dynamics_rnea(
+    joint_positions::AbstractVector,
+    joint_velocities::AbstractVector,
+    joint_torques::AbstractVector,
+    gravity::AbstractVector,
+    tip_wrench::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+)
+    LA.inv(mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)) * (
+        joint_torques - velocity_quadratic_forces(
+            joint_positions,
+            joint_velocities,
+            link_frames,
+            spatial_inertias,
+            screw_axes,
+        ) - gravity_forces(
+            joint_positions,
+            gravity,
+            link_frames,
+            spatial_inertias,
+            screw_axes,
+        ) - end_effector_forces(
+            joint_positions,
+            tip_wrench,
+            link_frames,
+            spatial_inertias,
+            screw_axes,
+        )
+    )
 end
 
 """
