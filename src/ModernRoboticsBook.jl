@@ -42,8 +42,11 @@ export near_zero,
     mass_matrix_crba!,
     mass_matrix_rnea,
     velocity_quadratic_forces,
+    velocity_quadratic_forces!,
     gravity_forces,
+    gravity_forces!,
     end_effector_forces,
+    end_effector_forces!,
     forward_dynamics_aba,
     forward_dynamics_aba!,
     forward_dynamics_crba,
@@ -1580,15 +1583,59 @@ function velocity_quadratic_forces(
     spatial_inertias::AbstractVector,
     screw_axes::AbstractMatrix,
 )
-    inverse_dynamics_rnea(
+    n = length(joint_positions)
+    tau = zeros(n)
+    Ai = Vector{SVector{6,Float64}}(undef, n)
+    AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
+    Vi = Vector{SVector{6,Float64}}(undef, n + 1)
+    Vdi = Vector{SVector{6,Float64}}(undef, n + 1)
+    velocity_quadratic_forces!(
+        tau,
         joint_positions,
         joint_velocities,
-        zeros(length(joint_positions)),
-        zeros(3),
-        zeros(6),
         link_frames,
         spatial_inertias,
         screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
+    )
+end
+
+"""
+    velocity_quadratic_forces!(tau, joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Vi, Vdi)
+
+In-place version of [`velocity_quadratic_forces`](@ref). Writes the result into `tau`.
+"""
+function velocity_quadratic_forces!(
+    tau::AbstractVector,
+    joint_positions::AbstractVector,
+    joint_velocities::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+    Ai::AbstractVector{SVector{6,Float64}},
+    AdTi::AbstractVector{SMatrix{6,6,Float64,36}},
+    Vi::AbstractVector{SVector{6,Float64}},
+    Vdi::AbstractVector{SVector{6,Float64}},
+)
+    # Reuse tau as temporary zero vector, then overwrite with result
+    tau .= 0
+    inverse_dynamics_rnea!(
+        tau,
+        joint_positions,
+        joint_velocities,
+        tau,
+        SA[0.0, 0.0, 0.0],
+        SA[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
     )
 end
 
@@ -1626,15 +1673,57 @@ function gravity_forces(
     screw_axes::AbstractMatrix,
 )
     n = length(joint_positions)
-    inverse_dynamics_rnea(
+    tau = zeros(n)
+    Ai = Vector{SVector{6,Float64}}(undef, n)
+    AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
+    Vi = Vector{SVector{6,Float64}}(undef, n + 1)
+    Vdi = Vector{SVector{6,Float64}}(undef, n + 1)
+    gravity_forces!(
+        tau,
         joint_positions,
-        zeros(n),
-        zeros(n),
         gravity,
-        zeros(6),
         link_frames,
         spatial_inertias,
         screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
+    )
+end
+
+"""
+    gravity_forces!(tau, joint_positions, gravity, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Vi, Vdi)
+
+In-place version of [`gravity_forces`](@ref). Writes the result into `tau`.
+"""
+function gravity_forces!(
+    tau::AbstractVector,
+    joint_positions::AbstractVector,
+    gravity::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+    Ai::AbstractVector{SVector{6,Float64}},
+    AdTi::AbstractVector{SMatrix{6,6,Float64,36}},
+    Vi::AbstractVector{SVector{6,Float64}},
+    Vdi::AbstractVector{SVector{6,Float64}},
+)
+    tau .= 0
+    inverse_dynamics_rnea!(
+        tau,
+        joint_positions,
+        tau,
+        tau,
+        gravity,
+        SA[0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
     )
 end
 
@@ -1778,15 +1867,57 @@ function end_effector_forces(
     screw_axes::AbstractMatrix,
 )
     n = length(joint_positions)
-    inverse_dynamics_rnea(
+    tau = zeros(n)
+    Ai = Vector{SVector{6,Float64}}(undef, n)
+    AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
+    Vi = Vector{SVector{6,Float64}}(undef, n + 1)
+    Vdi = Vector{SVector{6,Float64}}(undef, n + 1)
+    end_effector_forces!(
+        tau,
         joint_positions,
-        zeros(n),
-        zeros(n),
-        zeros(3),
         tip_wrench,
         link_frames,
         spatial_inertias,
         screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
+    )
+end
+
+"""
+    end_effector_forces!(tau, joint_positions, tip_wrench, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Vi, Vdi)
+
+In-place version of [`end_effector_forces`](@ref). Writes the result into `tau`.
+"""
+function end_effector_forces!(
+    tau::AbstractVector,
+    joint_positions::AbstractVector,
+    tip_wrench::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+    Ai::AbstractVector{SVector{6,Float64}},
+    AdTi::AbstractVector{SMatrix{6,6,Float64,36}},
+    Vi::AbstractVector{SVector{6,Float64}},
+    Vdi::AbstractVector{SVector{6,Float64}},
+)
+    tau .= 0
+    inverse_dynamics_rnea!(
+        tau,
+        joint_positions,
+        tau,
+        tau,
+        SA[0.0, 0.0, 0.0],
+        tip_wrench,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
     )
 end
 
