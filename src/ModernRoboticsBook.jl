@@ -2178,4 +2178,6 @@ function simulate_control(
     joint_torque_traj', joint_position_traj'
 end
 
+include("robot.jl")
+
 end # module

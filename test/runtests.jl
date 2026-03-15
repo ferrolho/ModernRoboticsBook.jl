@@ -899,4 +899,137 @@ Aqua.test_all(ModernRoboticsBook)
         @test joint_torque_traj_actual ≈ joint_torque_traj_expected
         @test joint_position_traj_actual ≈ joint_position_traj_expected
     end
+
+    @testset "Robot struct and load_robot" begin
+        models_dir = joinpath(@__DIR__, "..", "robots", "models")
+
+        @testset "load 3-DOF textbook model" begin
+            robot = load_robot(joinpath(models_dir, "3dof_textbook.json"))
+            @test robot.name == "3dof_textbook"
+            @test robot.n_joints == 3
+            @test size(robot.home_config) == (4, 4)
+            @test size(robot.screw_axes_space) == (6, 3)
+            @test size(robot.screw_axes_body) == (6, 3)
+            @test length(robot.link_frames) == 4  # n+1
+            @test length(robot.spatial_inertias) == 3
+            @test robot.joint_types == [:revolute, :revolute, :revolute]
+        end
+
+        @testset "3-DOF Robot convenience wrappers match raw functions" begin
+            robot = load_robot(joinpath(models_dir, "3dof_textbook.json"))
+
+            q = [0.1, 0.1, 0.1]
+            dq = [0.1, 0.2, 0.3]
+            ddq = [2.0, 1.5, 1.0]
+            g = [0.0, 0.0, -9.8]
+            Ftip = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+            # Inverse dynamics via Robot wrapper must match raw function
+            tau_robot = inverse_dynamics(robot, q, dq, ddq, g, Ftip)
+            tau_raw = inverse_dynamics(
+                q,
+                dq,
+                ddq,
+                g,
+                Ftip,
+                robot.link_frames,
+                robot.spatial_inertias,
+                robot.screw_axes_space,
+            )
+            @test tau_robot ≈ tau_raw
+
+            # Mass matrix
+            @test mass_matrix(robot, q) ≈ mass_matrix(
+                q,
+                robot.link_frames,
+                robot.spatial_inertias,
+                robot.screw_axes_space,
+            )
+
+            # Velocity quadratic forces
+            @test velocity_quadratic_forces(robot, q, dq) ≈ velocity_quadratic_forces(
+                q,
+                dq,
+                robot.link_frames,
+                robot.spatial_inertias,
+                robot.screw_axes_space,
+            )
+
+            # Gravity forces
+            @test gravity_forces(robot, q, g) ≈ gravity_forces(
+                q,
+                g,
+                robot.link_frames,
+                robot.spatial_inertias,
+                robot.screw_axes_space,
+            )
+
+            # End-effector forces
+            @test end_effector_forces(robot, q, Ftip) ≈ end_effector_forces(
+                q,
+                Ftip,
+                robot.link_frames,
+                robot.spatial_inertias,
+                robot.screw_axes_space,
+            )
+
+            # Forward dynamics
+            joint_torques = [0.5, 0.6, 0.7]
+            @test forward_dynamics(robot, q, dq, joint_torques, g, Ftip) ≈ forward_dynamics(
+                q,
+                dq,
+                joint_torques,
+                g,
+                Ftip,
+                robot.link_frames,
+                robot.spatial_inertias,
+                robot.screw_axes_space,
+            )
+        end
+
+        @testset "3-DOF dynamics match expected values" begin
+            robot = load_robot(joinpath(models_dir, "3dof_textbook.json"))
+
+            q = [0.1, 0.1, 0.1]
+            dq = [0.1, 0.2, 0.3]
+            ddq = [2.0, 1.5, 1.0]
+            g = [0.0, 0.0, -9.8]
+            Ftip = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+            @test inverse_dynamics(robot, q, dq, ddq, g, Ftip) ≈
+                  [74.69616155287451, -33.06766015851458, -3.230573137901424]
+
+            @test isapprox(
+                mass_matrix(robot, q),
+                [
+                    22.5433 -0.307147 -0.00718426
+                    -0.307147 1.96851 0.432157
+                    -0.00718426 0.432157 0.191631
+                ];
+                rtol = 1e-5,
+            )
+        end
+
+        @testset "load UR5 model" begin
+            robot = load_robot(joinpath(models_dir, "ur5.json"))
+            @test robot.name == "ur5"
+            @test robot.n_joints == 6
+            @test size(robot.screw_axes_space) == (6, 6)
+            @test length(robot.link_frames) == 7  # n+1
+
+            # FK at zero config should equal home config
+            q0 = zeros(6)
+            @test forward_kinematics_space(robot, q0) ≈ robot.home_config
+        end
+
+        @testset "load_robot by symbol" begin
+            robot = load_robot(:ur5)
+            @test robot.name == "ur5"
+            @test robot.n_joints == 6
+        end
+
+        @testset "load_robot errors on missing model" begin
+            @test_throws ErrorException load_robot(:nonexistent_robot)
+        end
+    end
 end

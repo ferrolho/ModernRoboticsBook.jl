@@ -34,6 +34,7 @@ makedocs(
         "Home" => "index.md",
         "Examples" => "man/examples.md",
         "API Reference" => [
+            "lib/robot-model.md",
             "lib/rigid-body-motions.md",
             "lib/forward-kinematics.md",
             "lib/velocity-kinematics.md",
