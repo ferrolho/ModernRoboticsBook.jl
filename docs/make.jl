@@ -33,6 +33,7 @@ makedocs(
     pages = [
         "Home" => "index.md",
         "Examples" => "man/examples.md",
+        "Benchmarks" => "man/benchmarks.md",
         "API Reference" => [
             "lib/robot-model.md",
             "lib/rigid-body-motions.md",
