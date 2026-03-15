@@ -11,9 +11,9 @@ in the conventions of the Modern Robotics textbook.
 # Fields
 - `name::String`: robot name.
 - `n_joints::Int`: number of actuated joints.
-- `home_ee_pose::Matrix{Float64}`: end-effector home pose ``M \\in SE(3)`` (4×4).
-- `screw_axes_space::Matrix{Float64}`: joint screw axes in the space frame (6×n).
-- `screw_axes_body::Matrix{Float64}`: joint screw axes in the body frame (6×n).
+- `home_ee_pose::Matrix{Float64}`: end-effector pose ``M \\in SE(3)`` when all joint positions are zero (4×4).
+- `screw_axes_space::Matrix{Float64}`: joint screw axes in the space (base) frame at the home configuration (6×n).
+- `screw_axes_body::Matrix{Float64}`: joint screw axes in the end-effector (body) frame at the home configuration (6×n).
 - `link_frames::Vector{Matrix{Float64}}`: transforms ``M_{i-1,i}`` between consecutive link frames (n+1 matrices).
 - `spatial_inertias::Vector{Matrix{Float64}}`: spatial inertia matrices ``G_i`` for each link (n 6×6 matrices).
 - `joint_names::Vector{String}`: joint names.

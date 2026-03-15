@@ -715,8 +715,8 @@ Computes forward kinematics in the body frame for an open chain robot.
     be more convenient when the task is defined relative to the tool.
 
 # Arguments
-- `home_ee_pose`: the ``4 \\times 4`` home pose ``M`` of the end-effector (SE(3)).
-- `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame, as a ``6 \\times n`` matrix.
+- `home_ee_pose`: the ``4 \\times 4`` end-effector pose ``M \\in`` SE(3) when all joint positions are zero (home configuration).
+- `body_screw_axes`: the joint screw axes ``B_i`` expressed in the end-effector (body) frame at the home configuration, as a ``6 \\times n`` matrix.
 - `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
 
 # Returns
@@ -765,8 +765,8 @@ Computes forward kinematics in the space frame for an open chain robot.
     choice depends on which frame your screw axes are defined in.
 
 # Arguments
-- `home_ee_pose`: the ``4 \\times 4`` home pose ``M`` of the end-effector (SE(3)).
-- `screw_axes`: the joint screw axes ``S_i`` in the space frame, as a ``6 \\times n`` matrix.
+- `home_ee_pose`: the ``4 \\times 4`` end-effector pose ``M \\in`` SE(3) when all joint positions are zero (home configuration).
+- `screw_axes`: the joint screw axes ``S_i`` expressed in the space (base) frame at the home configuration, as a ``6 \\times n`` matrix.
 - `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
 
 # Returns
@@ -919,9 +919,9 @@ Computes inverse kinematics in the body frame for an open chain robot using Newt
     computing the error and updating the joint angles via the Jacobian until convergence.
 
 # Arguments
-- `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame, as a ``6 \\times n`` matrix.
-- `home_ee_pose`: the ``4 \\times 4`` home pose ``M`` of the end-effector (SE(3)).
-- `target_config`: the desired ``4 \\times 4`` end-effector configuration ``T`` (SE(3)).
+- `body_screw_axes`: the joint screw axes ``B_i`` expressed in the end-effector (body) frame at the home configuration, as a ``6 \\times n`` matrix.
+- `home_ee_pose`: the ``4 \\times 4`` end-effector pose ``M \\in`` SE(3) when all joint positions are zero (home configuration).
+- `target_config`: the desired ``4 \\times 4`` end-effector pose ``T \\in`` SE(3).
 - `initial_guess`: an ``n``-vector initial guess of joint positions ``\\theta_0``.
 - `angular_tolerance`: small positive tolerance on the end-effector orientation error.
 - `linear_tolerance`: small positive tolerance on the end-effector position error.
@@ -999,9 +999,9 @@ Computes inverse kinematics in the space frame for an open chain robot using New
     different solutions or fail to converge depending on the starting point.
 
 # Arguments
-- `screw_axes`: the joint screw axes ``S_i`` in the space frame, as a ``6 \\times n`` matrix.
-- `home_ee_pose`: the ``4 \\times 4`` home pose ``M`` of the end-effector (SE(3)).
-- `target_config`: the desired ``4 \\times 4`` end-effector configuration ``T`` (SE(3)).
+- `screw_axes`: the joint screw axes ``S_i`` expressed in the space (base) frame at the home configuration, as a ``6 \\times n`` matrix.
+- `home_ee_pose`: the ``4 \\times 4`` end-effector pose ``M \\in`` SE(3) when all joint positions are zero (home configuration).
+- `target_config`: the desired ``4 \\times 4`` end-effector pose ``T \\in`` SE(3).
 - `initial_guess`: an ``n``-vector initial guess of joint positions ``\\theta_0``.
 - `angular_tolerance`: small positive tolerance on the end-effector orientation error.
 - `linear_tolerance`: small positive tolerance on the end-effector position error.
