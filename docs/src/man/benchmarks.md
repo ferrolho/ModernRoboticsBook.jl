@@ -6,8 +6,8 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 
 | Function | ModernRoboticsBook.jl | Pinocchio 3.9 (C++) | Ratio |
 |----------|----------------------:|--------------------:|------:|
-| Forward kinematics | 0.64 μs | 0.86 μs | **0.7x (faster)** |
-| Jacobian | 0.53 μs | 1.0 μs | **0.5x (faster)** |
+| Forward kinematics | 0.40 μs | 0.86 μs | **0.5x (faster)** |
+| Jacobian | 0.45 μs | 1.0 μs | **0.5x (faster)** |
 | Inverse dynamics | 3.64 μs | 0.64 μs | ~6x |
 | Mass matrix | 22.0 μs | 0.65 μs | ~34x |
 | Gravity forces | 3.68 μs | 0.48 μs | ~8x |
@@ -32,8 +32,8 @@ With StaticArrays, allocations are dramatically reduced compared to the initial 
 
 | Function | Allocations | Memory |
 |----------|------------:|-------:|
-| Forward kinematics | 38 | 2.7 KiB |
-| Jacobian | 27 | 1.9 KiB |
+| Forward kinematics | 2 | 208 B |
+| Jacobian | 2 | 384 B |
 | Inverse dynamics | 186 | 13.4 KiB |
 | Mass matrix | 1,114 | 80.7 KiB |
 | Forward dynamics | 1,702 | 125.6 KiB |

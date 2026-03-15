@@ -797,7 +797,7 @@ julia> body_screw_axes = [  0  0 -1  2  0  0   ;
 julia> joint_positions = [ π/2, 3, π ];
 
 julia> forward_kinematics_body(home_ee_pose, body_screw_axes, joint_positions)
-4×4 Matrix{Float64}:
+4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
   0.0          0.0          -1.0   1.68584
@@ -809,10 +809,12 @@ function forward_kinematics_body(
     body_screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
+    T = SMatrix{4,4}(home_ee_pose)
     for i in eachindex(joint_positions)
-        home_ee_pose *= matrix_exp6(vec_to_se3(body_screw_axes[:, i] * joint_positions[i]))
+        Bi = SVector{6}(@view body_screw_axes[:, i])
+        T = T * matrix_exp6(vec_to_se3(Bi * joint_positions[i]))
     end
-    home_ee_pose
+    T
 end
 
 """
@@ -857,7 +859,7 @@ julia> screw_axes = [  0  0  1  4  0  0   ;
 julia> joint_positions = [ π/2, 3, π ];
 
 julia> forward_kinematics_space(home_ee_pose, screw_axes, joint_positions)
-4×4 Matrix{Float64}:
+4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
   0.0          0.0          -1.0   1.68584
@@ -869,11 +871,12 @@ function forward_kinematics_space(
     screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
+    T = SMatrix{4,4}(home_ee_pose)
     for i in reverse(eachindex(joint_positions))
-        home_ee_pose =
-            matrix_exp6(vec_to_se3(screw_axes[:, i] * joint_positions[i])) * home_ee_pose
+        Si = SVector{6}(@view screw_axes[:, i])
+        T = matrix_exp6(vec_to_se3(Si * joint_positions[i])) * T
     end
-    home_ee_pose
+    T
 end
 
 # """
@@ -918,11 +921,13 @@ julia> jacobian_body(body_screw_axes, joint_positions)
 ```
 """
 function jacobian_body(body_screw_axes::AbstractMatrix, joint_positions::AbstractVector)
-    T = LA.I
+    T = SMatrix{4,4,Float64}(LA.I)
     Jb = copy(body_screw_axes)
     for i in Iterators.reverse(firstindex(joint_positions):(lastindex(joint_positions)-1))
-        T *= matrix_exp6(vec_to_se3(body_screw_axes[:, i+1] * -joint_positions[i+1]))
-        Jb[:, i] = adjoint_representation(T) * body_screw_axes[:, i]
+        Bi1 = SVector{6}(@view body_screw_axes[:, i+1])
+        T = T * matrix_exp6(vec_to_se3(Bi1 * -joint_positions[i+1]))
+        Bi = SVector{6}(@view body_screw_axes[:, i])
+        Jb[:, i] = adjoint_representation(T) * Bi
     end
     Jb
 end
@@ -965,11 +970,13 @@ julia> jacobian_space(screw_axes, joint_positions)
 ```
 """
 function jacobian_space(screw_axes::AbstractMatrix, joint_positions::AbstractVector)
-    T = LA.I
+    T = SMatrix{4,4,Float64}(LA.I)
     Js = copy(screw_axes)
     for i = (firstindex(joint_positions)+1):lastindex(joint_positions)
-        T *= matrix_exp6(vec_to_se3(screw_axes[:, i-1] * joint_positions[i-1]))
-        Js[:, i] = adjoint_representation(T) * screw_axes[:, i]
+        Si1 = SVector{6}(@view screw_axes[:, i-1])
+        T = T * matrix_exp6(vec_to_se3(Si1 * joint_positions[i-1]))
+        Si = SVector{6}(@view screw_axes[:, i])
+        Js[:, i] = adjoint_representation(T) * Si
     end
     Js
 end
