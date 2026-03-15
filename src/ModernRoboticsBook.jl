@@ -252,18 +252,19 @@ The corresponding ``4 \\times 4`` homogeneous transformation matrix ``T``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> rotation_position_to_transform([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
-4×4 Matrix{Int64}:
- 1  0   0  1
- 0  0  -1  2
- 0  1   0  5
- 0  0   0  1
+4×4 Matrix{Float64}:
+ 1.0  0.0   0.0  1.0
+ 0.0  0.0  -1.0  2.0
+ 0.0  1.0   0.0  5.0
+ 0.0  0.0   0.0  1.0
 ```
 """
 function rotation_position_to_transform(R::AbstractMatrix, p::AbstractVector)
-    [R[1,1] R[1,2] R[1,3] p[1]
-     R[2,1] R[2,2] R[2,3] p[2]
-     R[3,1] R[3,2] R[3,3] p[3]
-     0      0      0      1]
+    result = zeros(4, 4)
+    result[1:3, 1:3] .= R
+    result[1:3, 4] .= p
+    result[4, 4] = 1
+    return result
 end
 
 """
@@ -299,22 +300,22 @@ The inverse ``T^{-1}``, computed using ``R^T``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> transform_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
-4×4 Matrix{Int64}:
- 1   0  0   0
- 0   0  1  -3
- 0  -1  0   0
- 0   0  0   1
+4×4 Matrix{Float64}:
+ 1.0   0.0  0.0   0.0
+ 0.0   0.0  1.0  -3.0
+ 0.0  -1.0  0.0   0.0
+ 0.0   0.0  0.0   1.0
 ```
 """
 function transform_inv(T::AbstractMatrix)
-    R = T[1:3, 1:3]
-    p = T[1:3, 4]
+    R, p = transform_to_rotation_position(T)
     Rt = R'
     Rtp = Rt * p
-    [Rt[1,1] Rt[1,2] Rt[1,3] -Rtp[1]
-     Rt[2,1] Rt[2,2] Rt[2,3] -Rtp[2]
-     Rt[3,1] Rt[3,2] Rt[3,3] -Rtp[3]
-     0       0       0       1]
+    result = zeros(4, 4)
+    result[1:3, 1:3] .= Rt
+    result[1:3, 4] .= -Rtp
+    result[4, 4] = 1
+    return result
 end
 
 """
@@ -346,11 +347,12 @@ julia> vec_to_se3([1, 2, 3, 4, 5, 6])
 ```
 """
 function vec_to_se3(V::AbstractVector)
-    ω1, ω2, ω3, v1, v2, v3 = V
-    [0 -ω3 ω2 v1
-        ω3 0 -ω1 v2
-        -ω2 ω1 0 v3
-        0 0 0 0]
+    result = zeros(4, 4)
+    result[1:3, 1:3] .= vec_to_so3(V[1:3])
+    result[1, 4] = V[4]
+    result[2, 4] = V[5]
+    result[3, 4] = V[6]
+    return result
 end
 
 """
@@ -409,15 +411,13 @@ julia> adjoint_representation([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function adjoint_representation(T::AbstractMatrix)
-    R = T[1:3, 1:3]
-    p = T[1:3, 4]
+    R, p = transform_to_rotation_position(T)
     pR = vec_to_so3(p) * R
-    [R[1,1] R[1,2] R[1,3] 0      0      0
-     R[2,1] R[2,2] R[2,3] 0      0      0
-     R[3,1] R[3,2] R[3,3] 0      0      0
-     pR[1,1] pR[1,2] pR[1,3] R[1,1] R[1,2] R[1,3]
-     pR[2,1] pR[2,2] pR[2,3] R[2,1] R[2,2] R[2,3]
-     pR[3,1] pR[3,2] pR[3,3] R[3,1] R[3,2] R[3,3]]
+    result = zeros(6, 6)
+    result[1:3, 1:3] .= R
+    result[4:6, 1:3] .= pR
+    result[4:6, 4:6] .= R
+    return result
 end
 
 """
@@ -1139,13 +1139,13 @@ julia> ad([1, 2, 3, 4, 5, 6])
 ```
 """
 function ad(V::AbstractVector)
-    ω1, ω2, ω3, v1, v2, v3 = V
-    [0 -ω3 ω2 0 0 0
-        ω3 0 -ω1 0 0 0
-        -ω2 ω1 0 0 0 0
-        0 -v3 v2 0 -ω3 ω2
-        v3 0 -v1 ω3 0 -ω1
-        -v2 v1 0 -ω2 ω1 0]
+    ωmat = vec_to_so3(V[1:3])
+    vmat = vec_to_so3(V[4:6])
+    result = zeros(6, 6)
+    result[1:3, 1:3] .= ωmat
+    result[4:6, 1:3] .= vmat
+    result[4:6, 4:6] .= ωmat
+    return result
 end
 
 """
@@ -2213,7 +2213,7 @@ function simulate_control(
     current_positions = copy(joint_positions)
     current_velocities = copy(joint_velocities)
 
-    error_integral = reshape(zeros(m, 1), (m,))
+    error_integral = zeros(m)
     joint_torque_traj = zeros(size(desired_joint_position_traj))
     joint_position_traj = zeros(size(desired_joint_position_traj))
 
