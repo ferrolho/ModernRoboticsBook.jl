@@ -1023,6 +1023,34 @@ Aqua.test_all(ModernRoboticsBook)
             )
         end
 
+        @testset "textbook algorithms match optimized versions" begin
+            robot = load_robot(joinpath(models_dir, "3dof_textbook.json"))
+
+            q = [0.1, 0.1, 0.1]
+            dq = [0.1, 0.2, 0.3]
+            tau = [0.5, 0.6, 0.7]
+            g = [0.0, 0.0, -9.8]
+            Ftip = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+            @test mass_matrix_rnea(
+                q,
+                robot.link_frames,
+                robot.spatial_inertias,
+                robot.screw_axes_space,
+            ) ≈ mass_matrix_crba(robot, q)
+
+            @test forward_dynamics_rnea(
+                q,
+                dq,
+                tau,
+                g,
+                Ftip,
+                robot.link_frames,
+                robot.spatial_inertias,
+                robot.screw_axes_space,
+            ) ≈ forward_dynamics_crba(robot, q, dq, tau; gravity = g, tip_wrench = Ftip)
+        end
+
         @testset "load UR5 model" begin
             robot = load_robot(joinpath(models_dir, "ur5.json"))
             @test robot.name == "ur5"
