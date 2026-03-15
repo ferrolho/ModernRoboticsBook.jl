@@ -45,6 +45,7 @@ export near_zero,
     gravity_forces,
     end_effector_forces,
     forward_dynamics_aba,
+    forward_dynamics_aba!,
     forward_dynamics_crba,
     forward_dynamics_rnea,
     euler_step,
@@ -1379,6 +1380,8 @@ function inverse_dynamics_rnea!(
     Fi = SVector{6}(tip_wrench)
     for i = n:-1:1
         Gi = SMatrix{6,6}(spatial_inertias[i])
+        # The -ad(V)'*G*V term is Featherstone's v ×* (Iv): the force cross product
+        # is the negative transpose of the motion cross product (twist/wrench duality).
         Fi = AdTi[i+1]' * Fi + Gi * Vdi[i+1] - ad(Vi[i+1])' * Gi * Vi[i+1]
         joint_torques[i] = Fi' * Ai[i]
     end
@@ -1911,16 +1914,69 @@ function forward_dynamics_aba(
     screw_axes::AbstractMatrix,
 )
     n = length(joint_positions)
-
-    # Pass 1 (outward): velocities, bias accelerations, bias forces
-    Mi = SMatrix{4,4,Float64}(LA.I)
+    ddq = zeros(n)
     Ai = Vector{SVector{6,Float64}}(undef, n)
     AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
     Vi = Vector{SVector{6,Float64}}(undef, n + 1)
     ci = Vector{SVector{6,Float64}}(undef, n)
     IA = Vector{SMatrix{6,6,Float64,36}}(undef, n)
     pA = Vector{SVector{6,Float64}}(undef, n)
+    U = Vector{SVector{6,Float64}}(undef, n)
+    D = Vector{Float64}(undef, n)
+    u = Vector{Float64}(undef, n)
+    forward_dynamics_aba!(
+        ddq,
+        joint_positions,
+        joint_velocities,
+        joint_torques,
+        gravity,
+        tip_wrench,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        ci,
+        IA,
+        pA,
+        U,
+        D,
+        u,
+    )
+end
 
+"""
+    forward_dynamics_aba!(ddq, joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Vi, ci, IA, pA, U, D, u)
+
+In-place version of [`forward_dynamics_aba`](@ref). Writes the result into `ddq`.
+The workspace vectors must be pre-allocated: `Ai` (n), `AdTi` (n+1), `Vi` (n+1),
+`ci` (n), `IA` (n), `pA` (n), `U` (n), `D` (n), `u` (n).
+"""
+function forward_dynamics_aba!(
+    ddq::AbstractVector,
+    joint_positions::AbstractVector,
+    joint_velocities::AbstractVector,
+    joint_torques::AbstractVector,
+    gravity::AbstractVector,
+    tip_wrench::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+    Ai::AbstractVector{SVector{6,Float64}},
+    AdTi::AbstractVector{SMatrix{6,6,Float64,36}},
+    Vi::AbstractVector{SVector{6,Float64}},
+    ci::AbstractVector{SVector{6,Float64}},
+    IA::AbstractVector{SMatrix{6,6,Float64,36}},
+    pA::AbstractVector{SVector{6,Float64}},
+    U::AbstractVector{SVector{6,Float64}},
+    D::AbstractVector{Float64},
+    u::AbstractVector{Float64},
+)
+    n = length(joint_positions)
+
+    # Pass 1 (outward): velocities, bias accelerations, bias forces
+    Mi = SMatrix{4,4,Float64}(LA.I)
     Vi[1] = @SVector zeros(6)
     AdTi[n+1] = adjoint_representation(transform_inv(link_frames[n+1]))
 
@@ -1946,10 +2002,6 @@ function forward_dynamics_aba(
     pA[n] = pA[n] + AdTi[n+1]' * SVector{6}(tip_wrench)
 
     # Pass 2 (inward): articulated body inertias and bias forces
-    U = Vector{SVector{6,Float64}}(undef, n)
-    D = Vector{Float64}(undef, n)
-    u = Vector{Float64}(undef, n)
-
     for i = n:-1:1
         U[i] = IA[i] * Ai[i]
         D[i] = Ai[i]' * U[i]
@@ -1963,7 +2015,6 @@ function forward_dynamics_aba(
     end
 
     # Pass 3 (outward): joint accelerations
-    ddq = zeros(n)
     a0 = SA[0.0, 0.0, 0.0, -gravity[1], -gravity[2], -gravity[3]]
     a = AdTi[1] * a0
 
