@@ -1075,30 +1075,6 @@ Aqua.test_all(ModernRoboticsBook)
             sv3 = SVector{3}(v3)
             sv6 = SVector{6}(v6)
 
-            # Warm up all functions (trigger compilation)
-            vec_to_so3(v3);
-            vec_to_so3(sv3)
-            so3_to_vec(so3);
-            so3_to_vec(sso3)
-            matrix_exp3(so3);
-            matrix_exp3(sso3)
-            matrix_log3(R);
-            matrix_log3(sR)
-            vec_to_se3(v6);
-            vec_to_se3(sv6)
-            se3_to_vec(se3);
-            se3_to_vec(sse3)
-            transform_inv(T);
-            transform_inv(sT)
-            adjoint_representation(T);
-            adjoint_representation(sT)
-            matrix_exp6(se3);
-            matrix_exp6(sse3)
-            matrix_log6(T);
-            matrix_log6(sT)
-            ad(v6);
-            ad(sv6)
-
             # Test zero allocations with SMatrix/SVector inputs
             @test @allocated(vec_to_so3(sv3)) == 0
             @test @allocated(so3_to_vec(sso3)) == 0
