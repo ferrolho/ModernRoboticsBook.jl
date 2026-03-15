@@ -52,11 +52,17 @@ The textbook algorithm variants (`mass_matrix_rnea`, `forward_dynamics_rnea`) ar
 | Forward dynamics (CRBA) | 32 (8.8 KiB) | 8 (720 B) |
 | Forward dynamics (RNEA) | 78 (19.6 KiB) | 10 (3.7 KiB) |
 
-### When does this matter?
+### When do in-place variants matter?
 
-For **learning and prototyping**, ModernRoboticsBook.jl is fast enough — a full forward dynamics call takes ~2.7 μs, allowing ~370,000 evaluations per second. This is sufficient for trajectory optimization, offline simulation, and interactive exploration.
+The allocating and in-place versions have similar single-call timings because the workspace allocations are small (~3–6 KiB) and modern allocators handle them efficiently. The real benefit of in-place (`!`) variants appears in **tight loops**:
 
-For **real-time control loops** (1 kHz+) or **large-scale optimization** (millions of evaluations), the in-place variants bring performance close to production libraries like Pinocchio and RigidBodyDynamics.jl.
+- **GC pressure**: millions of small allocations accumulate garbage, triggering garbage collection pauses that cause unpredictable latency spikes.
+- **Predictable timing**: zero allocations means no GC pauses — critical for real-time control where a single missed deadline can cause instability.
+- **Scaling with DOF**: workspace arrays grow with robot complexity, so the allocation overhead grows too.
+
+For **learning and prototyping**, the allocating API is fast enough — a full forward dynamics call takes ~1.6 μs (ABA), allowing ~625,000 evaluations per second.
+
+For **real-time control loops** (1 kHz+), **trajectory optimization**, or **large-scale simulation** (millions of evaluations), use the in-place variants with pre-allocated workspace to avoid GC pauses.
 
 ## Reproducing
 
