@@ -310,17 +310,7 @@ julia> transform_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function transform_inv(T::AbstractMatrix)
-    R = SMatrix{3,3}(
-        T[1, 1],
-        T[2, 1],
-        T[3, 1],
-        T[1, 2],
-        T[2, 2],
-        T[3, 2],
-        T[1, 3],
-        T[2, 3],
-        T[3, 3],
-    )
+    R = SMatrix{3,3}(@view T[1:3, 1:3])
     p = SA[T[1, 4], T[2, 4], T[3, 4]]
     Rt = R'
     Rtp = Rt * p
@@ -426,17 +416,7 @@ julia> adjoint_representation([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function adjoint_representation(T::AbstractMatrix)
-    R = SMatrix{3,3}(
-        T[1, 1],
-        T[2, 1],
-        T[3, 1],
-        T[1, 2],
-        T[2, 2],
-        T[3, 2],
-        T[1, 3],
-        T[2, 3],
-        T[3, 3],
-    )
+    R = SMatrix{3,3}(@view T[1:3, 1:3])
     p = SA[T[1, 4], T[2, 4], T[3, 4]]
     pR = vec_to_so3(p) * R
     z = zero(eltype(T))
@@ -600,17 +580,7 @@ julia> matrix_log6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function matrix_log6(T::AbstractMatrix)
-    R = SMatrix{3,3}(
-        T[1, 1],
-        T[2, 1],
-        T[3, 1],
-        T[1, 2],
-        T[2, 2],
-        T[3, 2],
-        T[1, 3],
-        T[2, 3],
-        T[3, 3],
-    )
+    R = SMatrix{3,3}(@view T[1:3, 1:3])
     ωmat = matrix_log3(R)
     I3 = SMatrix{3,3,Float64}(LA.I)
     v = SA[T[1, 4], T[2, 4], T[3, 4]]
