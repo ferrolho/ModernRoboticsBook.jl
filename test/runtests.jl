@@ -1142,12 +1142,27 @@ Aqua.test_all(ModernRoboticsBook)
                     g_ref = Float64.(cfg["gravity_forces"])
                     tau_ref = Float64.(cfg["inverse_dynamics"])
                     c_ref = Float64.(cfg["coriolis_forces"])
+                    ddq_ref = Float64.(cfg["forward_dynamics"])
 
                     @test forward_kinematics_space(robot, q) ≈ T_ref atol = 1e-6
                     @test mass_matrix_crba(robot, q) ≈ M_ref atol = 1e-6
                     @test gravity_forces(robot, q) ≈ g_ref atol = 1e-6
                     @test inverse_dynamics_rnea(robot, q, v, a) ≈ tau_ref atol = 1e-6
                     @test velocity_quadratic_forces(robot, q, v) ≈ c_ref atol = 1e-6
+                    @test forward_dynamics_crba(
+                        robot,
+                        q,
+                        v,
+                        tau_ref;
+                        tip_wrench = zeros(6),
+                    ) ≈ ddq_ref atol = 1e-6
+
+                    # Jacobians: Pinocchio uses [v; ω] convention, we use [ω; v],
+                    # so swap the top/bottom 3-row blocks before comparing.
+                    Jb_pin = _json_matrix(cfg["jacobian_body"])
+                    Js_pin = _json_matrix(cfg["jacobian_space"])
+                    @test jacobian_body(robot, q) ≈ Jb_pin[[4:6; 1:3], :] atol = 1e-6
+                    @test jacobian_space(robot, q) ≈ Js_pin[[4:6; 1:3], :] atol = 1e-6
                 end
             end
         end

@@ -50,6 +50,10 @@ def compute_reference(model, data, ee_frame_id, q, v, a, gravity):
     bias = pin.rnea(model, data, q, v, np.zeros(model.nv))
     coriolis = bias - g
 
+    # Forward dynamics: ddq = M⁻¹(tau - bias)
+    # Use tau from inverse dynamics so we can verify the round-trip: FD(ID(a)) == a
+    ddq = pin.aba(model, data, q, v, tau)
+
     return {
         "ee_pose": T.tolist(),
         "jacobian_body": J_body.tolist(),
@@ -58,6 +62,7 @@ def compute_reference(model, data, ee_frame_id, q, v, a, gravity):
         "gravity_forces": g.tolist(),
         "inverse_dynamics": tau.tolist(),
         "coriolis_forces": coriolis.tolist(),
+        "forward_dynamics": ddq.tolist(),
     }
 
 
