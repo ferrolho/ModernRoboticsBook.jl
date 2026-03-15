@@ -6,16 +6,16 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 
 | Function | MRB.jl | MRB.jl (in-place) | Pinocchio 3.9 (C++) | RBD.jl |
 |----------|-------:|---------:|--------------------:|-------:|
-| Forward kinematics | 0.31 μs | **0.30 μs** | 0.86 μs | — |
-| Jacobian | 0.39 μs | **0.36 μs** | 1.0 μs | — |
-| Inverse dynamics (RNEA) | 1.15 μs | **1.0 μs** | 0.64 μs | 0.61 μs |
-| Mass matrix (CRBA) | 1.14 μs | **0.91 μs** | 0.65 μs | 0.15 μs |
+| Forward kinematics | 0.31 μs | **0.30 μs** | 0.86 μs | 0.41 μs |
+| Jacobian | 0.39 μs | **0.36 μs** | 1.0 μs | 0.13 μs |
+| Inverse dynamics (RNEA) | 1.15 μs | **1.0 μs** | 0.64 μs | 0.62 μs |
+| Mass matrix (CRBA) | 1.14 μs | **0.91 μs** | 0.65 μs | 0.14 μs |
 | Mass matrix (RNEA) | 6.79 μs | — | — | — |
 | Gravity / dynamics bias | 1.19 μs | — | 0.48 μs | 0.55 μs |
 | Forward dynamics (CRBA + RNEA) | 2.71 μs | — | 2.82 μs | — |
 | Forward dynamics (RNEA) | 5.44 μs | — | — | — |
 
-*Measured on Apple M2 (16 GB), Julia 1.12, Python 3.13. Julia timings are median values from BenchmarkTools.jl. RBD.jl does not expose standalone FK, Jacobian, or forward dynamics functions with the same interface.*
+*Measured on Apple M2 (16 GB), Julia 1.12, Python 3.13. Julia timings are median values from BenchmarkTools.jl. RBD.jl: the ee\_link frame is grabbed before removing fixed joints; timings are for in-place variants where available.*
 
 ## Analysis
 
@@ -23,7 +23,7 @@ Forward kinematics and Jacobian computation are **~3x faster than Pinocchio** th
 
 Dynamics functions are now **within 1.4–2x of Pinocchio**, with forward dynamics on par. Both libraries use the same algorithms (RNEA, CRBA); the remaining gap is due to Pinocchio's hand-tuned C++/Eigen spatial algebra vs our general Julia `SMatrix` operations.
 
-RigidBodyDynamics.jl achieves extremely fast mass matrix computation (0.15 μs) through aggressive caching and code generation specialized to the mechanism topology. Its inverse dynamics and dynamics bias timings are comparable to Pinocchio.
+RigidBodyDynamics.jl achieves extremely fast mass matrix (0.14 μs) and Jacobian (0.13 μs) computation through aggressive caching and code generation specialized to the mechanism topology. It uses a state-based API where `MechanismState` caches intermediate kinematic results, amortizing costs across queries. With fixed joints removed (the default), the kinematic tree is smaller and dynamics are faster. The `ee_link` frame is preserved on the parent body for FK queries even after pruning.
 
 The textbook algorithm variants (`mass_matrix_rnea`, `forward_dynamics_rnea`) are provided for educational purposes — they directly mirror the textbook equations but are slower than the optimized defaults.
 

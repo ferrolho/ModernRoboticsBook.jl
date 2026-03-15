@@ -34,7 +34,12 @@ if !isfile(urdf_path)
     )
 end
 
-mechanism = parse_urdf(urdf_path)
+# Parse with fixed joints kept so we can grab the ee_link frame reference,
+# then remove them for speed (the frame survives on the parent body).
+mechanism = parse_urdf(urdf_path; remove_fixed_tree_joints = false)
+ee_frame = default_frame(findbody(mechanism, "ee_link"))
+remove_fixed_tree_joints!(mechanism)
+
 state = MechanismState(mechanism)
 
 q = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
@@ -43,30 +48,50 @@ v = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 set_configuration!(state, q)
 set_velocity!(state, v)
 
+ee_body = findbody(mechanism, "wrist_3_link")
+ee_path = path(mechanism, root_body(mechanism), ee_body)
+
 # Build a SegmentedVector for accelerations (required by RBD's inverse_dynamics)
 vd = similar(velocity(state))
 vd .= [1.0, 1.5, 2.0, 0.5, 0.3, 0.1]
 
 println("=== RigidBodyDynamics.jl — UR5 (6-DOF) ===\n")
 
-print("Mass matrix:         ")
+print("FK (set_config + transform_to_root): ")
+function rbd_fk!(state, q, ee_frame)
+    set_configuration!(state, q)
+    transform_to_root(state, ee_frame)
+end
+display(@benchmark rbd_fk!($state, $q, $ee_frame))
+println()
+
+print("Jacobian (geometric, in-place): ")
+jac = geometric_jacobian(state, ee_path)
+display(@benchmark geometric_jacobian!($jac, $state, $ee_path))
+println()
+
+# Reset state for dynamics benchmarks
+set_configuration!(state, q)
+set_velocity!(state, v)
+
+print("Mass matrix:                    ")
 display(@benchmark mass_matrix($state))
 println()
 
-print("Mass matrix (0-alloc): ")
+print("Mass matrix (in-place):         ")
 M = mass_matrix(state)
 display(@benchmark mass_matrix!($M, $state))
 println()
 
-print("Inverse dynamics:    ")
+print("Inverse dynamics:               ")
 display(@benchmark inverse_dynamics($state, $vd))
 println()
 
-print("Dynamics bias (c+g): ")
+print("Dynamics bias (c+g):            ")
 display(@benchmark dynamics_bias($state))
 println()
 
-print("Dynamics bias (0-alloc): ")
+print("Dynamics bias (in-place):       ")
 result = DynamicsResult(mechanism)
 display(@benchmark dynamics_bias!($result, $state))
 println()
