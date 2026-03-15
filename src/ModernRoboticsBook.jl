@@ -806,13 +806,13 @@ The ``4 \\times 4`` end-effector transformation matrix ``T \\in`` SE(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> home_ee_pose = [ -1  0  0  0 ;
-              0  1  0  6 ;
-              0  0 -1  2 ;
-              0  0  0  1 ];
+                         0  1  0  6 ;
+                         0  0 -1  2 ;
+                         0  0  0  1 ];
 
 julia> body_screw_axes = [  0  0 -1  2  0  0   ;
-                  0  0  0  0  1  0   ;
-                  0  0  1  0  0  0.1 ]';
+                            0  0  0  0  1  0   ;
+                            0  0  1  0  0  0.1 ]';
 
 julia> joint_positions = [ π/2, 3, π ];
 
@@ -866,13 +866,13 @@ The ``4 \\times 4`` end-effector transformation matrix ``T \\in`` SE(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> home_ee_pose = [ -1  0  0  0 ;
-              0  1  0  6 ;
-              0  0 -1  2 ;
-              0  0  0  1 ];
+                         0  1  0  6 ;
+                         0  0 -1  2 ;
+                         0  0  0  1 ];
 
 julia> screw_axes = [  0  0  1  4  0  0   ;
-                  0  0  0  0  1  0   ;
-                  0  0 -1 -6  0 -0.1 ]';
+                       0  0  0  0  1  0   ;
+                       0  0 -1 -6  0 -0.1 ]';
 
 julia> joint_positions = [ π/2, 3, π ];
 
@@ -921,9 +921,9 @@ The ``6 \\times n`` body Jacobian ``J_b(\\theta)``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> body_screw_axes = [0 0 1   0 0.2 0.2;
-                1 0 0   2   0   3;
-                0 1 0   0   2   1;
-                1 0 0 0.2 0.3 0.4]';
+                          1 0 0   2   0   3;
+                          0 1 0   0   2   1;
+                          1 0 0 0.2 0.3 0.4]';
 
 julia> joint_positions = [0.2, 1.1, 0.1, 1.2];
 
@@ -968,9 +968,9 @@ The ``6 \\times n`` space Jacobian ``J_s(\\theta)``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> screw_axes = [0 0 1   0 0.2 0.2;
-                1 0 0   2   0   3;
-                0 1 0   0   2   1;
-                1 0 0 0.2 0.3 0.4]';
+                     1 0 0   2   0   3;
+                     0 1 0   0   2   1;
+                     1 0 0 0.2 0.3 0.4]';
 
 julia> joint_positions = [0.2, 1.1, 0.1, 1.2];
 
@@ -1023,18 +1023,18 @@ A tuple `(joint_positions, success)` where `joint_positions` is the ``n``-vector
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> body_screw_axes = [  0  0 -1  2  0  0   ;
-                  0  0  0  0  1  0   ;
-                  0  0  1  0  0  0.1 ]';
+                            0  0  0  0  1  0   ;
+                            0  0  1  0  0  0.1 ]';
 
 julia> home_ee_pose = [ -1  0  0  0 ;
-              0  1  0  6 ;
-              0  0 -1  2 ;
-              0  0  0  1 ];
+                         0  1  0  6 ;
+                         0  0 -1  2 ;
+                         0  0  0  1 ];
 
 julia> target_config = [ 0  1  0     -5 ;
-             1  0  0      4 ;
-             0  0 -1 1.6858 ;
-             0  0  0      1 ];
+                         1  0  0      4 ;
+                         0  0 -1 1.6858 ;
+                         0  0  0      1 ];
 
 julia> initial_guess = [1.5, 2.5, 3];
 
@@ -1103,18 +1103,18 @@ A tuple `(joint_positions, success)` where `joint_positions` is the ``n``-vector
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> screw_axes = [  0  0  1  4  0  0   ;
-                  0  0  0  0  1  0   ;
-                  0  0 -1 -6  0 -0.1 ]';
+                       0  0  0  0  1  0   ;
+                       0  0 -1 -6  0 -0.1 ]';
 
 julia> home_ee_pose = [ -1  0  0  0 ;
-              0  1  0  6 ;
-              0  0 -1  2 ;
-              0  0  0  1 ];
+                         0  1  0  6 ;
+                         0  0 -1  2 ;
+                         0  0  0  1 ];
 
 julia> target_config = [ 0  1  0     -5 ;
-             1  0  0      4 ;
-             0  0 -1 1.6858 ;
-             0  0  0      1 ];
+                         1  0  0      4 ;
+                         0  0 -1 1.6858 ;
+                         0  0  0      1 ];
 
 julia> initial_guess = [1.5, 2.5, 3];
 
@@ -1564,8 +1564,8 @@ julia> spatial_inertias = [G1, G2, G3]
  Diagonal([0.0494433, 0.0494433, 0.004095, 2.275, 2.275, 2.275])
 
 julia> screw_axes = [ 1  0  1      0  1      0;
-                 0  1  0 -0.089  0      0;
-                 0  1  0 -0.089  0  0.425]'
+                      0  1  0 -0.089  0      0;
+                      0  1  0 -0.089  0  0.425]'
 6×3 adjoint(::Matrix{Float64}) with eltype Float64:
  1.0   0.0     0.0
  0.0   1.0     1.0
