@@ -1,8 +1,12 @@
 using Aqua
+using JSON
 using ModernRoboticsBook
 using Test
 
 import LinearAlgebra as LA
+
+# Re-use the internal JSON matrix helper for parsing reference data
+_json_matrix(rows) = reduce(vcat, [Float64.(r)' for r in rows])
 
 Aqua.test_all(ModernRoboticsBook)
 
@@ -1030,6 +1034,34 @@ Aqua.test_all(ModernRoboticsBook)
 
         @testset "load_robot errors on missing model" begin
             @test_throws ErrorException load_robot(:nonexistent_robot)
+        end
+
+        @testset "cross-validate UR5 against Pinocchio" begin
+            robot = load_robot(:ur5)
+            ref_path = joinpath(models_dir, "ur5_pinocchio_reference.json")
+            ref = JSON.parsefile(ref_path)
+
+            for (config_name, cfg) in ref["configurations"]
+                @testset "$config_name" begin
+                    q = Float64.(cfg["q"])
+                    v = Float64.(cfg["v"])
+                    a = Float64.(cfg["a"])
+                    g = Float64.(ref["gravity"])
+
+                    T_ref = _json_matrix(cfg["ee_pose"])
+                    M_ref = _json_matrix(cfg["mass_matrix"])
+                    g_ref = Float64.(cfg["gravity_forces"])
+                    tau_ref = Float64.(cfg["inverse_dynamics"])
+                    c_ref = Float64.(cfg["coriolis_forces"])
+
+                    @test forward_kinematics_space(robot, q) ≈ T_ref atol = 1e-6
+                    @test mass_matrix(robot, q) ≈ M_ref atol = 1e-6
+                    @test gravity_forces(robot, q, g) ≈ g_ref atol = 1e-6
+                    @test inverse_dynamics(robot, q, v, a, g, zeros(6)) ≈ tau_ref atol =
+                        1e-6
+                    @test velocity_quadratic_forces(robot, q, v) ≈ c_ref atol = 1e-6
+                end
+            end
         end
     end
 end
