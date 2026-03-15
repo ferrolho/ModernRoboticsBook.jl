@@ -64,11 +64,17 @@ def trans_inv(T):
     return T_inv
 
 
-def urdf_to_mr(urdf_path):
+def urdf_to_mr(urdf_path, ee_link_name=None):
     """Extract Modern Robotics parameters from a URDF file.
 
     Uses yourdfpy for URDF parsing. Joint/inertial origins are already
     parsed as 4x4 SE(3) transforms by yourdfpy.
+
+    Args:
+        urdf_path: path to the URDF file.
+        ee_link_name: name of the end-effector link. If None, auto-detects by
+            looking for a link named "ee_link", or falls back to walking past
+            fixed joints from the last actuated joint.
 
     Returns a dict with keys: name, n_joints, home_ee_pose, screw_axes_space,
     screw_axes_body, link_frames, spatial_inertias, joint_names, joint_types,
@@ -121,18 +127,31 @@ def urdf_to_mr(urdf_path):
 
     compute_fk(root_link)
 
-    # Find end-effector link: walk past fixed joints after the last actuated joint
-    ee_link = actuated_joints[-1].child
-    current = ee_link
-    while current in parent_to_joints:
-        fixed_children = [j for j in parent_to_joints[current] if j.type == "fixed"]
-        if len(fixed_children) == 1:
-            current = fixed_children[0].child
-        else:
-            break
-    ee_link = current
+    # Find end-effector link
+    all_link_names = {link.name for link in urdf.links}
+    if ee_link_name is not None:
+        if ee_link_name not in all_link_names:
+            raise ValueError(
+                f"End-effector link '{ee_link_name}' not found in URDF. "
+                f"Available links: {sorted(all_link_names)}"
+            )
+        ee_link = ee_link_name
+    elif "ee_link" in all_link_names:
+        # Prefer the standard "ee_link" if it exists
+        ee_link = "ee_link"
+    else:
+        # Fall back: walk past fixed joints from the last actuated joint
+        ee_link = actuated_joints[-1].child
+        current = ee_link
+        while current in parent_to_joints:
+            fixed_children = [j for j in parent_to_joints[current] if j.type == "fixed"]
+            if len(fixed_children) == 1:
+                current = fixed_children[0].child
+            else:
+                break
+        ee_link = current
 
-    # M: end-effector home configuration
+    # M: end-effector home pose
     M = link_transforms[ee_link]
 
     # Slist: space-frame screw axes
@@ -268,6 +287,9 @@ def main():
         "--output", "-o", help="Output JSON file path (defaults to robots/models/<name>.json)"
     )
     parser.add_argument(
+        "--ee-link", help="End-effector link name (default: auto-detect 'ee_link' or last link)"
+    )
+    parser.add_argument(
         "--list", action="store_true", help="List available robots"
     )
 
@@ -290,7 +312,7 @@ def main():
         return
 
     print(f"Converting {robot_name} from {urdf_path}...")
-    result = urdf_to_mr(urdf_path)
+    result = urdf_to_mr(urdf_path, ee_link_name=args.ee_link)
 
     if args.name:
         result["name"] = args.name

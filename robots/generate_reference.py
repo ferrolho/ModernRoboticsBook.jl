@@ -66,11 +66,9 @@ def main():
     model = pin.buildModelFromUrdf(ur5_description.URDF_PATH)
     data = model.createData()
 
-    # Use wrist_3_link to match what our URDF converter actually produces
-    # (the converter walks past fixed joints but the home pose currently
-    # corresponds to wrist_3_link, not tool0 or ee_link)
-    ee_frame_id = model.getFrameId("wrist_3_link")
-    print(f"End-effector frame: wrist_3_link (id={ee_frame_id})")
+    # Use ee_link to match what our URDF converter produces (standard ROS convention)
+    ee_frame_id = model.getFrameId("ee_link")
+    print(f"End-effector frame: ee_link (id={ee_frame_id})")
     print(f"Joints: {model.nq}")
     print(f"Gravity: {model.gravity.linear}")
 
@@ -96,7 +94,7 @@ def main():
     result = {
         "robot": "ur5",
         "source": "pinocchio",
-        "ee_frame": "wrist_3_link",
+        "ee_frame": "ee_link",
         "gravity": model.gravity.linear.tolist(),
         "n_joints": model.nq,
         "configurations": {},
