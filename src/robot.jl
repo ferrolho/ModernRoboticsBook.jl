@@ -11,7 +11,7 @@ in the conventions of the Modern Robotics textbook.
 # Fields
 - `name::String`: robot name.
 - `n_joints::Int`: number of actuated joints.
-- `home_config::Matrix{Float64}`: end-effector home configuration ``M \\in SE(3)`` (4×4).
+- `home_ee_pose::Matrix{Float64}`: end-effector home pose ``M \\in SE(3)`` (4×4).
 - `screw_axes_space::Matrix{Float64}`: joint screw axes in the space frame (6×n).
 - `screw_axes_body::Matrix{Float64}`: joint screw axes in the body frame (6×n).
 - `link_frames::Vector{Matrix{Float64}}`: transforms ``M_{i-1,i}`` between consecutive link frames (n+1 matrices).
@@ -23,7 +23,7 @@ in the conventions of the Modern Robotics textbook.
 struct Robot
     name::String
     n_joints::Int
-    home_config::Matrix{Float64}
+    home_ee_pose::Matrix{Float64}
     screw_axes_space::Matrix{Float64}
     screw_axes_body::Matrix{Float64}
     link_frames::Vector{Matrix{Float64}}
@@ -47,7 +47,7 @@ function load_robot(path::AbstractString)
     name = json["name"]::String
     n_joints = Int(json["n_joints"])
 
-    home_config = _json_matrix(json["home_config"])
+    home_ee_pose = _json_matrix(json["home_ee_pose"])
     screw_axes_space = Matrix(_json_matrix(json["screw_axes_space"])')  # n×6 in JSON → 6×n
     screw_axes_body = Matrix(_json_matrix(json["screw_axes_body"])')
     link_frames = [_json_matrix(m) for m in json["link_frames"]]
@@ -61,7 +61,7 @@ function load_robot(path::AbstractString)
     Robot(
         name,
         n_joints,
-        home_config,
+        home_ee_pose,
         screw_axes_space,
         screw_axes_body,
         link_frames,
@@ -92,11 +92,11 @@ end
 # Convenience wrappers: kinematics
 
 forward_kinematics_body(robot::Robot, joint_positions::AbstractVector) =
-    forward_kinematics_body(copy(robot.home_config), robot.screw_axes_body, joint_positions)
+    forward_kinematics_body(copy(robot.home_ee_pose), robot.screw_axes_body, joint_positions)
 
 forward_kinematics_space(robot::Robot, joint_positions::AbstractVector) =
     forward_kinematics_space(
-        copy(robot.home_config),
+        copy(robot.home_ee_pose),
         robot.screw_axes_space,
         joint_positions,
     )
@@ -115,7 +115,7 @@ inverse_kinematics_body(
     linear_tolerance::Number,
 ) = inverse_kinematics_body(
     robot.screw_axes_body,
-    robot.home_config,
+    robot.home_ee_pose,
     target_config,
     initial_guess,
     angular_tolerance,
@@ -130,7 +130,7 @@ inverse_kinematics_space(
     linear_tolerance::Number,
 ) = inverse_kinematics_space(
     robot.screw_axes_space,
-    robot.home_config,
+    robot.home_ee_pose,
     target_config,
     initial_guess,
     angular_tolerance,

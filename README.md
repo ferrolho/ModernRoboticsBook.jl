@@ -23,7 +23,7 @@ using ModernRoboticsBook
 import LinearAlgebra as LA
 
 # Forward kinematics (body frame)
-home_config = [
+home_ee_pose = [
     -1  0  0  0
      0  1  0  6
      0  0 -1  2
@@ -34,7 +34,7 @@ body_screw_axes = [0 0 -1 2 0   0
                    0 0  1 0 0 0.1]'
 joint_positions = [π/2, 3, π]
 
-T = forward_kinematics_body(home_config, body_screw_axes, joint_positions)
+T = forward_kinematics_body(home_ee_pose, body_screw_axes, joint_positions)
 ```
 
 ## Documentation

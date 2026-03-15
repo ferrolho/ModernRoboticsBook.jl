@@ -1,7 +1,7 @@
 {
   "name": "panda",
   "n_joints": 9,
-  "home_config": [
+  "home_ee_pose": [
     [
       0.7071067811865476,
       0.7071067811865475,

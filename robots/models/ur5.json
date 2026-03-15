@@ -1,7 +1,7 @@
 {
   "name": "ur5",
   "n_joints": 6,
-  "home_config": [
+  "home_ee_pose": [
     [
       -1.0,
       0.0,

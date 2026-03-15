@@ -204,7 +204,7 @@ Aqua.test_all(ModernRoboticsBook)
         ])
     end
     @testset "chapter 4: forward kinematics" begin
-        home_config = [
+        home_ee_pose = [
             -1 0 0 0
             0 1 0 6
             0 0 -1 2
@@ -226,7 +226,7 @@ Aqua.test_all(ModernRoboticsBook)
         joint_positions = [π / 2, 3, π]
 
         @test isapprox(
-            forward_kinematics_body(home_config, body_screw_axes, joint_positions),
+            forward_kinematics_body(home_ee_pose, body_screw_axes, joint_positions),
             [
                 -1.14424e-17 1.0 0.0 -5.0
                 1.0 1.14424e-17 0.0 4.0
@@ -236,7 +236,7 @@ Aqua.test_all(ModernRoboticsBook)
             rtol = 1e-6,
         )
         @test isapprox(
-            forward_kinematics_space(home_config, screw_axes, joint_positions),
+            forward_kinematics_space(home_ee_pose, screw_axes, joint_positions),
             [
                 -1.14424e-17 1.0 0.0 -5.0
                 1.0 1.14424e-17 0.0 4.0
@@ -301,7 +301,7 @@ Aqua.test_all(ModernRoboticsBook)
             0 0 -1 -6 0 -0.1
         ]'
 
-        home_config = [
+        home_ee_pose = [
             -1 0 0 0
             0 1 0 6
             0 0 -1 2
@@ -321,7 +321,7 @@ Aqua.test_all(ModernRoboticsBook)
 
         joint_positions, success = inverse_kinematics_body(
             body_screw_axes,
-            home_config,
+            home_ee_pose,
             target_config,
             initial_guess,
             angular_tolerance,
@@ -332,7 +332,7 @@ Aqua.test_all(ModernRoboticsBook)
 
         joint_positions, success = inverse_kinematics_space(
             screw_axes,
-            home_config,
+            home_ee_pose,
             target_config,
             initial_guess,
             angular_tolerance,
@@ -907,7 +907,7 @@ Aqua.test_all(ModernRoboticsBook)
             robot = load_robot(joinpath(models_dir, "3dof_textbook.json"))
             @test robot.name == "3dof_textbook"
             @test robot.n_joints == 3
-            @test size(robot.home_config) == (4, 4)
+            @test size(robot.home_ee_pose) == (4, 4)
             @test size(robot.screw_axes_space) == (6, 3)
             @test size(robot.screw_axes_body) == (6, 3)
             @test length(robot.link_frames) == 4  # n+1
@@ -1019,7 +1019,7 @@ Aqua.test_all(ModernRoboticsBook)
 
             # FK at zero config should equal home config
             q0 = zeros(6)
-            @test forward_kinematics_space(robot, q0) ≈ robot.home_config
+            @test forward_kinematics_space(robot, q0) ≈ robot.home_ee_pose
         end
 
         @testset "load_robot by symbol" begin

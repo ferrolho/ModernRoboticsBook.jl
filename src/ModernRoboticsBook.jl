@@ -704,7 +704,7 @@ is_se3(mat::AbstractMatrix) = abs(distance_to_se3(mat)) < 1e-3
 # """
 
 """
-    forward_kinematics_body(home_config, body_screw_axes, joint_positions)
+    forward_kinematics_body(home_ee_pose, body_screw_axes, joint_positions)
 
 Computes forward kinematics in the body frame for an open chain robot.
 
@@ -715,7 +715,7 @@ Computes forward kinematics in the body frame for an open chain robot.
     be more convenient when the task is defined relative to the tool.
 
 # Arguments
-- `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
+- `home_ee_pose`: the ``4 \\times 4`` home pose ``M`` of the end-effector (SE(3)).
 - `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame, as a ``6 \\times n`` matrix.
 - `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
 
@@ -724,7 +724,7 @@ The ``4 \\times 4`` end-effector transformation matrix ``T \\in`` SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> home_config = [ -1  0  0  0 ;
+julia> home_ee_pose = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ];
@@ -735,7 +735,7 @@ julia> body_screw_axes = [  0  0 -1  2  0  0   ;
 
 julia> joint_positions = [ π/2, 3, π ];
 
-julia> forward_kinematics_body(home_config, body_screw_axes, joint_positions)
+julia> forward_kinematics_body(home_ee_pose, body_screw_axes, joint_positions)
 4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
@@ -744,18 +744,18 @@ julia> forward_kinematics_body(home_config, body_screw_axes, joint_positions)
 ```
 """
 function forward_kinematics_body(
-    home_config::AbstractMatrix,
+    home_ee_pose::AbstractMatrix,
     body_screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
     for i in eachindex(joint_positions)
-        home_config *= matrix_exp6(vec_to_se3(body_screw_axes[:, i] * joint_positions[i]))
+        home_ee_pose *= matrix_exp6(vec_to_se3(body_screw_axes[:, i] * joint_positions[i]))
     end
-    home_config
+    home_ee_pose
 end
 
 """
-    forward_kinematics_space(home_config, screw_axes, joint_positions)
+    forward_kinematics_space(home_ee_pose, screw_axes, joint_positions)
 
 Computes forward kinematics in the space frame for an open chain robot.
 
@@ -765,7 +765,7 @@ Computes forward kinematics in the space frame for an open chain robot.
     choice depends on which frame your screw axes are defined in.
 
 # Arguments
-- `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
+- `home_ee_pose`: the ``4 \\times 4`` home pose ``M`` of the end-effector (SE(3)).
 - `screw_axes`: the joint screw axes ``S_i`` in the space frame, as a ``6 \\times n`` matrix.
 - `joint_positions`: an ``n``-vector of joint positions ``\\theta``.
 
@@ -774,7 +774,7 @@ The ``4 \\times 4`` end-effector transformation matrix ``T \\in`` SE(3).
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> home_config = [ -1  0  0  0 ;
+julia> home_ee_pose = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ];
@@ -785,7 +785,7 @@ julia> screw_axes = [  0  0  1  4  0  0   ;
 
 julia> joint_positions = [ π/2, 3, π ];
 
-julia> forward_kinematics_space(home_config, screw_axes, joint_positions)
+julia> forward_kinematics_space(home_ee_pose, screw_axes, joint_positions)
 4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
@@ -794,15 +794,15 @@ julia> forward_kinematics_space(home_config, screw_axes, joint_positions)
 ```
 """
 function forward_kinematics_space(
-    home_config::AbstractMatrix,
+    home_ee_pose::AbstractMatrix,
     screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
     for i in reverse(eachindex(joint_positions))
-        home_config =
-            matrix_exp6(vec_to_se3(screw_axes[:, i] * joint_positions[i])) * home_config
+        home_ee_pose =
+            matrix_exp6(vec_to_se3(screw_axes[:, i] * joint_positions[i])) * home_ee_pose
     end
-    home_config
+    home_ee_pose
 end
 
 # """
@@ -908,7 +908,7 @@ end
 # """
 
 """
-    inverse_kinematics_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+    inverse_kinematics_body(body_screw_axes, home_ee_pose, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the body frame for an open chain robot using Newton-Raphson iteration.
 
@@ -920,7 +920,7 @@ Computes inverse kinematics in the body frame for an open chain robot using Newt
 
 # Arguments
 - `body_screw_axes`: the joint screw axes ``B_i`` in the end-effector (body) frame, as a ``6 \\times n`` matrix.
-- `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
+- `home_ee_pose`: the ``4 \\times 4`` home pose ``M`` of the end-effector (SE(3)).
 - `target_config`: the desired ``4 \\times 4`` end-effector configuration ``T`` (SE(3)).
 - `initial_guess`: an ``n``-vector initial guess of joint positions ``\\theta_0``.
 - `angular_tolerance`: small positive tolerance on the end-effector orientation error.
@@ -935,7 +935,7 @@ julia> body_screw_axes = [  0  0 -1  2  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0  1  0  0  0.1 ]';
 
-julia> home_config = [ -1  0  0  0 ;
+julia> home_ee_pose = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ];
@@ -949,13 +949,13 @@ julia> initial_guess = [1.5, 2.5, 3];
 
 julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
-julia> inverse_kinematics_body(body_screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+julia> inverse_kinematics_body(body_screw_axes, home_ee_pose, target_config, initial_guess, angular_tolerance, linear_tolerance)
 ([1.5707381937148923, 2.999666997382943, 3.141539129217613], true)
 ```
 """
 function inverse_kinematics_body(
     body_screw_axes::AbstractMatrix,
-    home_config::AbstractMatrix,
+    home_ee_pose::AbstractMatrix,
     target_config::AbstractMatrix,
     initial_guess::AbstractVector,
     angular_tolerance::Number,
@@ -967,7 +967,7 @@ function inverse_kinematics_body(
     Vb = se3_to_vec(
         matrix_log6(
             transform_inv(
-                forward_kinematics_body(home_config, body_screw_axes, joint_positions),
+                forward_kinematics_body(home_ee_pose, body_screw_axes, joint_positions),
             ) * target_config,
         ),
     )
@@ -978,7 +978,7 @@ function inverse_kinematics_body(
         Vb = se3_to_vec(
             matrix_log6(
                 transform_inv(
-                    forward_kinematics_body(home_config, body_screw_axes, joint_positions),
+                    forward_kinematics_body(home_ee_pose, body_screw_axes, joint_positions),
                 ) * target_config,
             ),
         )
@@ -988,7 +988,7 @@ function inverse_kinematics_body(
 end
 
 """
-    inverse_kinematics_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+    inverse_kinematics_space(screw_axes, home_ee_pose, target_config, initial_guess, angular_tolerance, linear_tolerance)
 
 Computes inverse kinematics in the space frame for an open chain robot using Newton-Raphson iteration.
 
@@ -1000,7 +1000,7 @@ Computes inverse kinematics in the space frame for an open chain robot using New
 
 # Arguments
 - `screw_axes`: the joint screw axes ``S_i`` in the space frame, as a ``6 \\times n`` matrix.
-- `home_config`: the ``4 \\times 4`` home configuration ``M`` of the end-effector (SE(3)).
+- `home_ee_pose`: the ``4 \\times 4`` home pose ``M`` of the end-effector (SE(3)).
 - `target_config`: the desired ``4 \\times 4`` end-effector configuration ``T`` (SE(3)).
 - `initial_guess`: an ``n``-vector initial guess of joint positions ``\\theta_0``.
 - `angular_tolerance`: small positive tolerance on the end-effector orientation error.
@@ -1015,7 +1015,7 @@ julia> screw_axes = [  0  0  1  4  0  0   ;
                   0  0  0  0  1  0   ;
                   0  0 -1 -6  0 -0.1 ]';
 
-julia> home_config = [ -1  0  0  0 ;
+julia> home_ee_pose = [ -1  0  0  0 ;
               0  1  0  6 ;
               0  0 -1  2 ;
               0  0  0  1 ];
@@ -1029,13 +1029,13 @@ julia> initial_guess = [1.5, 2.5, 3];
 
 julia> angular_tolerance, linear_tolerance = 0.01, 0.001;
 
-julia> inverse_kinematics_space(screw_axes, home_config, target_config, initial_guess, angular_tolerance, linear_tolerance)
+julia> inverse_kinematics_space(screw_axes, home_ee_pose, target_config, initial_guess, angular_tolerance, linear_tolerance)
 ([1.57073782965672, 2.999663844672525, 3.141534199856583], true)
 ```
 """
 function inverse_kinematics_space(
     screw_axes::AbstractMatrix,
-    home_config::AbstractMatrix,
+    home_ee_pose::AbstractMatrix,
     target_config::AbstractMatrix,
     initial_guess::AbstractVector,
     angular_tolerance::Number,
@@ -1044,7 +1044,7 @@ function inverse_kinematics_space(
     joint_positions = copy(initial_guess)
     i = 0
     maxiterations = 20
-    Tsb = forward_kinematics_space(home_config, screw_axes, joint_positions)
+    Tsb = forward_kinematics_space(home_ee_pose, screw_axes, joint_positions)
     Vs =
         adjoint_representation(Tsb) *
         se3_to_vec(matrix_log6(transform_inv(Tsb) * target_config))
@@ -1052,7 +1052,7 @@ function inverse_kinematics_space(
     while err && i < maxiterations
         joint_positions += LA.pinv(jacobian_space(screw_axes, joint_positions)) * Vs
         i += 1
-        Tsb = forward_kinematics_space(home_config, screw_axes, joint_positions)
+        Tsb = forward_kinematics_space(home_ee_pose, screw_axes, joint_positions)
         Vs =
             adjoint_representation(Tsb) *
             se3_to_vec(matrix_log6(transform_inv(Tsb) * target_config))

@@ -70,7 +70,7 @@ def urdf_to_mr(urdf_path):
     Uses yourdfpy for URDF parsing. Joint/inertial origins are already
     parsed as 4x4 SE(3) transforms by yourdfpy.
 
-    Returns a dict with keys: name, n_joints, home_config, screw_axes_space,
+    Returns a dict with keys: name, n_joints, home_ee_pose, screw_axes_space,
     screw_axes_body, link_frames, spatial_inertias, joint_names, joint_types,
     joint_limits.
     """
@@ -225,7 +225,7 @@ def urdf_to_mr(urdf_path):
     return {
         "name": urdf.name or Path(urdf_path).stem,
         "n_joints": n,
-        "home_config": M.tolist(),
+        "home_ee_pose": M.tolist(),
         "screw_axes_space": Slist.T.tolist(),  # n x 6 (each row is a screw axis)
         "screw_axes_body": Blist.T.tolist(),
         "link_frames": [m.tolist() for m in Mlist],
