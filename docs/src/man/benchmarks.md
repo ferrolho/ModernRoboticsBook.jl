@@ -4,14 +4,14 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 
 ## Results
 
-| Function | ModernRoboticsBook.jl | In-place (`!`) | Pinocchio 3.9 (C++) | Ratio (in-place) |
-|----------|----------------------:|---------------:|--------------------:|------------------:|
-| Forward kinematics | 0.31 μs | **0.30 μs** | 0.86 μs | **0.35x (faster)** |
-| Jacobian | 0.39 μs | **0.36 μs** | 1.0 μs | **0.36x (faster)** |
-| Inverse dynamics | 3.68 μs | — | 0.64 μs | ~6x |
-| Mass matrix | 22.2 μs | — | 0.65 μs | ~34x |
-| Gravity forces | 3.73 μs | — | 0.48 μs | ~8x |
-| Forward dynamics | 34.2 μs | — | 2.82 μs | ~12x |
+| Function | ModernRoboticsBook.jl | In-place (`!`) | Pinocchio 3.9 (C++) | vs Pinocchio |
+|----------|----------------------:|---------------:|--------------------:|-------------:|
+| Forward kinematics | 0.31 μs | **0.30 μs** | 0.86 μs | **~3x faster** |
+| Jacobian | 0.39 μs | **0.36 μs** | 1.0 μs | **~3x faster** |
+| Inverse dynamics | 3.68 μs | — | 0.64 μs | ~6x slower |
+| Mass matrix | 22.2 μs | — | 0.65 μs | ~34x slower |
+| Gravity forces | 3.73 μs | — | 0.48 μs | ~8x slower |
+| Forward dynamics | 34.2 μs | — | 2.82 μs | ~12x slower |
 
 *Measured on Apple M2 (16 GB), Julia 1.12, Python 3.13. Julia timings are median values from BenchmarkTools.jl.*
 
