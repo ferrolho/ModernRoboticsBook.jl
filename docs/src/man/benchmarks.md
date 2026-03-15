@@ -36,17 +36,17 @@ The textbook algorithm variants (`mass_matrix_rnea`, `forward_dynamics_rnea`) ar
 
 ### Allocations
 
-| Function | Allocations | Memory | In-place |
-|----------|------------:|-------:|---------:|
-| Forward kinematics | 2 | 208 B | **0 (0 B)** |
-| Jacobian | 2 | 384 B | **0 (0 B)** |
-| Inverse dynamics (RNEA) | 13 | 3.4 KiB | **0 (0 B)** |
-| Mass matrix (CRBA) | 9 | 4.6 KiB | **0 (0 B)** |
-| Mass matrix (RNEA) | 76 | 20.7 KiB | — |
-| Gravity forces | 17 | 3.6 KiB | — |
-| Forward dynamics (ABA) | 23 | 6.1 KiB | **0 (0 B)** |
-| Forward dynamics (CRBA) | 32 | 8.8 KiB | 8 (720 B) |
-| Forward dynamics (RNEA) | 78 | 19.6 KiB | 10 (3.7 KiB) |
+| Function | Allocating | In-place (`!`) |
+|----------|----------:|---------:|
+| Forward kinematics | 2 (208 B) | **0 (0 B)** |
+| Jacobian | 2 (384 B) | **0 (0 B)** |
+| Inverse dynamics (RNEA) | 13 (3.4 KiB) | **0 (0 B)** |
+| Mass matrix (CRBA) | 9 (4.6 KiB) | **0 (0 B)** |
+| Mass matrix (RNEA) | 76 (20.7 KiB) | — |
+| Gravity forces | 17 (3.6 KiB) | — |
+| Forward dynamics (ABA) | 23 (6.1 KiB) | **0 (0 B)** |
+| Forward dynamics (CRBA) | 32 (8.8 KiB) | 8 (720 B) |
+| Forward dynamics (RNEA) | 78 (19.6 KiB) | 10 (3.7 KiB) |
 
 ### When does this matter?
 
