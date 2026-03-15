@@ -38,6 +38,7 @@ export near_zero,
     ad,
     inverse_dynamics,
     mass_matrix,
+    mass_matrix!,
     velocity_quadratic_forces,
     gravity_forces,
     end_effector_forces,
@@ -1344,21 +1345,24 @@ end
 """
     mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)
 
-Computes the mass matrix of an open chain robot based on the given configuration.
-Calls [`inverse_dynamics`](@ref) ``n`` times, each time passing a ``\\ddot{\\theta}``
-vector with a single element equal to one and all other inputs set to zero. Each call
-generates a single column of ``M(\\theta)``.
+Computes the mass matrix ``M(\\theta)`` of an open chain robot using the
+**Composite Rigid Body Algorithm (CRBA)**.
 
-!!! info "How is the mass matrix computed?"
+!!! info "Composite Rigid Body Algorithm"
     The mass matrix ``M(\\theta)`` relates joint accelerations to joint torques in the
     absence of velocity-dependent and gravitational forces:
-    ``\\tau = M(\\theta) \\ddot{\\theta}``. It captures how the robot's inertia is
-    distributed across its joints at a given configuration.
+    ``\\tau = M(\\theta) \\ddot{\\theta}``. CRBA computes ``M`` in a single backward
+    pass by accumulating *composite spatial inertias* — the total inertia of each
+    link plus all its descendants — from leaf to root, then assembling the matrix
+    entries by projecting these composite inertias onto the joint screw axes.
 
-    Rather than forming ``M`` symbolically, this function uses a clever trick: it calls
-    [`inverse_dynamics`](@ref) ``n`` times with gravity, velocities, and tip wrench all
-    set to zero, and each time sets ``\\ddot{\\theta}`` to a unit vector ``e_i``. The
-    resulting torque vector is exactly the ``i``-th column of ``M(\\theta)``.
+!!! details "Educational note"
+    The textbook (Chapter 8.2) teaches a simpler approach that calls
+    [`inverse_dynamics`](@ref) ``n`` times with unit accelerations: "what torques
+    are needed for unit acceleration of joint ``i``?" Each call produces one column
+    of ``M(\\theta)``. This builds intuition but requires ``n`` full Newton-Euler
+    passes. CRBA computes the same result with one forward pass and one backward
+    pass, exploiting the symmetry of ``M``.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1386,24 +1390,70 @@ function mass_matrix(
 )
     n = length(joint_positions)
     M = zeros(n, n)
-    joint_accelerations = zeros(n)
-    zero_velocities = zeros(n)
-    zero_gravity = zeros(3)
-    zero_wrench = zeros(6)
+    Ai = Vector{SVector{6,Float64}}(undef, n)
+    AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
+    Gc = Vector{SMatrix{6,6,Float64,36}}(undef, n)
+    mass_matrix!(
+        M,
+        joint_positions,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Gc,
+    )
+end
+
+"""
+    mass_matrix!(M, joint_positions, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Gc)
+
+In-place version of [`mass_matrix`](@ref) using the Composite Rigid Body Algorithm (CRBA).
+Writes the result into `M`. The workspace vectors `Ai` (length n), `AdTi` (length n+1),
+and `Gc` (length n) must be pre-allocated.
+"""
+function mass_matrix!(
+    M::AbstractMatrix,
+    joint_positions::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+    Ai::AbstractVector{SVector{6,Float64}},
+    AdTi::AbstractVector{SMatrix{6,6,Float64,36}},
+    Gc::AbstractVector{SMatrix{6,6,Float64,36}},
+)
+    n = length(joint_positions)
+
+    # Forward pass: compute screw axes in link frames (Ai) and inter-link adjoints (AdTi)
+    Mi = SMatrix{4,4,Float64}(LA.I)
+    AdTi[n+1] = adjoint_representation(transform_inv(link_frames[n+1]))
 
     for i = 1:n
-        joint_accelerations[i] = 1
-        M[:, i] = inverse_dynamics(
-            joint_positions,
-            zero_velocities,
-            joint_accelerations,
-            zero_gravity,
-            zero_wrench,
-            link_frames,
-            spatial_inertias,
-            screw_axes,
+        Mi = Mi * SMatrix{4,4}(link_frames[i])
+        Ai[i] =
+            adjoint_representation(transform_inv(Mi)) * SVector{6}(@view screw_axes[:, i])
+        AdTi[i] = adjoint_representation(
+            matrix_exp6(vec_to_se3(Ai[i] * -joint_positions[i])) *
+            transform_inv(SMatrix{4,4}(link_frames[i])),
         )
-        joint_accelerations[i] = 0
+    end
+
+    # Backward pass: accumulate composite spatial inertias (leaf to root)
+    Gc[n] = SMatrix{6,6}(spatial_inertias[n])
+    for i = (n-1):-1:1
+        Gc[i] = SMatrix{6,6}(spatial_inertias[i]) + AdTi[i+1]' * Gc[i+1] * AdTi[i+1]
+    end
+
+    # Assembly: propagate F = Gc[j] * A[j] backwards through AdTi to compute
+    # M[i,j] = A_i^T * F. Exploits symmetry: M[j,i] = M[i,j].
+    for j = 1:n
+        F = Gc[j] * Ai[j]
+        M[j, j] = Ai[j]' * F
+        for i = (j-1):-1:1
+            F = AdTi[i+1]' * F
+            M[i, j] = Ai[i]' * F
+            M[j, i] = M[i, j]
+        end
     end
 
     return M

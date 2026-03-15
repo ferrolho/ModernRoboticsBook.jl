@@ -190,6 +190,24 @@ mass_matrix(robot::Robot, joint_positions::AbstractVector) = mass_matrix(
     robot.screw_axes_space,
 )
 
+mass_matrix!(
+    M::AbstractMatrix,
+    robot::Robot,
+    joint_positions::AbstractVector,
+    Ai::AbstractVector,
+    AdTi::AbstractVector,
+    Gc::AbstractVector,
+) = mass_matrix!(
+    M,
+    joint_positions,
+    robot.link_frames,
+    robot.spatial_inertias,
+    robot.screw_axes_space,
+    Ai,
+    AdTi,
+    Gc,
+)
+
 velocity_quadratic_forces(
     robot::Robot,
     joint_positions::AbstractVector,
