@@ -37,6 +37,7 @@ export near_zero,
     inverse_kinematics_space,
     ad,
     inverse_dynamics,
+    inverse_dynamics!,
     mass_matrix,
     mass_matrix!,
     velocity_quadratic_forces,
@@ -1307,36 +1308,76 @@ function inverse_dynamics(
     screw_axes::AbstractMatrix,
 )
     n = length(joint_positions)
-    Mi = LA.I
-    Ai = zeros(eltype(joint_positions), 6, n)
-    AdTi = Vector{Matrix{eltype(joint_positions)}}(undef, n + 1)
-    Vi = zeros(eltype(joint_positions), 6, n + 1)
-    Vdi = zeros(eltype(joint_positions), 6, n + 1)
-    Vdi[1:3, 1] .= 0
-    Vdi[4:6, 1] .= -gravity
+    joint_torques = zeros(n)
+    Ai = Vector{SVector{6,Float64}}(undef, n)
+    AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
+    Vi = Vector{SVector{6,Float64}}(undef, n + 1)
+    Vdi = Vector{SVector{6,Float64}}(undef, n + 1)
+    inverse_dynamics!(
+        joint_torques,
+        joint_positions,
+        joint_velocities,
+        joint_accelerations,
+        gravity,
+        tip_wrench,
+        link_frames,
+        spatial_inertias,
+        screw_axes,
+        Ai,
+        AdTi,
+        Vi,
+        Vdi,
+    )
+end
+
+"""
+    inverse_dynamics!(joint_torques, joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Vi, Vdi)
+
+In-place version of [`inverse_dynamics`](@ref). Writes the result into `joint_torques`.
+The workspace vectors `Ai` (length n), `AdTi` (length n+1), `Vi` (length n+1),
+and `Vdi` (length n+1) must be pre-allocated.
+"""
+function inverse_dynamics!(
+    joint_torques::AbstractVector,
+    joint_positions::AbstractVector,
+    joint_velocities::AbstractVector,
+    joint_accelerations::AbstractVector,
+    gravity::AbstractVector,
+    tip_wrench::AbstractVector,
+    link_frames::AbstractVector,
+    spatial_inertias::AbstractVector,
+    screw_axes::AbstractMatrix,
+    Ai::AbstractVector{SVector{6,Float64}},
+    AdTi::AbstractVector{SMatrix{6,6,Float64,36}},
+    Vi::AbstractVector{SVector{6,Float64}},
+    Vdi::AbstractVector{SVector{6,Float64}},
+)
+    n = length(joint_positions)
+    Mi = SMatrix{4,4,Float64}(LA.I)
+    Vi[1] = @SVector zeros(6)
+    Vdi[1] = SA[0.0, 0.0, 0.0, -gravity[1], -gravity[2], -gravity[3]]
     AdTi[n+1] = adjoint_representation(transform_inv(link_frames[n+1]))
-    Fi = copy(tip_wrench)
-    joint_torques = zeros(eltype(joint_positions), n)
 
     for i = 1:n
-        Mi = Mi * link_frames[i]
-        @views Ai[:, i] = adjoint_representation(transform_inv(Mi)) * screw_axes[:, i]
+        Mi = Mi * SMatrix{4,4}(link_frames[i])
+        Ai[i] =
+            adjoint_representation(transform_inv(Mi)) * SVector{6}(@view screw_axes[:, i])
         AdTi[i] = adjoint_representation(
-            matrix_exp6(vec_to_se3(@view(Ai[:, i]) * -joint_positions[i])) *
-            transform_inv(link_frames[i]),
+            matrix_exp6(vec_to_se3(Ai[i] * -joint_positions[i])) *
+            transform_inv(SMatrix{4,4}(link_frames[i])),
         )
-        @views Vi[:, i+1] = AdTi[i] * Vi[:, i] + Ai[:, i] * joint_velocities[i]
-        @views Vdi[:, i+1] =
-            AdTi[i] * Vdi[:, i] +
-            Ai[:, i] * joint_accelerations[i] +
-            ad(Vi[:, i+1]) * Ai[:, i] * joint_velocities[i]
+        Vi[i+1] = AdTi[i] * Vi[i] + Ai[i] * joint_velocities[i]
+        Vdi[i+1] =
+            AdTi[i] * Vdi[i] +
+            Ai[i] * joint_accelerations[i] +
+            ad(Vi[i+1]) * Ai[i] * joint_velocities[i]
     end
 
+    Fi = SVector{6}(tip_wrench)
     for i = n:-1:1
-        @views Fi =
-            AdTi[i+1]' * Fi + spatial_inertias[i] * Vdi[:, i+1] -
-            ad(Vi[:, i+1])' * spatial_inertias[i] * Vi[:, i+1]
-        @views joint_torques[i] = Fi' * Ai[:, i]
+        Gi = SMatrix{6,6}(spatial_inertias[i])
+        Fi = AdTi[i+1]' * Fi + Gi * Vdi[i+1] - ad(Vi[i+1])' * Gi * Vi[i+1]
+        joint_torques[i] = Fi' * Ai[i]
     end
 
     return joint_torques
