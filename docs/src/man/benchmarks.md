@@ -42,8 +42,11 @@ The textbook algorithm variants (`mass_matrix_rnea`, `forward_dynamics_rnea`) ar
 | Jacobian | 2 | 384 B | **0 (0 B)** |
 | Inverse dynamics (RNEA) | 13 | 3.4 KiB | **0 (0 B)** |
 | Mass matrix (CRBA) | 9 | 4.6 KiB | **0 (0 B)** |
+| Mass matrix (RNEA) | 76 | 20.7 KiB | — |
+| Gravity forces | 17 | 3.6 KiB | — |
 | Forward dynamics (ABA) | 23 | 6.1 KiB | — |
-| Forward dynamics | 32 | 8.8 KiB | — |
+| Forward dynamics (CRBA + RNEA) | 32 | 8.8 KiB | — |
+| Forward dynamics (RNEA) | 78 | 19.6 KiB | — |
 
 ### When does this matter?
 
