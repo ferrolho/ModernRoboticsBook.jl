@@ -2,6 +2,6 @@
 
 ```@autodocs
 Modules = [ModernRoboticsBook]
-Pages = ["ModernRoboticsBook.jl"]
+Pages = ["robot.jl"]
 Filter = t -> nameof(t) in [:Robot, :load_robot]
 ```

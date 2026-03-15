@@ -92,7 +92,11 @@ end
 # Convenience wrappers: kinematics
 
 forward_kinematics_body(robot::Robot, joint_positions::AbstractVector) =
-    forward_kinematics_body(copy(robot.home_ee_pose), robot.screw_axes_body, joint_positions)
+    forward_kinematics_body(
+        copy(robot.home_ee_pose),
+        robot.screw_axes_body,
+        joint_positions,
+    )
 
 forward_kinematics_space(robot::Robot, joint_positions::AbstractVector) =
     forward_kinematics_space(
