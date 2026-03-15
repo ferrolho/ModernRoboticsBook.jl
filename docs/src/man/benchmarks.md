@@ -11,7 +11,9 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 | Inverse dynamics (RNEA) | 1.15 μs | **1.0 μs** | 0.64 μs | 0.62 μs |
 | Mass matrix (CRBA) | 1.14 μs | **0.91 μs** | 0.65 μs | 0.14 μs |
 | Mass matrix (RNEA) | 6.79 μs | — | — | — |
-| Gravity / dynamics bias | 1.19 μs | — | 0.48 μs | 0.55 μs |
+| Velocity quadratic forces | 1.19 μs | **1.02 μs** | — | — |
+| Gravity forces | 1.19 μs | **1.03 μs** | 0.48 μs | 0.55 μs |
+| End-effector forces | 1.19 μs | **1.03 μs** | — | — |
 | Forward dynamics (ABA) | 1.65 μs | **1.41 μs** | 2.82 μs | — |
 | Forward dynamics (CRBA) | 2.80 μs | 2.39 μs | — | — |
 | Forward dynamics (RNEA) | 5.44 μs | 4.91 μs | — | — |
