@@ -10,10 +10,10 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 | Jacobian | 0.39 μs | **0.36 μs** | 1.0 μs | — |
 | Inverse dynamics (RNEA) | 1.15 μs | **1.0 μs** | 0.64 μs | 0.61 μs |
 | Mass matrix (CRBA) | 1.14 μs | **0.91 μs** | 0.65 μs | 0.15 μs |
-| Mass matrix (`mass_matrix_rnea`) | 6.79 μs | — | — | — |
+| Mass matrix (RNEA) | 6.79 μs | — | — | — |
 | Gravity / dynamics bias | 1.19 μs | — | 0.48 μs | 0.55 μs |
 | Forward dynamics (CRBA + RNEA) | 2.71 μs | — | 2.82 μs | — |
-| Forward dynamics (`forward_dynamics_rnea`) | 5.44 μs | — | — | — |
+| Forward dynamics (RNEA) | 5.44 μs | — | — | — |
 
 *Measured on Apple M2 (16 GB), Julia 1.12, Python 3.13. Julia timings are median values from BenchmarkTools.jl. RBD.jl does not expose standalone FK, Jacobian, or forward dynamics functions with the same interface.*
 
