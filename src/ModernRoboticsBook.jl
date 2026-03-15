@@ -259,8 +259,12 @@ julia> rotation_position_to_transform([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
  0  0   0  1
 ```
 """
-rotation_position_to_transform(R::AbstractMatrix, p::AbstractVector) =
-    vcat(hcat(R, p), [0 0 0 1])
+function rotation_position_to_transform(R::AbstractMatrix, p::AbstractVector)
+    [R[1,1] R[1,2] R[1,3] p[1]
+     R[2,1] R[2,2] R[2,3] p[2]
+     R[3,1] R[3,2] R[3,3] p[3]
+     0      0      0      1]
+end
 
 """
     transform_to_rotation_position(T)
@@ -303,8 +307,14 @@ julia> transform_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function transform_inv(T::AbstractMatrix)
-    R, p = transform_to_rotation_position(T)
-    vcat(hcat(R', -R' * p), [0 0 0 1])
+    R = T[1:3, 1:3]
+    p = T[1:3, 4]
+    Rt = R'
+    Rtp = Rt * p
+    [Rt[1,1] Rt[1,2] Rt[1,3] -Rtp[1]
+     Rt[2,1] Rt[2,2] Rt[2,3] -Rtp[2]
+     Rt[3,1] Rt[3,2] Rt[3,3] -Rtp[3]
+     0       0       0       1]
 end
 
 """
@@ -335,7 +345,13 @@ julia> vec_to_se3([1, 2, 3, 4, 5, 6])
   0.0   0.0   0.0  0.0
 ```
 """
-vec_to_se3(V::AbstractVector) = vcat(hcat(vec_to_so3(V[1:3]), V[4:6]), zeros(1, 4))
+function vec_to_se3(V::AbstractVector)
+    ω1, ω2, ω3, v1, v2, v3 = V
+    [0 -ω3 ω2 v1
+        ω3 0 -ω1 v2
+        -ω2 ω1 0 v3
+        0 0 0 0]
+end
 
 """
     se3_to_vec(se3mat)
@@ -361,7 +377,7 @@ julia> se3_to_vec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
 ```
 """
 se3_to_vec(se3mat::AbstractMatrix) =
-    vcat([se3mat[3, 2], se3mat[1, 3], se3mat[2, 1]], se3mat[1:3, 4])
+    [se3mat[3, 2], se3mat[1, 3], se3mat[2, 1], se3mat[1, 4], se3mat[2, 4], se3mat[3, 4]]
 
 """
     adjoint_representation(T)
@@ -393,8 +409,15 @@ julia> adjoint_representation([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function adjoint_representation(T::AbstractMatrix)
-    R, p = transform_to_rotation_position(T)
-    vcat(hcat(R, zeros(3, 3)), hcat(vec_to_so3(p) * R, R))
+    R = T[1:3, 1:3]
+    p = T[1:3, 4]
+    pR = vec_to_so3(p) * R
+    [R[1,1] R[1,2] R[1,3] 0      0      0
+     R[2,1] R[2,2] R[2,3] 0      0      0
+     R[3,1] R[3,2] R[3,3] 0      0      0
+     pR[1,1] pR[1,2] pR[1,3] R[1,1] R[1,2] R[1,3]
+     pR[2,1] pR[2,2] pR[2,3] R[2,1] R[2,2] R[2,3]
+     pR[3,1] pR[3,2] pR[3,3] R[3,1] R[3,2] R[3,3]]
 end
 
 """
@@ -429,8 +452,10 @@ julia> screw_to_axis([3; 0; 0], [0; 0; 1], 2)
   2
 ```
 """
-screw_to_axis(q::AbstractVector, s::AbstractVector, h::Number) =
-    vcat(s, LA.cross(q, s) + h * s)
+function screw_to_axis(q::AbstractVector, s::AbstractVector, h::Number)
+    v = LA.cross(q, s) + h * s
+    [s[1], s[2], s[3], v[1], v[2], v[3]]
+end
 
 """
     axis_angle6(expc6)
@@ -1114,8 +1139,13 @@ julia> ad([1, 2, 3, 4, 5, 6])
 ```
 """
 function ad(V::AbstractVector)
-    ωmat = vec_to_so3(V[1:3])
-    vcat(hcat(ωmat, zeros(3, 3)), hcat(vec_to_so3(V[4:6]), ωmat))
+    ω1, ω2, ω3, v1, v2, v3 = V
+    [0 -ω3 ω2 0 0 0
+        ω3 0 -ω1 0 0 0
+        -ω2 ω1 0 0 0 0
+        0 -v3 v2 0 -ω3 ω2
+        v3 0 -v1 ω3 0 -ω1
+        -v2 v1 0 -ω2 ω1 0]
 end
 
 """
@@ -1179,7 +1209,8 @@ function inverse_dynamics(
     AdTi = Vector{Matrix{eltype(joint_positions)}}(undef, n + 1)
     Vi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi = zeros(eltype(joint_positions), 6, n + 1)
-    Vdi[:, 1] = vcat(zeros(eltype(joint_positions), 3), -gravity)
+    Vdi[1:3, 1] .= 0
+    Vdi[4:6, 1] .= -gravity
     AdTi[n+1] = adjoint_representation(transform_inv(link_frames[n+1]))
     Fi = copy(tip_wrench)
     joint_torques = zeros(eltype(joint_positions), n)
