@@ -1176,7 +1176,7 @@ function inverse_dynamics(
     n = length(joint_positions)
     Mi = LA.I
     Ai = zeros(eltype(joint_positions), 6, n)
-    AdTi = Array{Array{eltype(joint_positions),2}}(undef, n + 1)
+    AdTi = Vector{Matrix{eltype(joint_positions)}}(undef, n + 1)
     Vi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi = zeros(eltype(joint_positions), 6, n + 1)
     Vdi[:, 1] = vcat(zeros(eltype(joint_positions), 3), -gravity)
@@ -1913,7 +1913,7 @@ function screw_trajectory(
     method::Integer,
 )
     timegap = total_time / (N - 1)
-    traj = Array{Array{Float64,2}}(undef, N)
+    traj = Vector{Matrix{Float64}}(undef, N)
 
     for i = 1:N
         if method == 3
@@ -1980,7 +1980,7 @@ function cartesian_trajectory(
     method::Integer,
 )
     timegap = total_time / (N - 1)
-    traj = Array{Array{Float64,2}}(undef, N)
+    traj = Vector{Matrix{Float64}}(undef, N)
 
     Rstart, pstart = transform_to_rotation_position(transform_start)
     Rend, pend = transform_to_rotation_position(transform_end)
