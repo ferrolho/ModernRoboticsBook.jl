@@ -600,7 +600,17 @@ julia> matrix_log6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function matrix_log6(T::AbstractMatrix)
-    R, p = transform_to_rotation_position(T)
+    R = SMatrix{3,3}(
+        T[1, 1],
+        T[2, 1],
+        T[3, 1],
+        T[1, 2],
+        T[2, 2],
+        T[3, 2],
+        T[1, 3],
+        T[2, 3],
+        T[3, 3],
+    )
     ωmat = matrix_log3(R)
     I3 = SMatrix{3,3,Float64}(LA.I)
     v = SA[T[1, 4], T[2, 4], T[3, 4]]

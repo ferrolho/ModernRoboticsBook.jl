@@ -1,6 +1,7 @@
 using Aqua
 using JSON
 using ModernRoboticsBook
+using StaticArrays
 using Test
 
 import LinearAlgebra as LA
@@ -1041,6 +1042,82 @@ Aqua.test_all(ModernRoboticsBook)
 
         @testset "load_robot errors on missing model" begin
             @test_throws ErrorException load_robot(:nonexistent_robot)
+        end
+
+        @testset "zero allocations for core helpers" begin
+            # Inputs as regular Matrix/Vector
+            so3 = [0.0 -3.0 2.0; 3.0 0.0 -1.0; -2.0 1.0 0.0]
+            R = [
+                -0.694921 0.713521 0.0892929
+                -0.192007 -0.303785 0.933192
+                0.692978 0.63135 0.348107
+            ]
+            se3 = [
+                0.0 -3.0 2.0 4.0
+                3.0 0.0 -1.0 5.0
+                -2.0 1.0 0.0 6.0
+                0.0 0.0 0.0 0.0
+            ]
+            T = [
+                1.0 0.0 0.0 0.0
+                0.0 0.0 -1.0 0.0
+                0.0 1.0 0.0 3.0
+                0.0 0.0 0.0 1.0
+            ]
+            v3 = [1.0, 2.0, 3.0]
+            v6 = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
+
+            # Inputs as SMatrix/SVector
+            sso3 = SMatrix{3,3}(so3)
+            sR = SMatrix{3,3}(R)
+            sse3 = SMatrix{4,4}(se3)
+            sT = SMatrix{4,4}(T)
+            sv3 = SVector{3}(v3)
+            sv6 = SVector{6}(v6)
+
+            # Warm up all functions (trigger compilation)
+            vec_to_so3(v3);
+            vec_to_so3(sv3)
+            so3_to_vec(so3);
+            so3_to_vec(sso3)
+            matrix_exp3(so3);
+            matrix_exp3(sso3)
+            matrix_log3(R);
+            matrix_log3(sR)
+            vec_to_se3(v6);
+            vec_to_se3(sv6)
+            se3_to_vec(se3);
+            se3_to_vec(sse3)
+            transform_inv(T);
+            transform_inv(sT)
+            adjoint_representation(T);
+            adjoint_representation(sT)
+            matrix_exp6(se3);
+            matrix_exp6(sse3)
+            matrix_log6(T);
+            matrix_log6(sT)
+            ad(v6);
+            ad(sv6)
+
+            # Test zero allocations with SMatrix/SVector inputs
+            @test @allocated(vec_to_so3(sv3)) == 0
+            @test @allocated(so3_to_vec(sso3)) == 0
+            @test @allocated(matrix_exp3(sso3)) == 0
+            @test @allocated(matrix_log3(sR)) == 0
+            @test @allocated(vec_to_se3(sv6)) == 0
+            @test @allocated(se3_to_vec(sse3)) == 0
+            @test @allocated(transform_inv(sT)) == 0
+            @test @allocated(adjoint_representation(sT)) == 0
+            @test @allocated(matrix_exp6(sse3)) == 0
+            @test @allocated(matrix_log6(sT)) == 0
+            @test @allocated(ad(sv6)) == 0
+
+            # Test zero allocations with regular Matrix/Vector inputs
+            @test @allocated(vec_to_so3(v3)) == 0
+            @test @allocated(so3_to_vec(so3)) == 0
+            @test @allocated(vec_to_se3(v6)) == 0
+            @test @allocated(se3_to_vec(se3)) == 0
+            @test @allocated(ad(v6)) == 0
         end
 
         @testset "cross-validate UR5 against Pinocchio" begin
