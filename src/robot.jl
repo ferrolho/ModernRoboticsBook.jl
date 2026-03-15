@@ -163,7 +163,7 @@ inverse_kinematics_space(
 
 # Convenience wrappers: dynamics
 
-function inverse_dynamics(
+function inverse_dynamics_rnea(
     robot::Robot,
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
@@ -171,7 +171,7 @@ function inverse_dynamics(
     gravity::AbstractVector = robot.gravity,
     tip_wrench::AbstractVector = zeros(6),
 )
-    inverse_dynamics(
+    inverse_dynamics_rnea(
         joint_positions,
         joint_velocities,
         joint_accelerations,
@@ -183,21 +183,21 @@ function inverse_dynamics(
     )
 end
 
-mass_matrix(robot::Robot, joint_positions::AbstractVector) = mass_matrix(
+mass_matrix_crba(robot::Robot, joint_positions::AbstractVector) = mass_matrix_crba(
     joint_positions,
     robot.link_frames,
     robot.spatial_inertias,
     robot.screw_axes_space,
 )
 
-mass_matrix!(
+mass_matrix_crba!(
     M::AbstractMatrix,
     robot::Robot,
     joint_positions::AbstractVector,
     Ai::AbstractVector,
     AdTi::AbstractVector,
     Gc::AbstractVector,
-) = mass_matrix!(
+) = mass_matrix_crba!(
     M,
     joint_positions,
     robot.link_frames,
@@ -248,7 +248,7 @@ function end_effector_forces(
     )
 end
 
-function forward_dynamics(
+function forward_dynamics_crba(
     robot::Robot,
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
@@ -256,7 +256,7 @@ function forward_dynamics(
     gravity::AbstractVector = robot.gravity,
     tip_wrench::AbstractVector = zeros(6),
 )
-    forward_dynamics(
+    forward_dynamics_crba(
         joint_positions,
         joint_velocities,
         joint_torques,

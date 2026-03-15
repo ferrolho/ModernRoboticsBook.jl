@@ -396,7 +396,7 @@ Aqua.test_all(ModernRoboticsBook)
             0 1 0 -0.089 0 0.425
         ]'
 
-        joint_torques_actual = inverse_dynamics(
+        joint_torques_actual = inverse_dynamics_rnea(
             joint_positions,
             joint_velocities,
             joint_accelerations,
@@ -411,7 +411,7 @@ Aqua.test_all(ModernRoboticsBook)
               [74.69616155287451, -33.06766015851458, -3.230573137901424]
 
         @test isapprox(
-            mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes),
+            mass_matrix_crba(joint_positions, link_frames, spatial_inertias, screw_axes),
             [
                 22.5433 -0.307147 -0.00718426
                 -0.307147 1.96851 0.432157
@@ -457,7 +457,7 @@ Aqua.test_all(ModernRoboticsBook)
         ]
 
         joint_torques = [0.5, 0.6, 0.7]
-        @test forward_dynamics(
+        @test forward_dynamics_crba(
             joint_positions,
             joint_velocities,
             joint_torques,
@@ -930,8 +930,9 @@ Aqua.test_all(ModernRoboticsBook)
             Ftip = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
             # Inverse dynamics via Robot wrapper must match raw function
-            tau_robot = inverse_dynamics(robot, q, dq, ddq; gravity = g, tip_wrench = Ftip)
-            tau_raw = inverse_dynamics(
+            tau_robot =
+                inverse_dynamics_rnea(robot, q, dq, ddq; gravity = g, tip_wrench = Ftip)
+            tau_raw = inverse_dynamics_rnea(
                 q,
                 dq,
                 ddq,
@@ -944,7 +945,7 @@ Aqua.test_all(ModernRoboticsBook)
             @test tau_robot ≈ tau_raw
 
             # Mass matrix
-            @test mass_matrix(robot, q) ≈ mass_matrix(
+            @test mass_matrix_crba(robot, q) ≈ mass_matrix_crba(
                 q,
                 robot.link_frames,
                 robot.spatial_inertias,
@@ -980,14 +981,14 @@ Aqua.test_all(ModernRoboticsBook)
 
             # Forward dynamics
             joint_torques = [0.5, 0.6, 0.7]
-            @test forward_dynamics(
+            @test forward_dynamics_crba(
                 robot,
                 q,
                 dq,
                 joint_torques;
                 gravity = g,
                 tip_wrench = Ftip,
-            ) ≈ forward_dynamics(
+            ) ≈ forward_dynamics_crba(
                 q,
                 dq,
                 joint_torques,
@@ -1008,11 +1009,11 @@ Aqua.test_all(ModernRoboticsBook)
             g = [0.0, 0.0, -9.8]
             Ftip = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-            @test inverse_dynamics(robot, q, dq, ddq; gravity = g, tip_wrench = Ftip) ≈
+            @test inverse_dynamics_rnea(robot, q, dq, ddq; gravity = g, tip_wrench = Ftip) ≈
                   [74.69616155287451, -33.06766015851458, -3.230573137901424]
 
             @test isapprox(
-                mass_matrix(robot, q),
+                mass_matrix_crba(robot, q),
                 [
                     22.5433 -0.307147 -0.00718426
                     -0.307147 1.96851 0.432157
@@ -1115,9 +1116,9 @@ Aqua.test_all(ModernRoboticsBook)
                     c_ref = Float64.(cfg["coriolis_forces"])
 
                     @test forward_kinematics_space(robot, q) ≈ T_ref atol = 1e-6
-                    @test mass_matrix(robot, q) ≈ M_ref atol = 1e-6
+                    @test mass_matrix_crba(robot, q) ≈ M_ref atol = 1e-6
                     @test gravity_forces(robot, q) ≈ g_ref atol = 1e-6
-                    @test inverse_dynamics(robot, q, v, a) ≈ tau_ref atol = 1e-6
+                    @test inverse_dynamics_rnea(robot, q, v, a) ≈ tau_ref atol = 1e-6
                     @test velocity_quadratic_forces(robot, q, v) ≈ c_ref atol = 1e-6
                 end
             end

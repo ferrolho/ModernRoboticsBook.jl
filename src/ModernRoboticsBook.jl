@@ -36,15 +36,15 @@ export near_zero,
     inverse_kinematics_body,
     inverse_kinematics_space,
     ad,
-    inverse_dynamics,
-    inverse_dynamics!,
-    mass_matrix,
-    mass_matrix!,
+    inverse_dynamics_rnea,
+    inverse_dynamics_rnea!,
+    mass_matrix_crba,
+    mass_matrix_crba!,
     mass_matrix_rnea,
     velocity_quadratic_forces,
     gravity_forces,
     end_effector_forces,
-    forward_dynamics,
+    forward_dynamics_crba,
     forward_dynamics_rnea,
     euler_step,
     inverse_dynamics_trajectory,
@@ -1255,7 +1255,7 @@ function ad(V::AbstractVector)
 end
 
 """
-    inverse_dynamics(joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
+    inverse_dynamics_rnea(joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes inverse dynamics in the space frame for an open chain robot using
 forward-backward Newton-Euler iterations.
@@ -1273,7 +1273,7 @@ forward-backward Newton-Euler iterations.
 
     This is ``O(n)`` in the number of joints — much faster than forming and inverting
     the full dynamics equation. It is also the workhorse behind most dynamics
-    computations: [`mass_matrix`](@ref), [`velocity_quadratic_forces`](@ref),
+    computations: [`mass_matrix_crba`](@ref), [`velocity_quadratic_forces`](@ref),
     [`gravity_forces`](@ref), and [`end_effector_forces`](@ref) are all computed by
     calling this function with specific inputs zeroed out.
 
@@ -1292,14 +1292,14 @@ The ``n``-vector of required joint forces/torques.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> inverse_dynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
+julia> inverse_dynamics_rnea([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [2, 1.5, 1], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   74.6961615528745
  -33.067660158514585
   -3.2305731379014246
 ```
 """
-function inverse_dynamics(
+function inverse_dynamics_rnea(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     joint_accelerations::AbstractVector,
@@ -1315,7 +1315,7 @@ function inverse_dynamics(
     AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
     Vi = Vector{SVector{6,Float64}}(undef, n + 1)
     Vdi = Vector{SVector{6,Float64}}(undef, n + 1)
-    inverse_dynamics!(
+    inverse_dynamics_rnea!(
         joint_torques,
         joint_positions,
         joint_velocities,
@@ -1333,13 +1333,13 @@ function inverse_dynamics(
 end
 
 """
-    inverse_dynamics!(joint_torques, joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Vi, Vdi)
+    inverse_dynamics_rnea!(joint_torques, joint_positions, joint_velocities, joint_accelerations, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Vi, Vdi)
 
-In-place version of [`inverse_dynamics`](@ref). Writes the result into `joint_torques`.
+In-place version of [`inverse_dynamics_rnea`](@ref). Writes the result into `joint_torques`.
 The workspace vectors `Ai` (length n), `AdTi` (length n+1), `Vi` (length n+1),
 and `Vdi` (length n+1) must be pre-allocated.
 """
-function inverse_dynamics!(
+function inverse_dynamics_rnea!(
     joint_torques::AbstractVector,
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
@@ -1386,7 +1386,7 @@ function inverse_dynamics!(
 end
 
 """
-    mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)
+    mass_matrix_crba(joint_positions, link_frames, spatial_inertias, screw_axes)
 
 Computes the mass matrix ``M(\\theta)`` of an open chain robot using the
 **Composite Rigid Body Algorithm (CRBA)**.
@@ -1401,7 +1401,7 @@ Computes the mass matrix ``M(\\theta)`` of an open chain robot using the
 
 !!! details "Educational note"
     The textbook (Chapter 8.2) teaches a simpler approach that calls
-    [`inverse_dynamics`](@ref) ``n`` times with unit accelerations: "what torques
+    [`inverse_dynamics_rnea`](@ref) ``n`` times with unit accelerations: "what torques
     are needed for unit acceleration of joint ``i``?" Each call produces one column
     of ``M(\\theta)``. This builds intuition but requires ``n`` full Newton-Euler
     passes. CRBA computes the same result with one forward pass and one backward
@@ -1419,14 +1419,14 @@ The ``n×n`` mass matrix ``M(\\theta)``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> mass_matrix([0.1, 0.1, 0.1], link_frames, spatial_inertias, screw_axes)
+julia> mass_matrix_crba([0.1, 0.1, 0.1], link_frames, spatial_inertias, screw_axes)
 3×3 Matrix{Float64}:
  22.5433      -0.307147  -0.00718426
  -0.307147     1.96851    0.432157
  -0.00718426   0.432157   0.191631
 ```
 """
-function mass_matrix(
+function mass_matrix_crba(
     joint_positions::AbstractVector,
     link_frames::AbstractVector,
     spatial_inertias::AbstractVector,
@@ -1437,7 +1437,7 @@ function mass_matrix(
     Ai = Vector{SVector{6,Float64}}(undef, n)
     AdTi = Vector{SMatrix{6,6,Float64,36}}(undef, n + 1)
     Gc = Vector{SMatrix{6,6,Float64,36}}(undef, n)
-    mass_matrix!(
+    mass_matrix_crba!(
         M,
         joint_positions,
         link_frames,
@@ -1450,13 +1450,13 @@ function mass_matrix(
 end
 
 """
-    mass_matrix!(M, joint_positions, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Gc)
+    mass_matrix_crba!(M, joint_positions, link_frames, spatial_inertias, screw_axes, Ai, AdTi, Gc)
 
-In-place version of [`mass_matrix`](@ref) using the Composite Rigid Body Algorithm (CRBA).
+In-place version of [`mass_matrix_crba`](@ref) using the Composite Rigid Body Algorithm (CRBA).
 Writes the result into `M`. The workspace vectors `Ai` (length n), `AdTi` (length n+1),
 and `Gc` (length n) must be pre-allocated.
 """
-function mass_matrix!(
+function mass_matrix_crba!(
     M::AbstractMatrix,
     joint_positions::AbstractVector,
     link_frames::AbstractVector,
@@ -1507,8 +1507,8 @@ end
     mass_matrix_rnea(joint_positions, link_frames, spatial_inertias, screw_axes)
 
 Computes the mass matrix using the textbook algorithm (Chapter 8.2): calls
-[`inverse_dynamics`](@ref) ``n`` times, each with a unit acceleration vector.
-This is slower than [`mass_matrix`](@ref) (which uses CRBA) but directly
+[`inverse_dynamics_rnea`](@ref) ``n`` times, each with a unit acceleration vector.
+This is slower than [`mass_matrix_crba`](@ref) (which uses CRBA) but directly
 illustrates that column ``i`` of ``M(\\theta)`` is the torque needed for unit
 acceleration of joint ``i``.
 """
@@ -1526,7 +1526,7 @@ function mass_matrix_rnea(
     zero_F = zeros(6)
     for i = 1:n
         ddq[i] = 1
-        M[:, i] = inverse_dynamics(
+        M[:, i] = inverse_dynamics_rnea(
             joint_positions,
             zero_dq,
             ddq,
@@ -1545,7 +1545,7 @@ end
     velocity_quadratic_forces(joint_positions, joint_velocities, link_frames, spatial_inertias, screw_axes)
 
 Computes the Coriolis and centripetal terms ``c(\\theta, \\dot{\\theta})`` in the inverse
-dynamics of an open chain robot. Calls [`inverse_dynamics`](@ref) with `gravity = 0`,
+dynamics of an open chain robot. Calls [`inverse_dynamics_rnea`](@ref) with `gravity = 0`,
 `tip_wrench = 0`, and `joint_accelerations = 0`.
 
 # Arguments
@@ -1574,7 +1574,7 @@ function velocity_quadratic_forces(
     spatial_inertias::AbstractVector,
     screw_axes::AbstractMatrix,
 )
-    inverse_dynamics(
+    inverse_dynamics_rnea(
         joint_positions,
         joint_velocities,
         zeros(length(joint_positions)),
@@ -1590,7 +1590,7 @@ end
     gravity_forces(joint_positions, gravity, link_frames, spatial_inertias, screw_axes)
 
 Computes the joint forces/torques an open chain robot requires to overcome gravity at
-its configuration. Calls [`inverse_dynamics`](@ref) with `joint_velocities = 0`,
+its configuration. Calls [`inverse_dynamics_rnea`](@ref) with `joint_velocities = 0`,
 `joint_accelerations = 0`, and `tip_wrench = 0`.
 
 # Arguments
@@ -1620,7 +1620,7 @@ function gravity_forces(
     screw_axes::AbstractMatrix,
 )
     n = length(joint_positions)
-    inverse_dynamics(
+    inverse_dynamics_rnea(
         joint_positions,
         zeros(n),
         zeros(n),
@@ -1645,7 +1645,7 @@ Computes the joint forces/torques an open chain robot requires only to create th
 - `screw_axes`: the screw axes `Si` of the joints in a space frame, in the format of a matrix with axes as the columns.
 
 Returns the joint forces and torques required only to create the end-effector force `tip_wrench`.
-This function calls inverse_dynamics with `gravity = 0`, `joint_velocities = 0`, and `joint_accelerations = 0`.
+This function calls inverse_dynamics_rnea with `gravity = 0`, `joint_velocities = 0`, and `joint_accelerations = 0`.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
@@ -1772,7 +1772,7 @@ function end_effector_forces(
     screw_axes::AbstractMatrix,
 )
     n = length(joint_positions)
-    inverse_dynamics(
+    inverse_dynamics_rnea(
         joint_positions,
         zeros(n),
         zeros(n),
@@ -1785,7 +1785,7 @@ function end_effector_forces(
 end
 
 """
-    forward_dynamics(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
+    forward_dynamics_crba(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes forward dynamics in the space frame for an open chain robot.
 
@@ -1797,13 +1797,13 @@ Computes forward dynamics in the space frame for an open chain robot.
     \\ddot{\\theta} = M(\\theta)^{-1} \\left[ \\tau - c(\\theta,\\dot{\\theta}) - g(\\theta) - J^T(\\theta) \\mathcal{F}_{\\text{tip}} \\right]
     ```
 
-    where ``M`` is the [mass matrix](@ref mass_matrix) (computed via CRBA), and the
-    right-hand side is computed via a single [`inverse_dynamics`](@ref) call with zero
+    where ``M`` is the [mass matrix](@ref mass_matrix_crba) (computed via CRBA), and the
+    right-hand side is computed via a single [`inverse_dynamics_rnea`](@ref) call with zero
     accelerations that captures velocity-dependent, gravitational, and tip wrench forces.
 
 !!! details "Educational note"
     The textbook computes forward dynamics by explicitly forming ``M^{-1}`` and calling
-    [`inverse_dynamics`](@ref) separately for Coriolis, gravity, and tip wrench terms.
+    [`inverse_dynamics_rnea`](@ref) separately for Coriolis, gravity, and tip wrench terms.
     This implementation combines these into a single RNEA call and uses `M \\ b` (LU
     factorization) instead of explicit inversion, which is both faster and more
     numerically stable. See [`forward_dynamics_rnea`](@ref) for the textbook algorithm.
@@ -1823,14 +1823,14 @@ The ``n``-vector of joint accelerations ``\\ddot{\\theta}``.
 
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
-julia> forward_dynamics([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.5, 0.6, 0.7], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
+julia> forward_dynamics_crba([0.1, 0.1, 0.1], [0.1, 0.2, 0.3], [0.5, 0.6, 0.7], [0, 0, -9.8], [1, 1, 1, 1, 1, 1], link_frames, spatial_inertias, screw_axes)
 3-element Vector{Float64}:
   -0.9739290670855625
   25.584667840340547
  -32.91499212478147
 ```
 """
-function forward_dynamics(
+function forward_dynamics_crba(
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     joint_torques::AbstractVector,
@@ -1841,9 +1841,9 @@ function forward_dynamics(
     screw_axes::AbstractMatrix,
 )
     # Use the explicit M⁻¹(τ - c - g - J^T F_tip) approach with CRBA for the mass matrix
-    mass = mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)
+    mass = mass_matrix_crba(joint_positions, link_frames, spatial_inertias, screw_axes)
     tau_rhs =
-        joint_torques - inverse_dynamics(
+        joint_torques - inverse_dynamics_rnea(
             joint_positions,
             joint_velocities,
             zeros(length(joint_positions)),
@@ -1860,8 +1860,8 @@ end
     forward_dynamics_rnea(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes forward dynamics using the textbook algorithm (Chapter 8.3): explicitly
-forms ``M^{-1}`` and calls [`inverse_dynamics`](@ref) separately for Coriolis,
-gravity, and tip wrench terms. This is slower than [`forward_dynamics`](@ref)
+forms ``M^{-1}`` and calls [`inverse_dynamics_rnea`](@ref) separately for Coriolis,
+gravity, and tip wrench terms. This is slower than [`forward_dynamics_crba`](@ref)
 (which uses CRBA + single RNEA + backslash) but directly mirrors the textbook
 equation ``\\ddot{\\theta} = M^{-1}[\\tau - c - g - J^T F_{\\text{tip}}]``.
 """
@@ -1875,7 +1875,7 @@ function forward_dynamics_rnea(
     spatial_inertias::AbstractVector,
     screw_axes::AbstractMatrix,
 )
-    LA.inv(mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)) * (
+    LA.inv(mass_matrix_crba(joint_positions, link_frames, spatial_inertias, screw_axes)) * (
         joint_torques - velocity_quadratic_forces(
             joint_positions,
             joint_velocities,
@@ -1933,7 +1933,7 @@ end
     inverse_dynamics_trajectory(joint_position_traj, joint_velocity_traj, joint_acceleration_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes)
 
 Calculates the joint forces/torques required to move the serial chain along the given
-trajectory using [`inverse_dynamics`](@ref) at each timestep.
+trajectory using [`inverse_dynamics_rnea`](@ref) at each timestep.
 
 # Arguments
 - `joint_position_traj`: an ``N×n`` matrix of joint variables, where row ``i`` is the joint vector at timestep ``i``.
@@ -1980,7 +1980,7 @@ function inverse_dynamics_trajectory(
     joint_torque_traj = copy(joint_position_traj)
 
     for i in axes(joint_position_traj, 2)
-        joint_torque_traj[:, i] = inverse_dynamics(
+        joint_torque_traj[:, i] = inverse_dynamics_rnea(
             joint_position_traj[:, i],
             joint_velocity_traj[:, i],
             joint_acceleration_traj[:, i],
@@ -1999,7 +1999,7 @@ end
     forward_dynamics_trajectory(joint_positions, joint_velocities, joint_torque_traj, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, timestep, integration_resolution)
 
 Simulates the motion of a serial chain given an open-loop history of joint
-forces/torques. Uses [`forward_dynamics`](@ref) with [`euler_step`](@ref) integration at
+forces/torques. Uses [`forward_dynamics_crba`](@ref) with [`euler_step`](@ref) integration at
 each timestep.
 
 # Arguments
@@ -2052,7 +2052,7 @@ function forward_dynamics_trajectory(
 
     for i = first(axes(joint_torque_traj, 2)):(last(axes(joint_torque_traj, 2))-1)
         for j = 1:integration_resolution
-            joint_accelerations = forward_dynamics(
+            joint_accelerations = forward_dynamics_crba(
                 joint_positions,
                 joint_velocities,
                 joint_torque_traj[:, i],
@@ -2384,11 +2384,11 @@ function computed_torque(
     Kd::Number,
 )
     e = desired_joint_positions - joint_positions
-    mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes) * (
+    mass_matrix_crba(joint_positions, link_frames, spatial_inertias, screw_axes) * (
         Kp * e +
         Ki * (error_integral + e) +
         Kd * (desired_joint_velocities - joint_velocities)
-    ) + inverse_dynamics(
+    ) + inverse_dynamics_rnea(
         joint_positions,
         joint_velocities,
         desired_joint_accelerations,
@@ -2404,7 +2404,7 @@ end
     simulate_control(joint_positions, joint_velocities, gravity, tip_wrench_traj, link_frames, spatial_inertias, screw_axes, desired_joint_position_traj, desired_joint_velocity_traj, desired_joint_acceleration_traj, estimated_gravity, estimated_link_frames, estimated_spatial_inertias, Kp, Ki, Kd, timestep, integration_resolution)
 
 Simulates the [`computed_torque`](@ref) controller over a given desired trajectory using
-[`forward_dynamics`](@ref) and numerical integration. The controller may use different
+[`forward_dynamics_crba`](@ref) and numerical integration. The controller may use different
 (possibly inaccurate) dynamics parameters
 (`estimated_gravity`, `estimated_link_frames`, `estimated_spatial_inertias`) while the
 actual forward dynamics simulation uses the true parameters (`gravity`, `link_frames`,
@@ -2509,7 +2509,7 @@ function simulate_control(
         )
 
         for j = 1:integration_resolution
-            joint_accelerations = forward_dynamics(
+            joint_accelerations = forward_dynamics_crba(
                 current_positions,
                 current_velocities,
                 joint_torques,
