@@ -708,11 +708,19 @@ is_se3(mat::AbstractMatrix) = abs(distance_to_se3(mat)) < 1e-3
 
 Computes forward kinematics in the body frame for an open chain robot.
 
-!!! info "What is the body frame?"
-    In robotics, we often need to know where the end-effector is given the joint angles.
-    The "body frame" formulation expresses the joint screw axes as seen from the
-    end-effector's perspective. This is equivalent to `forward_kinematics_space` but can
-    be more convenient when the task is defined relative to the tool.
+!!! info "Product of Exponentials (body frame)"
+    Forward kinematics computes the end-effector pose from joint positions using the
+    Product of Exponentials (PoE) formula. Each joint's contribution is a matrix
+    exponential ``e^{[B_i]\\theta_i}`` that "moves" the end-effector from its home pose ``M``:
+
+    ```math
+    T(\\theta) = M \\, e^{[B_1]\\theta_1} \\, e^{[B_2]\\theta_2} \\cdots e^{[B_n]\\theta_n}
+    ```
+
+    The body-frame formulation expresses the screw axes as seen from the end-effector's
+    perspective. This is equivalent to [`forward_kinematics_space`](@ref) (which uses
+    ``T = e^{[S_1]\\theta_1} \\cdots e^{[S_n]\\theta_n} \\, M``) but can be more
+    convenient when the task is defined relative to the tool.
 
 # Arguments
 - `home_ee_pose`: the ``4 \\times 4`` end-effector pose ``M \\in`` SE(3) when all joint positions are zero (home configuration).
@@ -759,10 +767,20 @@ end
 
 Computes forward kinematics in the space frame for an open chain robot.
 
-!!! info "What is the space frame?"
-    The "space frame" formulation expresses joint screw axes relative to a fixed base
-    frame. Both body and space formulations compute the same end-effector pose — the
-    choice depends on which frame your screw axes are defined in.
+!!! info "Product of Exponentials (space frame)"
+    Forward kinematics computes the end-effector pose from joint positions using the
+    Product of Exponentials (PoE) formula. Each joint's contribution is a matrix
+    exponential ``e^{[S_i]\\theta_i}`` applied to the home pose ``M``:
+
+    ```math
+    T(\\theta) = e^{[S_1]\\theta_1} \\, e^{[S_2]\\theta_2} \\cdots e^{[S_n]\\theta_n} \\, M
+    ```
+
+    The space-frame formulation expresses screw axes relative to a fixed base frame.
+    This is equivalent to [`forward_kinematics_body`](@ref) (which uses
+    ``T = M \\, e^{[B_1]\\theta_1} \\cdots e^{[B_n]\\theta_n}``) — both compute the
+    same end-effector pose; the choice depends on which frame your screw axes are
+    defined in.
 
 # Arguments
 - `home_ee_pose`: the ``4 \\times 4`` end-effector pose ``M \\in`` SE(3) when all joint positions are zero (home configuration).
@@ -1106,12 +1124,22 @@ end
 Computes inverse dynamics in the space frame for an open chain robot using
 forward-backward Newton-Euler iterations.
 
-!!! info "What is inverse dynamics?"
+!!! info "Recursive Newton-Euler algorithm"
     Inverse dynamics answers: "what joint torques do I need to produce a desired motion?"
-    Given the joint positions, velocities, and accelerations, it computes the required
-    forces using the recursive Newton-Euler algorithm. This is the workhorse behind most
-    dynamics computations — the mass matrix, Coriolis terms, and gravity vector are all
-    computed by calling this function with special inputs.
+    It uses the recursive Newton-Euler algorithm, which works in two passes:
+
+    1. **Forward pass** (base → tip): propagate link velocities and accelerations
+       outward along the chain, computing each link's twist and acceleration from its
+       parent's motion plus the joint's contribution.
+    2. **Backward pass** (tip → base): propagate wrenches inward, computing the force
+       each link needs (from its inertia and acceleration) and projecting onto joint
+       axes to get the required torque.
+
+    This is ``O(n)`` in the number of joints — much faster than forming and inverting
+    the full dynamics equation. It is also the workhorse behind most dynamics
+    computations: [`mass_matrix`](@ref), [`velocity_quadratic_forces`](@ref),
+    [`gravity_forces`](@ref), and [`end_effector_forces`](@ref) are all computed by
+    calling this function with specific inputs zeroed out.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1188,12 +1216,16 @@ Calls [`inverse_dynamics`](@ref) ``n`` times, each time passing a ``\\ddot{\\the
 vector with a single element equal to one and all other inputs set to zero. Each call
 generates a single column of ``M(\\theta)``.
 
-!!! info "What is the mass matrix?"
+!!! info "How is the mass matrix computed?"
     The mass matrix ``M(\\theta)`` relates joint accelerations to joint torques in the
     absence of velocity-dependent and gravitational forces:
     ``\\tau = M(\\theta) \\ddot{\\theta}``. It captures how the robot's inertia is
-    distributed across its joints at a given configuration. This function computes it by
-    calling [`inverse_dynamics`](@ref) ``n`` times, once per joint.
+    distributed across its joints at a given configuration.
+
+    Rather than forming ``M`` symbolically, this function uses a clever trick: it calls
+    [`inverse_dynamics`](@ref) ``n`` times with gravity, velocities, and tip wrench all
+    set to zero, and each time sets ``\\ddot{\\theta}`` to a unit vector ``e_i``. The
+    resulting torque vector is exactly the ``i``-th column of ``M(\\theta)``.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1487,8 +1519,20 @@ end
     forward_dynamics(joint_positions, joint_velocities, joint_torques, gravity, tip_wrench, link_frames, spatial_inertias, screw_axes)
 
 Computes forward dynamics in the space frame for an open chain robot.
-Computes ``\\ddot{\\theta}`` by solving
-``M(\\theta)\\ddot{\\theta} = \\tau - c(\\theta,\\dot{\\theta}) - g(\\theta) - J^T(\\theta) \\mathcal{F}_{\\text{tip}}``.
+
+!!! info "How does forward dynamics work?"
+    Forward dynamics answers: "given the applied torques, how does the robot accelerate?"
+    It solves the manipulator equation for joint accelerations:
+
+    ```math
+    \\ddot{\\theta} = M(\\theta)^{-1} \\left[ \\tau - c(\\theta,\\dot{\\theta}) - g(\\theta) - J^T(\\theta) \\mathcal{F}_{\\text{tip}} \\right]
+    ```
+
+    where ``M`` is the [mass matrix](@ref mass_matrix), ``c`` captures
+    [velocity-dependent (Coriolis/centrifugal) forces](@ref velocity_quadratic_forces),
+    ``g`` captures [gravitational forces](@ref gravity_forces), and the last term
+    captures [end-effector contact forces](@ref end_effector_forces). Each of these
+    terms is computed via [`inverse_dynamics`](@ref) with appropriate inputs.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1976,12 +2020,17 @@ where ``e = \\theta_d - \\theta``, ``\\dot{e} = \\dot{\\theta}_d - \\dot{\\theta
 ``\\widehat{M}`` is the model of the robot's mass matrix, and ``\\widehat{h}`` is the
 model of centripetal, Coriolis, and gravitational forces.
 
-!!! info "What is computed torque control?"
-    Computed torque control (also called inverse dynamics control) uses a full dynamic
-    model of the robot to cancel out nonlinear effects (Coriolis, centripetal, gravity),
-    then applies a PID-like feedback law on the linearised system. This achieves precise
-    trajectory tracking even at high speeds, unlike simpler PD controllers that ignore
-    the robot's dynamics.
+!!! info "How does computed torque control work?"
+    Computed torque control (also called inverse dynamics control) combines two components:
+
+    1. **Feedforward**: uses the robot's dynamics model (``\\widehat{M}``, ``\\widehat{h}``)
+       to compute the torques needed for the desired trajectory, cancelling out nonlinear
+       effects (Coriolis, centripetal, gravity).
+    2. **Feedback**: a PID law (``K_p e + K_i \\int e + K_d \\dot{e}``) corrects for
+       tracking errors and model inaccuracies.
+
+    Together, this linearises the closed-loop system so that each joint behaves like a
+    simple second-order system, achieving precise trajectory tracking even at high speeds.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of current joint variables ``\\theta``.
