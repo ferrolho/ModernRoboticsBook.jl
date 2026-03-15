@@ -61,7 +61,7 @@ The textbook and companion materials are available at http://modernrobotics.org.
 [ci-img]: https://github.com/ferrolho/ModernRoboticsBook.jl/actions/workflows/CI.yml/badge.svg?branch=master
 [ci-url]: https://github.com/ferrolho/ModernRoboticsBook.jl/actions/workflows/CI.yml
 
-[codecov-img]: https://codecov.io/gh/ferrolho/ModernRoboticsBook.jl/branch/master/graph/badge.svg
+[codecov-img]: https://codecov.io/gh/ferrolho/ModernRoboticsBook.jl/graph/badge.svg?token=RTg8Y7KXXA
 [codecov-url]: https://codecov.io/gh/ferrolho/ModernRoboticsBook.jl
 
 [aqua-img]: https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg
