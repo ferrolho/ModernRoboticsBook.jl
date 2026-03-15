@@ -1216,24 +1216,24 @@ function inverse_dynamics(
     joint_torques = zeros(eltype(joint_positions), n)
 
     for i = 1:n
-        Mi *= link_frames[i]
-        Ai[:, i] = adjoint_representation(transform_inv(Mi)) * screw_axes[:, i]
+        Mi = Mi * link_frames[i]
+        @views Ai[:, i] = adjoint_representation(transform_inv(Mi)) * screw_axes[:, i]
         AdTi[i] = adjoint_representation(
-            matrix_exp6(vec_to_se3(Ai[:, i] * -joint_positions[i])) *
+            matrix_exp6(vec_to_se3(@view(Ai[:, i]) * -joint_positions[i])) *
             transform_inv(link_frames[i]),
         )
-        Vi[:, i+1] = AdTi[i] * Vi[:, i] + Ai[:, i] * joint_velocities[i]
-        Vdi[:, i+1] =
+        @views Vi[:, i+1] = AdTi[i] * Vi[:, i] + Ai[:, i] * joint_velocities[i]
+        @views Vdi[:, i+1] =
             AdTi[i] * Vdi[:, i] +
             Ai[:, i] * joint_accelerations[i] +
             ad(Vi[:, i+1]) * Ai[:, i] * joint_velocities[i]
     end
 
     for i = n:-1:1
-        Fi =
+        @views Fi =
             AdTi[i+1]' * Fi + spatial_inertias[i] * Vdi[:, i+1] -
             ad(Vi[:, i+1])' * spatial_inertias[i] * Vi[:, i+1]
-        joint_torques[i] = Fi' * Ai[:, i]
+        @views joint_torques[i] = Fi' * Ai[:, i]
     end
 
     return joint_torques
