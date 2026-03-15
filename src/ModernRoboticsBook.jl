@@ -26,9 +26,13 @@ export near_zero,
     is_so3,
     is_se3,
     forward_kinematics_body,
+    forward_kinematics_body!,
     forward_kinematics_space,
+    forward_kinematics_space!,
     jacobian_body,
+    jacobian_body!,
     jacobian_space,
+    jacobian_space!,
     inverse_kinematics_body,
     inverse_kinematics_space,
     ad,
@@ -797,7 +801,7 @@ julia> body_screw_axes = [  0  0 -1  2  0  0   ;
 julia> joint_positions = [ π/2, 3, π ];
 
 julia> forward_kinematics_body(home_ee_pose, body_screw_axes, joint_positions)
-4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
+4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
   0.0          0.0          -1.0   1.68584
@@ -809,11 +813,27 @@ function forward_kinematics_body(
     body_screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
-    T = SMatrix{4,4}(home_ee_pose)
+    T = similar(home_ee_pose, Float64, 4, 4)
+    forward_kinematics_body!(T, home_ee_pose, body_screw_axes, joint_positions)
+end
+
+"""
+    forward_kinematics_body!(T, home_ee_pose, body_screw_axes, joint_positions)
+
+In-place version of [`forward_kinematics_body`](@ref). Writes the result into `T`.
+"""
+function forward_kinematics_body!(
+    T::AbstractMatrix,
+    home_ee_pose::AbstractMatrix,
+    body_screw_axes::AbstractMatrix,
+    joint_positions::AbstractVector,
+)
+    Ts = SMatrix{4,4}(home_ee_pose)
     for i in eachindex(joint_positions)
         Bi = SVector{6}(@view body_screw_axes[:, i])
-        T = T * matrix_exp6(vec_to_se3(Bi * joint_positions[i]))
+        Ts = Ts * matrix_exp6(vec_to_se3(Bi * joint_positions[i]))
     end
+    T .= Ts
     T
 end
 
@@ -859,7 +879,7 @@ julia> screw_axes = [  0  0  1  4  0  0   ;
 julia> joint_positions = [ π/2, 3, π ];
 
 julia> forward_kinematics_space(home_ee_pose, screw_axes, joint_positions)
-4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
+4×4 Matrix{Float64}:
  -1.14424e-17  1.0           0.0  -5.0
   1.0          1.14424e-17   0.0   4.0
   0.0          0.0          -1.0   1.68584
@@ -871,11 +891,27 @@ function forward_kinematics_space(
     screw_axes::AbstractMatrix,
     joint_positions::AbstractVector,
 )
-    T = SMatrix{4,4}(home_ee_pose)
+    T = similar(home_ee_pose, Float64, 4, 4)
+    forward_kinematics_space!(T, home_ee_pose, screw_axes, joint_positions)
+end
+
+"""
+    forward_kinematics_space!(T, home_ee_pose, screw_axes, joint_positions)
+
+In-place version of [`forward_kinematics_space`](@ref). Writes the result into `T`.
+"""
+function forward_kinematics_space!(
+    T::AbstractMatrix,
+    home_ee_pose::AbstractMatrix,
+    screw_axes::AbstractMatrix,
+    joint_positions::AbstractVector,
+)
+    Ts = SMatrix{4,4}(home_ee_pose)
     for i in reverse(eachindex(joint_positions))
         Si = SVector{6}(@view screw_axes[:, i])
-        T = matrix_exp6(vec_to_se3(Si * joint_positions[i])) * T
+        Ts = matrix_exp6(vec_to_se3(Si * joint_positions[i])) * Ts
     end
+    T .= Ts
     T
 end
 
@@ -921,8 +957,22 @@ julia> jacobian_body(body_screw_axes, joint_positions)
 ```
 """
 function jacobian_body(body_screw_axes::AbstractMatrix, joint_positions::AbstractVector)
+    Jb = similar(body_screw_axes, Float64)
+    jacobian_body!(Jb, body_screw_axes, joint_positions)
+end
+
+"""
+    jacobian_body!(Jb, body_screw_axes, joint_positions)
+
+In-place version of [`jacobian_body`](@ref). Writes the result into `Jb`.
+"""
+function jacobian_body!(
+    Jb::AbstractMatrix,
+    body_screw_axes::AbstractMatrix,
+    joint_positions::AbstractVector,
+)
+    Jb .= body_screw_axes
     T = SMatrix{4,4,Float64}(LA.I)
-    Jb = copy(body_screw_axes)
     for i in Iterators.reverse(firstindex(joint_positions):(lastindex(joint_positions)-1))
         Bi1 = SVector{6}(@view body_screw_axes[:, i+1])
         T = T * matrix_exp6(vec_to_se3(Bi1 * -joint_positions[i+1]))
@@ -970,8 +1020,22 @@ julia> jacobian_space(screw_axes, joint_positions)
 ```
 """
 function jacobian_space(screw_axes::AbstractMatrix, joint_positions::AbstractVector)
+    Js = similar(screw_axes, Float64)
+    jacobian_space!(Js, screw_axes, joint_positions)
+end
+
+"""
+    jacobian_space!(Js, screw_axes, joint_positions)
+
+In-place version of [`jacobian_space`](@ref). Writes the result into `Js`.
+"""
+function jacobian_space!(
+    Js::AbstractMatrix,
+    screw_axes::AbstractMatrix,
+    joint_positions::AbstractVector,
+)
+    Js .= screw_axes
     T = SMatrix{4,4,Float64}(LA.I)
-    Js = copy(screw_axes)
     for i = (firstindex(joint_positions)+1):lastindex(joint_positions)
         Si1 = SVector{6}(@view screw_axes[:, i-1])
         T = T * matrix_exp6(vec_to_se3(Si1 * joint_positions[i-1]))

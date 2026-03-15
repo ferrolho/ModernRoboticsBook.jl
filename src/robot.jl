@@ -100,24 +100,36 @@ end
 # Convenience wrappers: kinematics
 
 forward_kinematics_body(robot::Robot, joint_positions::AbstractVector) =
-    forward_kinematics_body(
-        copy(robot.home_ee_pose),
-        robot.screw_axes_body,
-        joint_positions,
-    )
+    forward_kinematics_body(robot.home_ee_pose, robot.screw_axes_body, joint_positions)
+
+forward_kinematics_body!(T::AbstractMatrix, robot::Robot, joint_positions::AbstractVector) =
+    forward_kinematics_body!(T, robot.home_ee_pose, robot.screw_axes_body, joint_positions)
 
 forward_kinematics_space(robot::Robot, joint_positions::AbstractVector) =
-    forward_kinematics_space(
-        copy(robot.home_ee_pose),
-        robot.screw_axes_space,
-        joint_positions,
-    )
+    forward_kinematics_space(robot.home_ee_pose, robot.screw_axes_space, joint_positions)
+
+forward_kinematics_space!(
+    T::AbstractMatrix,
+    robot::Robot,
+    joint_positions::AbstractVector,
+) = forward_kinematics_space!(
+    T,
+    robot.home_ee_pose,
+    robot.screw_axes_space,
+    joint_positions,
+)
 
 jacobian_body(robot::Robot, joint_positions::AbstractVector) =
     jacobian_body(robot.screw_axes_body, joint_positions)
 
+jacobian_body!(J::AbstractMatrix, robot::Robot, joint_positions::AbstractVector) =
+    jacobian_body!(J, robot.screw_axes_body, joint_positions)
+
 jacobian_space(robot::Robot, joint_positions::AbstractVector) =
     jacobian_space(robot.screw_axes_space, joint_positions)
+
+jacobian_space!(J::AbstractMatrix, robot::Robot, joint_positions::AbstractVector) =
+    jacobian_space!(J, robot.screw_axes_space, joint_positions)
 
 inverse_kinematics_body(
     robot::Robot,
