@@ -1715,11 +1715,16 @@ Computes forward dynamics in the space frame for an open chain robot.
     \\ddot{\\theta} = M(\\theta)^{-1} \\left[ \\tau - c(\\theta,\\dot{\\theta}) - g(\\theta) - J^T(\\theta) \\mathcal{F}_{\\text{tip}} \\right]
     ```
 
-    where ``M`` is the [mass matrix](@ref mass_matrix), ``c`` captures
-    [velocity-dependent (Coriolis/centrifugal) forces](@ref velocity_quadratic_forces),
-    ``g`` captures [gravitational forces](@ref gravity_forces), and the last term
-    captures [end-effector contact forces](@ref end_effector_forces). Each of these
-    terms is computed via [`inverse_dynamics`](@ref) with appropriate inputs.
+    where ``M`` is the [mass matrix](@ref mass_matrix) (computed via CRBA), and the
+    right-hand side is computed via a single [`inverse_dynamics`](@ref) call with zero
+    accelerations that captures velocity-dependent, gravitational, and tip wrench forces.
+
+!!! details "Educational note"
+    The textbook computes forward dynamics by explicitly forming ``M^{-1}`` and calling
+    [`inverse_dynamics`](@ref) separately for Coriolis, gravity, and tip wrench terms.
+    This implementation combines these into a single RNEA call and uses `M \\ b` (LU
+    factorization) instead of explicit inversion, which is both faster and more
+    numerically stable.
 
 # Arguments
 - `joint_positions`: the ``n``-vector of joint variables.
@@ -1753,27 +1758,20 @@ function forward_dynamics(
     spatial_inertias::AbstractVector,
     screw_axes::AbstractMatrix,
 )
-    LA.inv(mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)) * (
-        joint_torques - velocity_quadratic_forces(
+    # Use the explicit M⁻¹(τ - c - g - J^T F_tip) approach with CRBA for the mass matrix
+    mass = mass_matrix(joint_positions, link_frames, spatial_inertias, screw_axes)
+    tau_rhs =
+        joint_torques - inverse_dynamics(
             joint_positions,
             joint_velocities,
-            link_frames,
-            spatial_inertias,
-            screw_axes,
-        ) - gravity_forces(
-            joint_positions,
+            zeros(length(joint_positions)),
             gravity,
-            link_frames,
-            spatial_inertias,
-            screw_axes,
-        ) - end_effector_forces(
-            joint_positions,
             tip_wrench,
             link_frames,
             spatial_inertias,
             screw_axes,
         )
-    )
+    return mass \ tau_rhs
 end
 
 """
