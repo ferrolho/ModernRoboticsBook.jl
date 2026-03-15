@@ -929,7 +929,7 @@ Aqua.test_all(ModernRoboticsBook)
             Ftip = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
             # Inverse dynamics via Robot wrapper must match raw function
-            tau_robot = inverse_dynamics(robot, q, dq, ddq, g, Ftip)
+            tau_robot = inverse_dynamics(robot, q, dq, ddq; gravity = g, tip_wrench = Ftip)
             tau_raw = inverse_dynamics(
                 q,
                 dq,
@@ -960,7 +960,7 @@ Aqua.test_all(ModernRoboticsBook)
             )
 
             # Gravity forces
-            @test gravity_forces(robot, q, g) ≈ gravity_forces(
+            @test gravity_forces(robot, q; gravity = g) ≈ gravity_forces(
                 q,
                 g,
                 robot.link_frames,
@@ -979,7 +979,14 @@ Aqua.test_all(ModernRoboticsBook)
 
             # Forward dynamics
             joint_torques = [0.5, 0.6, 0.7]
-            @test forward_dynamics(robot, q, dq, joint_torques, g, Ftip) ≈ forward_dynamics(
+            @test forward_dynamics(
+                robot,
+                q,
+                dq,
+                joint_torques;
+                gravity = g,
+                tip_wrench = Ftip,
+            ) ≈ forward_dynamics(
                 q,
                 dq,
                 joint_torques,
@@ -1000,7 +1007,7 @@ Aqua.test_all(ModernRoboticsBook)
             g = [0.0, 0.0, -9.8]
             Ftip = [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
-            @test inverse_dynamics(robot, q, dq, ddq, g, Ftip) ≈
+            @test inverse_dynamics(robot, q, dq, ddq; gravity = g, tip_wrench = Ftip) ≈
                   [74.69616155287451, -33.06766015851458, -3.230573137901424]
 
             @test isapprox(
@@ -1037,6 +1044,7 @@ Aqua.test_all(ModernRoboticsBook)
         end
 
         @testset "cross-validate UR5 against Pinocchio" begin
+            # Pinocchio reference uses gravity [0, 0, -9.81] which matches our default
             robot = load_robot(:ur5)
             ref_path = joinpath(models_dir, "ur5_pinocchio_reference.json")
             ref = JSON.parsefile(ref_path)
@@ -1046,7 +1054,6 @@ Aqua.test_all(ModernRoboticsBook)
                     q = Float64.(cfg["q"])
                     v = Float64.(cfg["v"])
                     a = Float64.(cfg["a"])
-                    g = Float64.(ref["gravity"])
 
                     T_ref = _json_matrix(cfg["ee_pose"])
                     M_ref = _json_matrix(cfg["mass_matrix"])
@@ -1056,9 +1063,8 @@ Aqua.test_all(ModernRoboticsBook)
 
                     @test forward_kinematics_space(robot, q) ≈ T_ref atol = 1e-6
                     @test mass_matrix(robot, q) ≈ M_ref atol = 1e-6
-                    @test gravity_forces(robot, q, g) ≈ g_ref atol = 1e-6
-                    @test inverse_dynamics(robot, q, v, a, g, zeros(6)) ≈ tau_ref atol =
-                        1e-6
+                    @test gravity_forces(robot, q) ≈ g_ref atol = 1e-6
+                    @test inverse_dynamics(robot, q, v, a) ≈ tau_ref atol = 1e-6
                     @test velocity_quadratic_forces(robot, q, v) ≈ c_ref atol = 1e-6
                 end
             end

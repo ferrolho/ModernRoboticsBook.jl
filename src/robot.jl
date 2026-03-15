@@ -2,6 +2,8 @@ using JSON
 
 export Robot, load_robot
 
+const DEFAULT_GRAVITY = [0.0, 0.0, -9.81]
+
 """
     Robot
 
@@ -16,6 +18,7 @@ in the conventions of the Modern Robotics textbook.
 - `screw_axes_body::Matrix{Float64}`: joint screw axes in the end-effector (body) frame at the home configuration (6×n).
 - `link_frames::Vector{Matrix{Float64}}`: transforms ``M_{i-1,i}`` between consecutive link frames (n+1 matrices).
 - `spatial_inertias::Vector{Matrix{Float64}}`: spatial inertia matrices ``G_i`` for each link (n 6×6 matrices).
+- `gravity::Vector{Float64}`: gravity vector (default `[0, 0, -9.81]`).
 - `joint_names::Vector{String}`: joint names.
 - `joint_types::Vector{Symbol}`: joint types (`:revolute` or `:prismatic`).
 - `joint_limits::Vector{Tuple{Float64,Float64}}`: `(lower, upper)` position limits per joint.
@@ -28,20 +31,24 @@ struct Robot
     screw_axes_body::Matrix{Float64}
     link_frames::Vector{Matrix{Float64}}
     spatial_inertias::Vector{Matrix{Float64}}
+    gravity::Vector{Float64}
     joint_names::Vector{String}
     joint_types::Vector{Symbol}
     joint_limits::Vector{Tuple{Float64,Float64}}
 end
 
 """
-    load_robot(path::AbstractString) -> Robot
+    load_robot(path::AbstractString; gravity=$DEFAULT_GRAVITY) -> Robot
 
 Load a robot model from a JSON file.
 
 The JSON file should contain the robot's kinematic and dynamic parameters serialized
 by the companion Python converter script (`robots/convert.py`).
+
+The `gravity` keyword argument sets the gravity vector for the robot's operating
+environment. Defaults to Earth gravity `[0, 0, -9.81]`.
 """
-function load_robot(path::AbstractString)
+function load_robot(path::AbstractString; gravity::AbstractVector = DEFAULT_GRAVITY)
     json = JSON.parsefile(path)
 
     name = json["name"]::String
@@ -66,6 +73,7 @@ function load_robot(path::AbstractString)
         screw_axes_body,
         link_frames,
         spatial_inertias,
+        Float64.(gravity),
         joint_names,
         joint_types,
         joint_limits,
@@ -73,16 +81,16 @@ function load_robot(path::AbstractString)
 end
 
 """
-    load_robot(name::Symbol) -> Robot
+    load_robot(name::Symbol; gravity=$DEFAULT_GRAVITY) -> Robot
 
 Load a bundled robot model by name (e.g., `load_robot(:ur5)`).
 
 Bundled models are stored in the `robots/models/` directory of this package.
 """
-function load_robot(name::Symbol)
+function load_robot(name::Symbol; gravity::AbstractVector = DEFAULT_GRAVITY)
     path = joinpath(@__DIR__, "..", "robots", "models", "$(name).json")
     isfile(path) || error("No bundled robot model found for :$name. Expected file: $path")
-    load_robot(path)
+    load_robot(path; gravity)
 end
 
 function _json_matrix(rows)
@@ -143,23 +151,25 @@ inverse_kinematics_space(
 
 # Convenience wrappers: dynamics
 
-inverse_dynamics(
+function inverse_dynamics(
     robot::Robot,
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
-    joint_accelerations::AbstractVector,
-    gravity::AbstractVector,
-    tip_wrench::AbstractVector,
-) = inverse_dynamics(
-    joint_positions,
-    joint_velocities,
-    joint_accelerations,
-    gravity,
-    tip_wrench,
-    robot.link_frames,
-    robot.spatial_inertias,
-    robot.screw_axes_space,
+    joint_accelerations::AbstractVector;
+    gravity::AbstractVector = robot.gravity,
+    tip_wrench::AbstractVector = zeros(6),
 )
+    inverse_dynamics(
+        joint_positions,
+        joint_velocities,
+        joint_accelerations,
+        gravity,
+        tip_wrench,
+        robot.link_frames,
+        robot.spatial_inertias,
+        robot.screw_axes_space,
+    )
+end
 
 mass_matrix(robot::Robot, joint_positions::AbstractVector) = mass_matrix(
     joint_positions,
@@ -180,7 +190,11 @@ velocity_quadratic_forces(
     robot.screw_axes_space,
 )
 
-gravity_forces(robot::Robot, joint_positions::AbstractVector, gravity::AbstractVector) =
+function gravity_forces(
+    robot::Robot,
+    joint_positions::AbstractVector;
+    gravity::AbstractVector = robot.gravity,
+)
     gravity_forces(
         joint_positions,
         gravity,
@@ -188,142 +202,155 @@ gravity_forces(robot::Robot, joint_positions::AbstractVector, gravity::AbstractV
         robot.spatial_inertias,
         robot.screw_axes_space,
     )
+end
 
-end_effector_forces(
+function end_effector_forces(
     robot::Robot,
     joint_positions::AbstractVector,
     tip_wrench::AbstractVector,
-) = end_effector_forces(
-    joint_positions,
-    tip_wrench,
-    robot.link_frames,
-    robot.spatial_inertias,
-    robot.screw_axes_space,
 )
+    end_effector_forces(
+        joint_positions,
+        tip_wrench,
+        robot.link_frames,
+        robot.spatial_inertias,
+        robot.screw_axes_space,
+    )
+end
 
-forward_dynamics(
+function forward_dynamics(
     robot::Robot,
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
-    joint_torques::AbstractVector,
-    gravity::AbstractVector,
-    tip_wrench::AbstractVector,
-) = forward_dynamics(
-    joint_positions,
-    joint_velocities,
-    joint_torques,
-    gravity,
-    tip_wrench,
-    robot.link_frames,
-    robot.spatial_inertias,
-    robot.screw_axes_space,
+    joint_torques::AbstractVector;
+    gravity::AbstractVector = robot.gravity,
+    tip_wrench::AbstractVector = zeros(6),
 )
+    forward_dynamics(
+        joint_positions,
+        joint_velocities,
+        joint_torques,
+        gravity,
+        tip_wrench,
+        robot.link_frames,
+        robot.spatial_inertias,
+        robot.screw_axes_space,
+    )
+end
 
 # Convenience wrappers: trajectory dynamics
 
-inverse_dynamics_trajectory(
+function inverse_dynamics_trajectory(
     robot::Robot,
     joint_position_traj::AbstractMatrix,
     joint_velocity_traj::AbstractMatrix,
-    joint_acceleration_traj::AbstractMatrix,
-    gravity::AbstractVector,
-    tip_wrench_traj::AbstractMatrix,
-) = inverse_dynamics_trajectory(
-    joint_position_traj,
-    joint_velocity_traj,
-    joint_acceleration_traj,
-    gravity,
-    tip_wrench_traj,
-    robot.link_frames,
-    robot.spatial_inertias,
-    robot.screw_axes_space,
+    joint_acceleration_traj::AbstractMatrix;
+    gravity::AbstractVector = robot.gravity,
+    tip_wrench_traj::AbstractMatrix = zeros(size(joint_position_traj, 1), 6),
 )
+    inverse_dynamics_trajectory(
+        joint_position_traj,
+        joint_velocity_traj,
+        joint_acceleration_traj,
+        gravity,
+        tip_wrench_traj,
+        robot.link_frames,
+        robot.spatial_inertias,
+        robot.screw_axes_space,
+    )
+end
 
-forward_dynamics_trajectory(
+function forward_dynamics_trajectory(
     robot::Robot,
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     joint_torque_traj::AbstractMatrix,
-    gravity::AbstractVector,
-    tip_wrench_traj::AbstractMatrix,
     timestep::Number,
-    integration_resolution::Number,
-) = forward_dynamics_trajectory(
-    joint_positions,
-    joint_velocities,
-    joint_torque_traj,
-    gravity,
-    tip_wrench_traj,
-    robot.link_frames,
-    robot.spatial_inertias,
-    robot.screw_axes_space,
-    timestep,
-    integration_resolution,
+    integration_resolution::Number;
+    gravity::AbstractVector = robot.gravity,
+    tip_wrench_traj::AbstractMatrix = zeros(size(joint_torque_traj, 1), 6),
 )
+    forward_dynamics_trajectory(
+        joint_positions,
+        joint_velocities,
+        joint_torque_traj,
+        gravity,
+        tip_wrench_traj,
+        robot.link_frames,
+        robot.spatial_inertias,
+        robot.screw_axes_space,
+        timestep,
+        integration_resolution,
+    )
+end
 
 # Convenience wrappers: control
 
-computed_torque(
+function computed_torque(
     robot::Robot,
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
     error_integral::AbstractVector,
-    gravity::AbstractVector,
     desired_joint_positions::AbstractVector,
     desired_joint_velocities::AbstractVector,
     desired_joint_accelerations::AbstractVector,
     Kp::Number,
     Ki::Number,
-    Kd::Number,
-) = computed_torque(
-    joint_positions,
-    joint_velocities,
-    error_integral,
-    gravity,
-    robot.link_frames,
-    robot.spatial_inertias,
-    robot.screw_axes_space,
-    desired_joint_positions,
-    desired_joint_velocities,
-    desired_joint_accelerations,
-    Kp,
-    Ki,
-    Kd,
+    Kd::Number;
+    gravity::AbstractVector = robot.gravity,
 )
+    computed_torque(
+        joint_positions,
+        joint_velocities,
+        error_integral,
+        gravity,
+        robot.link_frames,
+        robot.spatial_inertias,
+        robot.screw_axes_space,
+        desired_joint_positions,
+        desired_joint_velocities,
+        desired_joint_accelerations,
+        Kp,
+        Ki,
+        Kd,
+    )
+end
 
-simulate_control(
+function simulate_control(
     robot::Robot,
     joint_positions::AbstractVector,
     joint_velocities::AbstractVector,
-    gravity::AbstractVector,
     tip_wrench_traj::AbstractMatrix,
     desired_joint_position_traj::AbstractMatrix,
     desired_joint_velocity_traj::AbstractMatrix,
     desired_joint_acceleration_traj::AbstractMatrix,
-    estimated_gravity::AbstractVector,
     estimated_robot::Robot,
     Kp::Number,
     Ki::Number,
     Kd::Number,
     timestep::Number,
-    integration_resolution::Number,
-) = simulate_control(
-    joint_positions,
-    joint_velocities,
-    gravity,
-    tip_wrench_traj,
-    robot.link_frames,
-    robot.spatial_inertias,
-    robot.screw_axes_space,
-    desired_joint_position_traj,
-    desired_joint_velocity_traj,
-    desired_joint_acceleration_traj,
-    estimated_gravity,
-    estimated_robot.link_frames,
-    estimated_robot.spatial_inertias,
-    Kp,
-    Ki,
-    Kd,
-    timestep,
-    integration_resolution,
+    integration_resolution::Number;
+    gravity::AbstractVector = robot.gravity,
+    estimated_gravity::AbstractVector = estimated_robot.gravity,
 )
+    simulate_control(
+        joint_positions,
+        joint_velocities,
+        gravity,
+        tip_wrench_traj,
+        robot.link_frames,
+        robot.spatial_inertias,
+        robot.screw_axes_space,
+        desired_joint_position_traj,
+        desired_joint_velocity_traj,
+        desired_joint_acceleration_traj,
+        estimated_gravity,
+        estimated_robot.link_frames,
+        estimated_robot.spatial_inertias,
+        Kp,
+        Ki,
+        Kd,
+        timestep,
+        integration_resolution,
+    )
+end
