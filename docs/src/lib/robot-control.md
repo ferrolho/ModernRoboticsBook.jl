@@ -7,6 +7,5 @@
 
 ```@autodocs
 Modules = [ModernRoboticsBook]
-Pages = ["ModernRoboticsBook.jl"]
-Filter = t -> nameof(t) in [:computed_torque, :simulate_control]
+Pages = ["control.jl"]
 ```

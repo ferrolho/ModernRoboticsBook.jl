@@ -46,10 +46,10 @@ Common issues these catch:
 
 ## Architecture
 
-- **Single-module package**: Core algorithms in `src/ModernRoboticsBook.jl`, robot model loading in `src/robot.jl` (included via `include("robot.jl")`).
-- **Dependencies**: `LinearAlgebra` (aliased as `LA`) and `JSON`.
+- **Single-module package**: `src/ModernRoboticsBook.jl` defines the module and includes chapter files. Source is split by textbook chapter: `helpers.jl`, `rigid_body_motions.jl` (Ch. 3), `forward_kinematics.jl` (Ch. 4), `velocity_kinematics.jl` (Ch. 5), `inverse_kinematics.jl` (Ch. 6), `dynamics.jl` (Ch. 8), `trajectory.jl` (Ch. 9), `control.jl` (Ch. 11), `robot.jl` (Robot struct and convenience wrappers). Each file exports its own symbols.
+- **Dependencies**: `LinearAlgebra` (aliased as `LA`), `StaticArrays`, and `JSON`.
 - **Tests**: `test/runtests.jl` includes [Aqua.jl](https://github.com/JuliaTesting/Aqua.jl) quality checks alongside chapter-organized test sets.
-- **Docs**: Built with Documenter.jl via `docs/make.jl`. Each `docs/src/lib/*.md` page uses `@autodocs` with a `Pages` filter — when moving code between source files, update the corresponding doc page filter.
+- **Docs**: Built with Documenter.jl via `docs/make.jl`. Each `docs/src/lib/*.md` page uses `@autodocs` with a `Pages` filter matching the source file (e.g., `Pages = ["dynamics.jl"]`).
 
 ## Conventions
 
