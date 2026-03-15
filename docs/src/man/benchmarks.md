@@ -8,10 +8,17 @@ This page compares the performance of ModernRoboticsBook.jl against [Pinocchio](
 |----------|----------------------:|---------------:|--------------------:|-------------:|
 | Forward kinematics | 0.31 μs | **0.30 μs** | 0.86 μs | **~3x faster** |
 | Jacobian | 0.39 μs | **0.36 μs** | 1.0 μs | **~3x faster** |
-| Inverse dynamics | 3.81 μs | — | 0.64 μs | ~6x slower |
+| Inverse dynamics (RNEA) | 3.81 μs | — | 0.64 μs | ~6x slower |
 | Mass matrix (CRBA) | 1.11 μs | **0.91 μs** | 0.65 μs | ~1.4x slower |
 | Gravity forces | 3.80 μs | — | 0.48 μs | ~8x slower |
-| Forward dynamics | 5.38 μs | — | 2.82 μs | ~2x slower |
+| Forward dynamics (CRBA + RNEA) | 5.38 μs | — | 2.82 μs | ~2x slower |
+
+For reference, here are the timings of the textbook algorithms that were replaced by the optimized versions above:
+
+| Function (textbook algorithm) | ModernRoboticsBook.jl | Pinocchio 3.9 (C++) | vs Pinocchio |
+|-------------------------------|----------------------:|--------------------:|-------------:|
+| Mass matrix (n × RNEA) | 22.2 μs | 0.65 μs | ~34x slower |
+| Forward dynamics (M⁻¹ × ...) | 34.2 μs | 2.82 μs | ~12x slower |
 
 *Measured on Apple M2 (16 GB), Julia 1.12, Python 3.13. Julia timings are median values from BenchmarkTools.jl.*
 
@@ -39,7 +46,7 @@ The remaining gap in dynamics functions comes from allocation overhead in the RN
 
 ### When does this matter?
 
-For **learning and prototyping**, ModernRoboticsBook.jl is fast enough — a full forward dynamics call takes ~34 μs, allowing ~29,000 evaluations per second. This is sufficient for trajectory optimization, offline simulation, and interactive exploration.
+For **learning and prototyping**, ModernRoboticsBook.jl is fast enough — a full forward dynamics call takes ~5 μs, allowing ~186,000 evaluations per second. This is sufficient for trajectory optimization, offline simulation, and interactive exploration.
 
 For **real-time control loops** (1 kHz+) or **large-scale optimization** (millions of evaluations), use a production library like Pinocchio, [RigidBodyDynamics.jl](https://github.com/JuliaRobotics/RigidBodyDynamics.jl), or [MuJoCo](https://mujoco.org/).
 
