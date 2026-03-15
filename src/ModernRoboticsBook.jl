@@ -1,6 +1,7 @@
 module ModernRoboticsBook
 
 import LinearAlgebra as LA
+using StaticArrays
 
 export near_zero,
     vec_to_so3,
@@ -96,14 +97,14 @@ The corresponding ``3 \\times 3`` skew-symmetric matrix in so(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> vec_to_so3([1, 2, 3])
-3×3 Matrix{Int64}:
+3×3 StaticArraysCore.SMatrix{3, 3, Int64, 9} with indices SOneTo(3)×SOneTo(3):
   0  -3   2
   3   0  -1
  -2   1   0
 ```
 """
 function vec_to_so3(ω::AbstractVector)
-    [
+    @SMatrix [
         0 -ω[3] ω[2]
         ω[3] 0 -ω[1]
         -ω[2] ω[1] 0
@@ -124,14 +125,14 @@ The corresponding 3-vector of angular velocities.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> so3_to_vec([0 -3 2; 3 0 -1; -2 1 0])
-3-element Vector{Int64}:
+3-element StaticArraysCore.SVector{3, Int64} with indices SOneTo(3):
  1
  2
  3
 ```
 """
 function so3_to_vec(so3mat::AbstractMatrix)
-    [so3mat[3, 2], so3mat[1, 3], so3mat[2, 1]]
+    SA[so3mat[3, 2], so3mat[1, 3], so3mat[2, 1]]
 end
 
 """
@@ -175,20 +176,20 @@ The corresponding rotation matrix ``R`` in SO(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> matrix_exp3([0 -3 2; 3 0 -1; -2 1 0])
-3×3 Matrix{Float64}:
+3×3 StaticArraysCore.SMatrix{3, 3, Float64, 9} with indices SOneTo(3)×SOneTo(3):
  -0.694921   0.713521  0.0892929
- -0.192007  -0.303785  0.933192 
-  0.692978   0.63135   0.348107 
+ -0.192007  -0.303785  0.933192
+  0.692978   0.63135   0.348107
 ```
 """
 function matrix_exp3(so3mat::AbstractMatrix)
     ωθ = so3_to_vec(so3mat)
     if near_zero(LA.norm(ωθ))
-        return Matrix{Float64}(LA.I, 3, 3)
+        return SMatrix{3,3,Float64}(LA.I)
     else
         θ = axis_angle3(ωθ)[2]
         ωmat = so3mat / θ
-        return LA.I + sin(θ) * ωmat + (1 - cos(θ)) * ωmat * ωmat
+        return SMatrix{3,3,Float64}(LA.I) + sin(θ) * ωmat + (1 - cos(θ)) * ωmat * ωmat
     end
 end
 
@@ -221,14 +222,14 @@ julia> matrix_log3([0 0 1; 1 0 0; 0 1 0])
 function matrix_log3(R::AbstractMatrix)
     acosinput = (LA.tr(R) - 1) / 2
     if acosinput >= 1
-        return zeros(3, 3)
+        return @SMatrix zeros(3, 3)
     elseif acosinput <= -1
         if !near_zero(1 + R[3, 3])
-            ω = (1 / √(2 * (1 + R[3, 3]))) * [R[1, 3], R[2, 3], 1 + R[3, 3]]
+            ω = (1 / √(2 * (1 + R[3, 3]))) * SA[R[1, 3], R[2, 3], 1+R[3, 3]]
         elseif !near_zero(1 + R[2, 2])
-            ω = (1 / √(2 * (1 + R[2, 2]))) * [R[1, 2], 1 + R[2, 2], R[3, 2]]
+            ω = (1 / √(2 * (1 + R[2, 2]))) * SA[R[1, 2], 1+R[2, 2], R[3, 2]]
         else
-            ω = (1 / √(2 * (1 + R[1, 1]))) * [1 + R[1, 1], R[2, 1], R[3, 1]]
+            ω = (1 / √(2 * (1 + R[1, 1]))) * SA[1+R[1, 1], R[2, 1], R[3, 1]]
         end
         return vec_to_so3(π * ω)
     else
@@ -252,7 +253,7 @@ The corresponding ``4 \\times 4`` homogeneous transformation matrix ``T``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> rotation_position_to_transform([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
-4×4 Matrix{Float64}:
+4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
  1.0  0.0   0.0  1.0
  0.0  0.0  -1.0  2.0
  0.0  1.0   0.0  5.0
@@ -260,11 +261,12 @@ julia> rotation_position_to_transform([1 0 0; 0 0 -1; 0 1 0], [1, 2, 5])
 ```
 """
 function rotation_position_to_transform(R::AbstractMatrix, p::AbstractVector)
-    result = zeros(4, 4)
-    result[1:3, 1:3] .= R
-    result[1:3, 4] .= p
-    result[4, 4] = 1
-    return result
+    @SMatrix [
+        R[1, 1] R[1, 2] R[1, 3] p[1]
+        R[2, 1] R[2, 2] R[2, 3] p[2]
+        R[3, 1] R[3, 2] R[3, 3] p[3]
+        0.0 0.0 0.0 1.0
+    ]
 end
 
 """
@@ -300,7 +302,7 @@ The inverse ``T^{-1}``, computed using ``R^T``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> transform_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
-4×4 Matrix{Float64}:
+4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
  1.0   0.0  0.0   0.0
  0.0   0.0  1.0  -3.0
  0.0  -1.0  0.0   0.0
@@ -308,14 +310,26 @@ julia> transform_inv([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
 ```
 """
 function transform_inv(T::AbstractMatrix)
-    R, p = transform_to_rotation_position(T)
+    R = SMatrix{3,3}(
+        T[1, 1],
+        T[2, 1],
+        T[3, 1],
+        T[1, 2],
+        T[2, 2],
+        T[3, 2],
+        T[1, 3],
+        T[2, 3],
+        T[3, 3],
+    )
+    p = SA[T[1, 4], T[2, 4], T[3, 4]]
     Rt = R'
     Rtp = Rt * p
-    result = zeros(4, 4)
-    result[1:3, 1:3] .= Rt
-    result[1:3, 4] .= -Rtp
-    result[4, 4] = 1
-    return result
+    @SMatrix [
+        Rt[1, 1] Rt[1, 2] Rt[1, 3] -Rtp[1]
+        Rt[2, 1] Rt[2, 2] Rt[2, 3] -Rtp[2]
+        Rt[3, 1] Rt[3, 2] Rt[3, 3] -Rtp[3]
+        0.0 0.0 0.0 1.0
+    ]
 end
 
 """
@@ -339,7 +353,7 @@ The corresponding ``4 \\times 4`` matrix in se(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> vec_to_se3([1, 2, 3, 4, 5, 6])
-4×4 Matrix{Float64}:
+4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
   0.0  -3.0   2.0  4.0
   3.0   0.0  -1.0  5.0
  -2.0   1.0   0.0  6.0
@@ -347,12 +361,13 @@ julia> vec_to_se3([1, 2, 3, 4, 5, 6])
 ```
 """
 function vec_to_se3(V::AbstractVector)
-    result = zeros(4, 4)
-    result[1:3, 1:3] .= vec_to_so3(V[1:3])
-    result[1, 4] = V[4]
-    result[2, 4] = V[5]
-    result[3, 4] = V[6]
-    return result
+    ω1, ω2, ω3, v1, v2, v3 = V
+    @SMatrix [
+        0.0 -ω3 ω2 v1
+        ω3 0.0 -ω1 v2
+        -ω2 ω1 0.0 v3
+        0.0 0.0 0.0 0.0
+    ]
 end
 
 """
@@ -369,7 +384,7 @@ The corresponding 6-vector twist (angular velocity, linear velocity).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> se3_to_vec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
-6-element Vector{Int64}:
+6-element StaticArraysCore.SVector{6, Int64} with indices SOneTo(6):
  1
  2
  3
@@ -379,7 +394,7 @@ julia> se3_to_vec([0 -3 2 4; 3 0 -1 5; -2 1 0 6; 0 0 0 0])
 ```
 """
 se3_to_vec(se3mat::AbstractMatrix) =
-    [se3mat[3, 2], se3mat[1, 3], se3mat[2, 1], se3mat[1, 4], se3mat[2, 4], se3mat[3, 4]]
+    SA[se3mat[3, 2], se3mat[1, 3], se3mat[2, 1], se3mat[1, 4], se3mat[2, 4], se3mat[3, 4]]
 
 """
     adjoint_representation(T)
@@ -401,23 +416,38 @@ The ``6 \\times 6`` adjoint representation ``[\\text{Ad}_T]``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> adjoint_representation([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
-6×6 Matrix{Float64}:
- 1.0  0.0   0.0  0.0  0.0   0.0
- 0.0  0.0  -1.0  0.0  0.0   0.0
- 0.0  1.0   0.0  0.0  0.0   0.0
- 0.0  0.0   3.0  1.0  0.0   0.0
- 3.0  0.0   0.0  0.0  0.0  -1.0
- 0.0  0.0   0.0  0.0  1.0   0.0
+6×6 StaticArraysCore.SMatrix{6, 6, Int64, 36} with indices SOneTo(6)×SOneTo(6):
+ 1  0   0  0  0   0
+ 0  0  -1  0  0   0
+ 0  1   0  0  0   0
+ 0  0   3  1  0   0
+ 3  0   0  0  0  -1
+ 0  0   0  0  1   0
 ```
 """
 function adjoint_representation(T::AbstractMatrix)
-    R, p = transform_to_rotation_position(T)
+    R = SMatrix{3,3}(
+        T[1, 1],
+        T[2, 1],
+        T[3, 1],
+        T[1, 2],
+        T[2, 2],
+        T[3, 2],
+        T[1, 3],
+        T[2, 3],
+        T[3, 3],
+    )
+    p = SA[T[1, 4], T[2, 4], T[3, 4]]
     pR = vec_to_so3(p) * R
-    result = zeros(6, 6)
-    result[1:3, 1:3] .= R
-    result[4:6, 1:3] .= pR
-    result[4:6, 4:6] .= R
-    return result
+    z = zero(eltype(T))
+    @SMatrix [
+        R[1, 1] R[1, 2] R[1, 3] z z z
+        R[2, 1] R[2, 2] R[2, 3] z z z
+        R[3, 1] R[3, 2] R[3, 3] z z z
+        pR[1, 1] pR[1, 2] pR[1, 3] R[1, 1] R[1, 2] R[1, 3]
+        pR[2, 1] pR[2, 2] pR[2, 3] R[2, 1] R[2, 2] R[2, 3]
+        pR[3, 1] pR[3, 2] pR[3, 3] R[3, 1] R[3, 2] R[3, 3]
+    ]
 end
 
 """
@@ -443,7 +473,7 @@ The normalized 6-vector screw axis ``\\mathcal{S}``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> screw_to_axis([3; 0; 0], [0; 0; 1], 2)
-6-element Vector{Int64}:
+6-element StaticArraysCore.SVector{6, Int64} with indices SOneTo(6):
   0
   0
   1
@@ -454,7 +484,7 @@ julia> screw_to_axis([3; 0; 0], [0; 0; 1], 2)
 """
 function screw_to_axis(q::AbstractVector, s::AbstractVector, h::Number)
     v = LA.cross(q, s) + h * s
-    [s[1], s[2], s[3], v[1], v[2], v[3]]
+    SA[s[1], s[2], s[3], v[1], v[2], v[3]]
 end
 
 """
@@ -503,32 +533,43 @@ The corresponding homogeneous transformation matrix ``T`` in SE(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> matrix_exp6([0 0 0 0; 0 0 -1.57079632 2.35619449; 0 1.57079632 0 2.35619449; 0 0 0 0])
-4×4 Matrix{Float64}:
- 1.0  0.0         0.0        0.0       
+4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
+ 1.0  0.0         0.0        0.0
  0.0  6.7949e-9  -1.0        1.01923e-8
- 0.0  1.0         6.7949e-9  3.0       
- 0.0  0.0         0.0        1.0       
+ 0.0  1.0         6.7949e-9  3.0
+ 0.0  0.0         0.0        1.0
 ```
 """
 function matrix_exp6(se3mat::AbstractMatrix)
-    ωθ = so3_to_vec(se3mat[1:3, 1:3])
+    omgtheta = SMatrix{3,3}(
+        se3mat[1, 1],
+        se3mat[2, 1],
+        se3mat[3, 1],
+        se3mat[1, 2],
+        se3mat[2, 2],
+        se3mat[3, 2],
+        se3mat[1, 3],
+        se3mat[2, 3],
+        se3mat[3, 3],
+    )
+    ωθ = so3_to_vec(omgtheta)
+    v = SA[se3mat[1, 4], se3mat[2, 4], se3mat[3, 4]]
+    I3 = SMatrix{3,3,Float64}(LA.I)
     if near_zero(LA.norm(ωθ))
-        return vcat(hcat(Matrix{Float64}(LA.I, 3, 3), se3mat[1:3, 4]), [0 0 0 1])
+        R = I3
+        p = v
     else
         θ = axis_angle3(ωθ)[2]
-        ωmat = se3mat[1:3, 1:3] / θ
-        return vcat(
-            hcat(
-                matrix_exp3(se3mat[1:3, 1:3]),
-                (
-                    Matrix{Float64}(LA.I, 3, 3) * θ +
-                    (1 - cos(θ)) * ωmat +
-                    (θ - sin(θ)) * ωmat * ωmat
-                ) * se3mat[1:3, 4] / θ,
-            ),
-            [0 0 0 1],
-        )
+        ωmat = omgtheta / θ
+        R = I3 + sin(θ) * ωmat + (1 - cos(θ)) * ωmat * ωmat
+        p = (I3 * θ + (1 - cos(θ)) * ωmat + (θ - sin(θ)) * ωmat * ωmat) * v / θ
     end
+    @SMatrix [
+        R[1, 1] R[1, 2] R[1, 3] p[1]
+        R[2, 1] R[2, 2] R[2, 3] p[2]
+        R[3, 1] R[3, 2] R[3, 3] p[3]
+        0.0 0.0 0.0 1.0
+    ]
 end
 
 """
@@ -551,28 +592,35 @@ The ``4 \\times 4`` matrix logarithm ``[\\mathcal{S}\\theta]`` in se(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> matrix_log6([1 0 0 0; 0 0 -1 0; 0 1 0 3; 0 0 0 1])
-4×4 Matrix{Float64}:
- 0.0  0.0      0.0     0.0    
+4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
+ 0.0  0.0      0.0     0.0
  0.0  0.0     -1.5708  2.35619
  0.0  1.5708   0.0     2.35619
- 0.0  0.0      0.0     0.0    
+ 0.0  0.0      0.0     0.0
 ```
 """
 function matrix_log6(T::AbstractMatrix)
     R, p = transform_to_rotation_position(T)
     ωmat = matrix_log3(R)
+    I3 = SMatrix{3,3,Float64}(LA.I)
+    v = SA[T[1, 4], T[2, 4], T[3, 4]]
     if iszero(ωmat)
-        return vcat(hcat(zeros(3, 3), T[1:3, 4]), [0 0 0 0])
+        @SMatrix [
+            0.0 0.0 0.0 v[1]
+            0.0 0.0 0.0 v[2]
+            0.0 0.0 0.0 v[3]
+            0.0 0.0 0.0 0.0
+        ]
     else
         θ = acos((LA.tr(R) - 1) / 2)
-        return vcat(
-            hcat(
-                ωmat,
-                (LA.I - ωmat / 2 + (1 / θ - 1 / tan(θ / 2) / 2) * ωmat * ωmat / θ) *
-                T[1:3, 4],
-            ),
-            [0 0 0 0],
-        )
+        Ginv = I3 - ωmat / 2 + (1 / θ - 1 / tan(θ / 2) / 2) * ωmat * ωmat / θ
+        p = Ginv * v
+        @SMatrix [
+            ωmat[1, 1] ωmat[1, 2] ωmat[1, 3] p[1]
+            ωmat[2, 1] ωmat[2, 2] ωmat[2, 3] p[2]
+            ωmat[3, 1] ωmat[3, 2] ωmat[3, 3] p[3]
+            0.0 0.0 0.0 0.0
+        ]
     end
 end
 
@@ -631,7 +679,7 @@ The closest homogeneous transformation matrix in SE(3).
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> project_to_se3([0.675 0.150 0.720 1.2; 0.370 0.771 -0.511 5.4; -0.630 0.619 0.472 3.6; 0.003 0.002 0.010 0.9])
-4×4 Matrix{Float64}:
+4×4 StaticArraysCore.SMatrix{4, 4, Float64, 16} with indices SOneTo(4)×SOneTo(4):
   0.679011  0.148945   0.718859  1.2
   0.373207  0.773196  -0.512723  5.4
  -0.632187  0.616428   0.469421  3.6
@@ -1129,23 +1177,26 @@ The ``6 \\times 6`` matrix ``[\\text{ad}_V]``.
 # Examples
 ```jldoctest; setup = :(using ModernRoboticsBook)
 julia> ad([1, 2, 3, 4, 5, 6])
-6×6 Matrix{Float64}:
-  0.0  -3.0   2.0   0.0   0.0   0.0
-  3.0   0.0  -1.0   0.0   0.0   0.0
- -2.0   1.0   0.0   0.0   0.0   0.0
-  0.0  -6.0   5.0   0.0  -3.0   2.0
-  6.0   0.0  -4.0   3.0   0.0  -1.0
- -5.0   4.0   0.0  -2.0   1.0   0.0
+6×6 StaticArraysCore.SMatrix{6, 6, Int64, 36} with indices SOneTo(6)×SOneTo(6):
+  0  -3   2   0   0   0
+  3   0  -1   0   0   0
+ -2   1   0   0   0   0
+  0  -6   5   0  -3   2
+  6   0  -4   3   0  -1
+ -5   4   0  -2   1   0
 ```
 """
 function ad(V::AbstractVector)
-    ωmat = vec_to_so3(V[1:3])
-    vmat = vec_to_so3(V[4:6])
-    result = zeros(6, 6)
-    result[1:3, 1:3] .= ωmat
-    result[4:6, 1:3] .= vmat
-    result[4:6, 4:6] .= ωmat
-    return result
+    ω1, ω2, ω3, v1, v2, v3 = V
+    z = zero(ω1)
+    @SMatrix [
+        z -ω3 ω2 z z z
+        ω3 z -ω1 z z z
+        -ω2 ω1 z z z z
+        z -v3 v2 z -ω3 ω2
+        v3 z -v1 ω3 z -ω1
+        -v2 v1 z -ω2 ω1 z
+    ]
 end
 
 """
