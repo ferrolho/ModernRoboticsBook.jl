@@ -99,15 +99,39 @@ end
 
 # Convenience wrappers: kinematics
 
+"""
+    forward_kinematics_body(robot::Robot, joint_positions) -> Matrix
+
+[`Robot`](@ref) wrapper for [`forward_kinematics_body`](@ref) — supplies
+`robot.home_ee_pose` and `robot.screw_axes_body` automatically.
+"""
 forward_kinematics_body(robot::Robot, joint_positions::AbstractVector) =
     forward_kinematics_body(robot.home_ee_pose, robot.screw_axes_body, joint_positions)
 
+"""
+    forward_kinematics_body!(T, robot::Robot, joint_positions)
+
+In-place [`Robot`](@ref) wrapper for [`forward_kinematics_body!`](@ref).
+Writes the result into `T`.
+"""
 forward_kinematics_body!(T::AbstractMatrix, robot::Robot, joint_positions::AbstractVector) =
     forward_kinematics_body!(T, robot.home_ee_pose, robot.screw_axes_body, joint_positions)
 
+"""
+    forward_kinematics_space(robot::Robot, joint_positions) -> Matrix
+
+[`Robot`](@ref) wrapper for [`forward_kinematics_space`](@ref) — supplies
+`robot.home_ee_pose` and `robot.screw_axes_space` automatically.
+"""
 forward_kinematics_space(robot::Robot, joint_positions::AbstractVector) =
     forward_kinematics_space(robot.home_ee_pose, robot.screw_axes_space, joint_positions)
 
+"""
+    forward_kinematics_space!(T, robot::Robot, joint_positions)
+
+In-place [`Robot`](@ref) wrapper for [`forward_kinematics_space!`](@ref).
+Writes the result into `T`.
+"""
 forward_kinematics_space!(
     T::AbstractMatrix,
     robot::Robot,
@@ -119,18 +143,48 @@ forward_kinematics_space!(
     joint_positions,
 )
 
+"""
+    jacobian_body(robot::Robot, joint_positions) -> Matrix
+
+[`Robot`](@ref) wrapper for [`jacobian_body`](@ref) — supplies
+`robot.screw_axes_body` automatically.
+"""
 jacobian_body(robot::Robot, joint_positions::AbstractVector) =
     jacobian_body(robot.screw_axes_body, joint_positions)
 
+"""
+    jacobian_body!(J, robot::Robot, joint_positions)
+
+In-place [`Robot`](@ref) wrapper for [`jacobian_body!`](@ref).
+Writes the result into `J`.
+"""
 jacobian_body!(J::AbstractMatrix, robot::Robot, joint_positions::AbstractVector) =
     jacobian_body!(J, robot.screw_axes_body, joint_positions)
 
+"""
+    jacobian_space(robot::Robot, joint_positions) -> Matrix
+
+[`Robot`](@ref) wrapper for [`jacobian_space`](@ref) — supplies
+`robot.screw_axes_space` automatically.
+"""
 jacobian_space(robot::Robot, joint_positions::AbstractVector) =
     jacobian_space(robot.screw_axes_space, joint_positions)
 
+"""
+    jacobian_space!(J, robot::Robot, joint_positions)
+
+In-place [`Robot`](@ref) wrapper for [`jacobian_space!`](@ref).
+Writes the result into `J`.
+"""
 jacobian_space!(J::AbstractMatrix, robot::Robot, joint_positions::AbstractVector) =
     jacobian_space!(J, robot.screw_axes_space, joint_positions)
 
+"""
+    inverse_kinematics_body(robot::Robot, target_config, initial_guess, angular_tolerance, linear_tolerance)
+
+[`Robot`](@ref) wrapper for [`inverse_kinematics_body`](@ref) — supplies
+`robot.screw_axes_body` and `robot.home_ee_pose` automatically.
+"""
 inverse_kinematics_body(
     robot::Robot,
     target_config::AbstractMatrix,
@@ -146,6 +200,12 @@ inverse_kinematics_body(
     linear_tolerance,
 )
 
+"""
+    inverse_kinematics_space(robot::Robot, target_config, initial_guess, angular_tolerance, linear_tolerance)
+
+[`Robot`](@ref) wrapper for [`inverse_kinematics_space`](@ref) — supplies
+`robot.screw_axes_space` and `robot.home_ee_pose` automatically.
+"""
 inverse_kinematics_space(
     robot::Robot,
     target_config::AbstractMatrix,
@@ -163,6 +223,13 @@ inverse_kinematics_space(
 
 # Convenience wrappers: dynamics
 
+"""
+    inverse_dynamics_rnea(robot::Robot, joint_positions, joint_velocities, joint_accelerations; gravity, tip_wrench)
+
+[`Robot`](@ref) wrapper for [`inverse_dynamics_rnea`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically. Defaults `gravity` to `robot.gravity` and `tip_wrench` to zero.
+"""
 function inverse_dynamics_rnea(
     robot::Robot,
     joint_positions::AbstractVector,
@@ -183,6 +250,13 @@ function inverse_dynamics_rnea(
     )
 end
 
+"""
+    mass_matrix_crba(robot::Robot, joint_positions) -> Matrix
+
+[`Robot`](@ref) wrapper for [`mass_matrix_crba`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically.
+"""
 mass_matrix_crba(robot::Robot, joint_positions::AbstractVector) = mass_matrix_crba(
     joint_positions,
     robot.link_frames,
@@ -190,6 +264,12 @@ mass_matrix_crba(robot::Robot, joint_positions::AbstractVector) = mass_matrix_cr
     robot.screw_axes_space,
 )
 
+"""
+    mass_matrix_crba!(M, robot::Robot, joint_positions, Ai, AdTi, Gc)
+
+In-place [`Robot`](@ref) wrapper for [`mass_matrix_crba!`](@ref).
+Writes the result into `M`.
+"""
 mass_matrix_crba!(
     M::AbstractMatrix,
     robot::Robot,
@@ -208,6 +288,13 @@ mass_matrix_crba!(
     Gc,
 )
 
+"""
+    velocity_quadratic_forces(robot::Robot, joint_positions, joint_velocities) -> Vector
+
+[`Robot`](@ref) wrapper for [`velocity_quadratic_forces`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically.
+"""
 velocity_quadratic_forces(
     robot::Robot,
     joint_positions::AbstractVector,
@@ -220,6 +307,13 @@ velocity_quadratic_forces(
     robot.screw_axes_space,
 )
 
+"""
+    gravity_forces(robot::Robot, joint_positions; gravity) -> Vector
+
+[`Robot`](@ref) wrapper for [`gravity_forces`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically. Defaults `gravity` to `robot.gravity`.
+"""
 function gravity_forces(
     robot::Robot,
     joint_positions::AbstractVector;
@@ -234,6 +328,13 @@ function gravity_forces(
     )
 end
 
+"""
+    end_effector_forces(robot::Robot, joint_positions, tip_wrench) -> Vector
+
+[`Robot`](@ref) wrapper for [`end_effector_forces`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically.
+"""
 function end_effector_forces(
     robot::Robot,
     joint_positions::AbstractVector,
@@ -248,6 +349,13 @@ function end_effector_forces(
     )
 end
 
+"""
+    forward_dynamics_crba(robot::Robot, joint_positions, joint_velocities, joint_torques; gravity, tip_wrench) -> Vector
+
+[`Robot`](@ref) wrapper for [`forward_dynamics_crba`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically. Defaults `gravity` to `robot.gravity` and `tip_wrench` to zero.
+"""
 function forward_dynamics_crba(
     robot::Robot,
     joint_positions::AbstractVector,
@@ -268,6 +376,13 @@ function forward_dynamics_crba(
     )
 end
 
+"""
+    forward_dynamics_aba(robot::Robot, joint_positions, joint_velocities, joint_torques; gravity, tip_wrench) -> Vector
+
+[`Robot`](@ref) wrapper for [`forward_dynamics_aba`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically. Defaults `gravity` to `robot.gravity` and `tip_wrench` to zero.
+"""
 function forward_dynamics_aba(
     robot::Robot,
     joint_positions::AbstractVector,
@@ -290,6 +405,14 @@ end
 
 # Convenience wrappers: trajectory dynamics
 
+"""
+    inverse_dynamics_trajectory(robot::Robot, joint_position_traj, joint_velocity_traj, joint_acceleration_traj; gravity, tip_wrench_traj) -> Matrix
+
+[`Robot`](@ref) wrapper for [`inverse_dynamics_trajectory`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically. Defaults `gravity` to `robot.gravity` and `tip_wrench_traj` to
+zero.
+"""
 function inverse_dynamics_trajectory(
     robot::Robot,
     joint_position_traj::AbstractMatrix,
@@ -310,6 +433,14 @@ function inverse_dynamics_trajectory(
     )
 end
 
+"""
+    forward_dynamics_trajectory(robot::Robot, joint_positions, joint_velocities, joint_torque_traj, timestep, integration_resolution; gravity, tip_wrench_traj) -> Tuple
+
+[`Robot`](@ref) wrapper for [`forward_dynamics_trajectory`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically. Defaults `gravity` to `robot.gravity` and `tip_wrench_traj` to
+zero.
+"""
 function forward_dynamics_trajectory(
     robot::Robot,
     joint_positions::AbstractVector,
@@ -336,6 +467,13 @@ end
 
 # Convenience wrappers: control
 
+"""
+    computed_torque(robot::Robot, joint_positions, joint_velocities, error_integral, desired_joint_positions, desired_joint_velocities, desired_joint_accelerations, Kp, Ki, Kd; gravity) -> Vector
+
+[`Robot`](@ref) wrapper for [`computed_torque`](@ref) — supplies
+`robot.link_frames`, `robot.spatial_inertias`, and `robot.screw_axes_space`
+automatically. Defaults `gravity` to `robot.gravity`.
+"""
 function computed_torque(
     robot::Robot,
     joint_positions::AbstractVector,
@@ -366,6 +504,14 @@ function computed_torque(
     )
 end
 
+"""
+    simulate_control(robot::Robot, joint_positions, joint_velocities, tip_wrench_traj, desired_joint_position_traj, desired_joint_velocity_traj, desired_joint_acceleration_traj, estimated_robot::Robot, Kp, Ki, Kd, timestep, integration_resolution; gravity, estimated_gravity) -> Tuple
+
+[`Robot`](@ref) wrapper for [`simulate_control`](@ref) — supplies kinematic and
+dynamic parameters from both the true `robot` and the `estimated_robot`.
+Defaults `gravity` to `robot.gravity` and `estimated_gravity` to
+`estimated_robot.gravity`.
+"""
 function simulate_control(
     robot::Robot,
     joint_positions::AbstractVector,
